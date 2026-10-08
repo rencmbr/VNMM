@@ -17,7 +17,9 @@ import matplotlib.pyplot as plt
 DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
 DIRETORIO_RAIZ = os.path.dirname(DIRETORIO_ATUAL)
 DIRETORIO_RELATORIOS = os.path.join(DIRETORIO_RAIZ, "relatorios")
+DIRETORIO_ARTIGO = os.path.join(DIRETORIO_RAIZ, "artigo")
 os.makedirs(DIRETORIO_RELATORIOS, exist_ok=True)
+os.makedirs(DIRETORIO_ARTIGO, exist_ok=True)
 
 sys.path.insert(0, DIRETORIO_ATUAL)
 sys.path.insert(0, os.path.join(DIRETORIO_RAIZ, "src"))
@@ -29,16 +31,16 @@ plt.rcParams.update({
     "font.family": "sans-serif",
     "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
     "mathtext.fontset": "dejavusans",
-    "axes.labelsize": 11,
-    "axes.titlesize": 11.5,
-    "xtick.labelsize": 9.5,
-    "ytick.labelsize": 9.5,
-    "legend.fontsize": 9.2,
+    "axes.labelsize": 11.5,
+    "axes.titlesize": 12.0,
+    "xtick.labelsize": 10.5,
+    "ytick.labelsize": 10.5,
+    "legend.fontsize": 10.0,
     "figure.titlesize": 12.5,
     "axes.linewidth": 1.0,
     "grid.linewidth": 0.6,
     "grid.alpha": 0.45,
-    "lines.markersize": 6.5,
+    "lines.markersize": 7.0,
     "lines.linewidth": 1.8,
     "savefig.dpi": 300,
     "savefig.bbox": "tight",
@@ -293,15 +295,15 @@ def main():
     print(f"  Diferença Mútua Maxima: {np.max(d_E_rms):.3e} (Rigorosamente zero a nível de precisão de máquina)")
     print("-"*75)
     
-    # 4. Geração da Figura de Publicação
-    fig, (ax_E, ax_rot) = plt.subplots(1, 2, figsize=(11.8, 5.0))
+    # 4. Geração da Figura de Publicação (Layout Vertical 2x1 para legibilidade ideal)
+    fig, (ax_E, ax_rot) = plt.subplots(2, 1, figsize=(6.2, 6.5))
     
     # --- Subplot (a): Campo Elétrico ---
     # Plota VNMM com linha e marcadores sólidos
-    ax_E.loglog(h_vals, e_E_vnmm, 'o-', color=COLOR_NAVY, lw=2.0, markersize=7.0,
+    ax_E.loglog(h_vals, e_E_vnmm, 'o-', color=COLOR_NAVY, lw=2.0, markersize=6.8,
                 label=f"VNMM $\\mathcal{{L}}^1$ (3 nodes): $\\mathcal{{O}}(h^{{{p_E_vnmm:.2f}}})$")
     # Plota EFEM com círculos abertos tracejados (para evidenciar sobreposição exata)
-    ax_E.loglog(h_vals, e_E_efem, 's--', color=COLOR_CRIMSON, lw=1.6, markersize=8.0, markerfacecolor='none',
+    ax_E.loglog(h_vals, e_E_efem, 's--', color=COLOR_CRIMSON, lw=1.6, markersize=7.5, markerfacecolor='none',
                 markeredgewidth=1.8, label=f"EFEM Whitney (Edges): $\\mathcal{{O}}(h^{{{p_E_efem:.2f}}})$")
                 
     # Linha de referência teórica O(h^1)
@@ -311,21 +313,21 @@ def main():
     
     # Callout anotando a sobreposição de precisão de máquina
     ax_E.annotate("Machine Precision Identity:\n" r"$\|\mathbf{E}^{\mathrm{VNMM}} - \mathbf{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \leq 1.6 \times 10^{-16}$",
-                  xy=(h_vals[4], e_E_vnmm[4]), xytext=(0.28, 0.024),
+                  xy=(h_vals[4], e_E_vnmm[4]), xytext=(0.28, 0.023),
                   arrowprops=dict(arrowstyle="->", color=COLOR_NAVY, lw=1.3),
-                  fontsize=9.0, fontweight="bold", color="#082b4c",
+                  fontsize=9.2, fontweight="bold", color="#082b4c",
                   bbox=dict(boxstyle="round,pad=0.35", facecolor="#ebf3fb", edgecolor=COLOR_NAVY, alpha=0.95))
                   
     ax_E.set_xlabel(r"Characteristic Average Mesh Size $h_{\mathrm{avg}}$ [m]")
-    ax_E.set_ylabel(r"Electric Field RMS Error $\|\mathbf{E} - \mathbf{E}^h\|_{\mathrm{RMS}}$")
+    ax_E.set_ylabel(r"Electric Field RMS Error $\|\mathbf{E} - \mathbf{E}^h\|_{\mathrm{RMS}}$", labelpad=6)
     ax_E.set_title(r"(a) Electric Field Convergence ($\mathbf{E}$)")
     ax_E.grid(True, which="both", linestyle="--", alpha=0.5)
     ax_E.legend(loc="upper left", framealpha=0.92)
     
     # --- Subplot (b): Rotacional ---
-    ax_rot.loglog(h_vals, e_rot_vnmm, 'd-', color=COLOR_TEAL, lw=2.0, markersize=7.0,
+    ax_rot.loglog(h_vals, e_rot_vnmm, 'd-', color=COLOR_TEAL, lw=2.0, markersize=6.8,
                   label=f"VNMM $\\mathcal{{L}}^1$ (3 nodes): $\\mathcal{{O}}(h^{{{p_rot_vnmm:.2f}}})$")
-    ax_rot.loglog(h_vals, e_rot_efem, '^--', color=COLOR_PURPLE, lw=1.6, markersize=8.0, markerfacecolor='none',
+    ax_rot.loglog(h_vals, e_rot_efem, '^--', color=COLOR_PURPLE, lw=1.6, markersize=7.5, markerfacecolor='none',
                   markeredgewidth=1.8, label=f"EFEM Whitney (Edges): $\\mathcal{{O}}(h^{{{p_rot_efem:.2f}}})$")
                   
     # Faixa de estagnação O(1) / limitação da base incompleta
@@ -334,27 +336,34 @@ def main():
                   label=f"Fitted slope $\\approx \\mathcal{{O}}(h^{{{p_rot_vnmm:.2f}}})$")
                   
     ax_rot.annotate("Identical Curl Fields:\n" r"$\|(\nabla \times \mathbf{E})^{\mathrm{VNMM}} - (\nabla \times \mathbf{E})^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \leq 2.5 \times 10^{-15}$",
-                    xy=(h_vals[4], e_rot_vnmm[4]), xytext=(0.18, 0.045),
+                    xy=(h_vals[4], e_rot_vnmm[4]), xytext=(0.19, 0.040),
                     arrowprops=dict(arrowstyle="->", color=COLOR_TEAL, lw=1.3),
-                    fontsize=9.0, fontweight="bold", color="#094a3d",
+                    fontsize=9.2, fontweight="bold", color="#094a3d",
                     bbox=dict(boxstyle="round,pad=0.35", facecolor="#e8f8f4", edgecolor=COLOR_TEAL, alpha=0.95))
                     
     ax_rot.set_xlabel(r"Characteristic Average Mesh Size $h_{\mathrm{avg}}$ [m]")
-    ax_rot.set_ylabel(r"Curl Operator RMS Error $\|(\nabla \times \mathbf{E})_z - (\nabla \times \mathbf{E}^h)_z\|_{\mathrm{RMS}}$")
+    ax_rot.set_ylabel(r"Curl Operator RMS Error $\|(\nabla \times \mathbf{E})_z - (\nabla \times \mathbf{E}^h)_z\|_{\mathrm{RMS}}$", labelpad=6)
     ax_rot.set_title(r"(b) Curl Operator Convergence ($(\nabla \times \mathbf{E})_z$)")
     ax_rot.grid(True, which="both", linestyle="--", alpha=0.5)
     ax_rot.legend(loc="upper left", framealpha=0.92)
     
-    fig.tight_layout()
+    fig.tight_layout(pad=1.5)
     
-    caminho_pdf = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_efem_vs_vnmm_L1.pdf")
-    caminho_png = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_efem_vs_vnmm_L1.png")
-    fig.savefig(caminho_pdf)
-    fig.savefig(caminho_png)
+    caminho_pdf_rel = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_efem_vs_vnmm_L1.pdf")
+    caminho_png_rel = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_efem_vs_vnmm_L1.png")
+    caminho_pdf_art = os.path.join(DIRETORIO_ARTIGO, "figura_convergencia_efem_vs_vnmm_L1.pdf")
+    caminho_png_art = os.path.join(DIRETORIO_ARTIGO, "figura_convergencia_efem_vs_vnmm_L1.png")
+    
+    fig.savefig(caminho_pdf_rel, bbox_inches="tight", pad_inches=0.08)
+    fig.savefig(caminho_png_rel, bbox_inches="tight", pad_inches=0.08)
+    fig.savefig(caminho_pdf_art, bbox_inches="tight", pad_inches=0.08)
+    fig.savefig(caminho_png_art, bbox_inches="tight", pad_inches=0.08)
     plt.close(fig)
     print(f"\nFiguras salvas com sucesso em:")
-    print(f"  PDF: {caminho_pdf}")
-    print(f"  PNG: {caminho_png}")
+    print(f"  PDF (relatórios): {caminho_pdf_rel}")
+    print(f"  PNG (relatórios): {caminho_png_rel}")
+    print(f"  PDF (artigo):     {caminho_pdf_art}")
+    print(f"  PNG (artigo):     {caminho_png_art}")
     
     # 5. Salva sumário com a tabela das taxas
     caminho_tabela = os.path.join(DIRETORIO_RELATORIOS, "tabela_taxas_efem_vs_vnmm_L1.md")

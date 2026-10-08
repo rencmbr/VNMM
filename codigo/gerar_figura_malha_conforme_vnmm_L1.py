@@ -4,6 +4,7 @@
 Script to generate the publication-quality figure: figura_malha_conforme_vnmm_L1
 Illustrating the conformal triangulation with VNMM L1 support nodes located at edge midpoints.
 All text, labels, titles, and annotations are strictly in English.
+Optimized for compact display matching caption font size.
 """
 
 import os
@@ -14,21 +15,23 @@ import matplotlib.pyplot as plt
 DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
 DIRETORIO_RAIZ = os.path.dirname(DIRETORIO_ATUAL)
 DIRETORIO_RELATORIOS = os.path.join(DIRETORIO_RAIZ, "relatorios")
+DIRETORIO_ARTIGO = os.path.join(DIRETORIO_RAIZ, "artigo")
 os.makedirs(DIRETORIO_RELATORIOS, exist_ok=True)
+os.makedirs(DIRETORIO_ARTIGO, exist_ok=True)
 
 # Publication styling (IEEE / Elsevier standard)
 plt.rcParams.update({
     "font.family": "sans-serif",
     "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
     "mathtext.fontset": "dejavusans",
-    "axes.labelsize": 11,
-    "axes.titlesize": 12,
-    "xtick.labelsize": 10,
-    "ytick.labelsize": 10,
-    "legend.fontsize": 9.5,
-    "figure.titlesize": 12.5,
+    "axes.labelsize": 10.8,
+    "axes.titlesize": 11.2,
+    "xtick.labelsize": 9.8,
+    "ytick.labelsize": 9.8,
+    "legend.fontsize": 9.0,
+    "figure.titlesize": 11.5,
     "axes.linewidth": 1.0,
-    "grid.linewidth": 0.6,
+    "grid.linewidth": 0.55,
     "grid.alpha": 0.45,
     "savefig.dpi": 300,
     "savefig.bbox": "tight",
@@ -92,14 +95,14 @@ def gerar_figura_malha_conforme_vnmm_L1():
         vnmm_coords.append(0.5 * (p1 + p2))
     vnmm_coords = np.array(vnmm_coords)
     
-    # 2. Plotting
-    fig, ax = plt.subplots(figsize=(7.6, 6.6))
+    # 2. Plotting with compact canvas size (4.8 x 4.15 in)
+    fig, ax = plt.subplots(figsize=(4.8, 4.15))
     
     # Plot triangular mesh edges
     for tri in triangulos:
         pts = vertices[tri]
         pts_closed = np.vstack([pts, pts[0]])
-        ax.plot(pts_closed[:, 0], pts_closed[:, 1], color='#7f8c8d', lw=0.7, alpha=0.55)
+        ax.plot(pts_closed[:, 0], pts_closed[:, 1], color='#7f8c8d', lw=0.55, alpha=0.55)
         
     # Select a well-proportioned representative support triangle in the center of the domain
     centroids = np.mean(vertices[triangulos], axis=1)
@@ -111,11 +114,11 @@ def gerar_figura_malha_conforme_vnmm_L1():
     tri_centroid = np.mean(pts_sel, axis=0)
     
     ax.fill(pts_sel[:, 0], pts_sel[:, 1], color='#3498db', alpha=0.25, label=r"Local Support Simplex $T$")
-    ax.plot(pts_sel_closed[:, 0], pts_sel_closed[:, 1], color='#1f77b4', lw=2.6, zorder=4)
+    ax.plot(pts_sel_closed[:, 0], pts_sel_closed[:, 1], color='#1f77b4', lw=2.1, zorder=4)
     
     # Plot global VNMM midpoint nodes
-    ax.plot(vnmm_coords[:, 0], vnmm_coords[:, 1], 'o', color='#95a5a6', markersize=3.5, alpha=0.6,
-            label=r"Global VNMM Nodes (Edge Midpoints)", zorder=3)
+    ax.plot(vnmm_coords[:, 0], vnmm_coords[:, 1], 'o', color='#95a5a6', markersize=2.6, alpha=0.6,
+            label=r"Global VNMM Nodes (Midpoints)", zorder=3)
             
     # Highlight the 3 local support nodes of triangle T with directional tangent vectors
     loc_edges = [(pts_sel[0], pts_sel[1]), (pts_sel[1], pts_sel[2]), (pts_sel[2], pts_sel[0])]
@@ -130,56 +133,59 @@ def gerar_figura_malha_conforme_vnmm_L1():
         outward = outward / np.linalg.norm(outward)
         
         # Red node marker
-        ax.plot(mid[0], mid[1], 'ro', markersize=9.0, markeredgecolor='#800000', markeredgewidth=1.3, zorder=6)
+        ax.plot(mid[0], mid[1], 'ro', markersize=7.0, markeredgecolor='#800000', markeredgewidth=1.1, zorder=6)
         
         # Directional arrow along edge
-        ax.quiver(mid[0], mid[1], tk[0], tk[1], color='#c0392b', scale=12, width=0.008,
+        ax.quiver(mid[0], mid[1], tk[0], tk[1], color='#c0392b', scale=10.5, width=0.009,
                   headwidth=4.5, headlength=5.5, zorder=7)
                   
-        # Label offset outward from triangle
-        offset_dist = 0.20
-        label_pos = mid + offset_dist * outward
-        
-        # Specific adjustments for perfectly clear orientation
+        # Specific adjustments for perfectly clear orientation without overlap
         if k == 0:  # Bottom edge
-            label_pos = mid + np.array([-0.05, -0.14])
+            label_pos = mid + np.array([-0.05, -0.15])
         elif k == 1:  # Right/vertical edge
             label_pos = mid + np.array([0.22, 0.08])
         elif k == 2:  # Slanted edge
             label_pos = mid + np.array([-0.22, 0.08])
             
         ax.annotate(f"$P_{k+1}, \\mathbf{{t}}_{k+1}$", xy=mid, xytext=label_pos,
-                    fontsize=11.5, fontweight='bold', color='#8b0000', zorder=8,
+                    fontsize=10.0, fontweight='bold', color='#8b0000', zorder=8,
                     ha='center', va='center',
-                    bbox=dict(boxstyle="round,pad=0.22", facecolor="#ffffff", edgecolor="#c0392b", alpha=0.92))
+                    bbox=dict(boxstyle="round,pad=0.18", facecolor="#ffffff", edgecolor="#c0392b", alpha=0.92, lw=0.85))
                     
     # Evaluation point P inside the triangle
     P_eval = tri_centroid + np.array([0.01, -0.04])
-    ax.plot(P_eval[0], P_eval[1], 'm*', markersize=15, markeredgecolor='#4a148c', markeredgewidth=1.3,
-            zorder=9, label=r"Collocation Evaluation Point $\mathbf{P}$")
-    ax.annotate(r"$\mathbf{P}$ (Interpolation)", xy=P_eval, xytext=(P_eval[0] + 0.35, P_eval[1] - 0.16),
-                arrowprops=dict(arrowstyle="->", color='#6a1b9a', lw=1.3),
-                fontsize=11.0, fontweight='bold', color='#4a148c', zorder=10,
+    ax.plot(P_eval[0], P_eval[1], 'm*', markersize=12.5, markeredgecolor='#4a148c', markeredgewidth=1.1,
+            zorder=9, label=r"Collocation Point $\mathbf{P}$")
+    ax.annotate(r"$\mathbf{P}$ (Interpolation)", xy=P_eval, xytext=(P_eval[0] + 0.48, P_eval[1] - 0.12),
+                arrowprops=dict(arrowstyle="->", color='#6a1b9a', lw=1.1),
+                fontsize=9.8, fontweight='bold', color='#4a148c', zorder=10,
                 ha='left', va='center',
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#f3e5f5", edgecolor='#6a1b9a', alpha=0.95))
+                bbox=dict(boxstyle="round,pad=0.20", facecolor="#f3e5f5", edgecolor='#6a1b9a', alpha=0.95, lw=0.85))
                 
     ax.set_aspect('equal')
-    ax.set_title(r"Conformal Triangulation: VNMM $\mathcal{L}^1$ Nodes at Edge Midpoints",
-                 fontsize=12, fontweight='bold', pad=12)
-    ax.set_xlabel(r"Cartesian Coordinate $x$ [m]")
-    ax.set_ylabel(r"Cartesian Coordinate $y$ [m]")
+    ax.set_xlabel(r"Cartesian Coordinate $x$ [m]", fontsize=10.8)
+    ax.set_ylabel(r"Cartesian Coordinate $y$ [m]", fontsize=10.8)
+    ax.tick_params(labelsize=9.8)
     ax.grid(True, linestyle='--', alpha=0.45)
-    ax.legend(loc='upper right', framealpha=0.93, edgecolor='#cccccc')
     
-    fig.tight_layout()
+    leg = ax.legend(loc='upper right', framealpha=0.92, edgecolor='#cccccc', fontsize=8.8)
+    if len(leg.legend_handles) > 2:
+        leg.legend_handles[2]._sizes = [60]
     
-    caminho_pdf = os.path.join(DIRETORIO_RELATORIOS, "figura_malha_conforme_vnmm_L1.pdf")
-    caminho_png = os.path.join(DIRETORIO_RELATORIOS, "figura_malha_conforme_vnmm_L1.png")
-    fig.savefig(caminho_pdf)
-    fig.savefig(caminho_png)
+    fig.tight_layout(pad=0.6)
+    
+    # Save to both relatorios and artigo
+    caminho_rel_pdf = os.path.join(DIRETORIO_RELATORIOS, "figura_malha_conforme_vnmm_L1.pdf")
+    caminho_rel_png = os.path.join(DIRETORIO_RELATORIOS, "figura_malha_conforme_vnmm_L1.png")
+    caminho_art_pdf = os.path.join(DIRETORIO_ARTIGO, "figura_malha_conforme_vnmm_L1.pdf")
+    caminho_art_png = os.path.join(DIRETORIO_ARTIGO, "figura_malha_conforme_vnmm_L1.png")
+    
+    fig.savefig(caminho_rel_pdf)
+    fig.savefig(caminho_rel_png)
+    fig.savefig(caminho_art_pdf)
+    fig.savefig(caminho_art_png)
     plt.close(fig)
-    print(f"Saved: {caminho_pdf}")
-    print(f"Saved: {caminho_png}")
+    print(f"Saved: {caminho_rel_pdf} and {caminho_art_pdf}")
 
 
 if __name__ == "__main__":
