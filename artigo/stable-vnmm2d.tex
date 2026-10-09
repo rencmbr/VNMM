@@ -755,7 +755,7 @@ Unlike scalar meshless formulations where matrix singularity is dictated purely 
 (c) \textbf{Shared line of action}: nodes $\mathbf{x}_1, \mathbf{x}_2$ lying on a common line $\mathcal{L}$ with $\vec{t}_1 = \vec{t}_2 \parallel (\mathbf{x}_2 - \mathbf{x}_1)$ share identical directional moments, $y_2 t_{2x} - x_2 t_{2y} = y_1 t_{1x} - x_1 t_{1y}$, producing duplicate rows $\operatorname{Row}_2(\mathbf{A}) = \operatorname{Row}_1(\mathbf{A})$;
 (d) \textbf{Nodal coincidence / spatial collapse}: as $\|\mathbf{x}_1 - \mathbf{x}_2\| \to 0$, if $\vec{t}_1 = \vec{t}_2$ identical rows are formed; if $\vec{t}_1 \neq \vec{t}_2$, two distinct vector degrees of freedom are colocated at a single spatial point, degenerating the 2D spatial sampling base into a 1D line;
 (e) \textbf{Decoupling of spatial geometry and vector alignment}: illustrates why geometric proximity algorithms alone fail---(top) spatially non-collinear nodes ($\operatorname{Area}(T) > 0$) with parallel directors yield $\det(\mathbf{A}) = 0$; (bottom) collinear nodes ($\operatorname{Area}(T) = 0$) with non-parallel directors can yield $\det(\mathbf{A}) \neq 0$ (algebraically invertible), yet fail to span 2D transverse derivatives;
-(f) \textbf{Admissible and stable support}: dual qualification requiring non-collinear spatial distribution ($\operatorname{Area}(T) > 0$) and non-vanishing circulation around evaluation point $P$, ensuring $|\det(\widehat{\mathbf{A}})| \ge \widehat{\mathrm{Tol}}$ and promoting bounded condition numbers $\kappa_2(\widehat{\mathbf{A}}) \sim \mathcal{O}(1)$ for accurate field and curl reconstruction.}
+(f) \textbf{Admissible and stable support}: dual qualification requiring non-collinear spatial distribution ($\operatorname{Area}(T) > 0$) and non-vanishing circulation around evaluation point $P$, promoting bounded condition numbers for accurate field and curl reconstruction.}
 \label{fig:vnmm_singularities_matrix_A}
 \end{figure*}
 
@@ -799,7 +799,7 @@ A crucial theoretical insight governing vector meshless approximations is the fo
     \item \textbf{Algebraically Solvable but Spatially Degenerate (Fig.~\ref{fig:vnmm_singularities_matrix_A}e, bottom):} Conversely, if three support nodes lie on a perfectly collinear 1D line in space (zero triangle area $|T| = 0$) but possess non-parallel directors, matrix $\mathbf{A}$ in the $\mathcal{L}^1$ basis can yield a non-zero determinant ($\det(\mathbf{A}) \neq 0$). While algebraically solvable, this configuration lacks 2D spatial sampling normal to the line of nodes, leading to unconstrained polynomial extrapolation and catastrophic derivative errors in field operators.
     
 \end{itemize}
-In contrast to the pathological or decoupled configurations depicted in Figs.~\ref{fig:vnmm_singularities_matrix_A}(a)--(e), an admissible support---designated as an ideal support triad in Fig.~\ref{fig:vnmm_singularities_matrix_A}(f)---requires a dual geometric-directional qualification. Geometrically, the candidate support nodes must form a non-degenerate 2D spatial distribution ($|T| > 0$), shielding the local domain from nodal collapse or spatial collinearity. Directionally, the assigned vector directors $\vec{t}_k$ must provide coherent tangential circulation around the evaluation point $P(x_P, y_P)$, maximizing the directional moment $M_k = (\Delta\mathbf{x}_k \times \vec{t}_k)_z \gg 0$. By enforcing non-zero spatial area coverage and vector circulation simultaneously, the automated selection algorithm rejects locally degenerate configurations and enforces the scale-invariant criterion $|\det(\widehat{\mathbf{A}})| \ge \widehat{\mathrm{Tol}}$, thereby ensuring well-conditioned local placement matrices and promoting stable shape-function construction.
+In contrast to the pathological or decoupled configurations depicted in Figs.~\ref{fig:vnmm_singularities_matrix_A}(a)--(e), an admissible support---designated as an ideal support triad in Fig.~\ref{fig:vnmm_singularities_matrix_A}(f)---requires a dual geometric-directional qualification. Geometrically, the candidate support nodes must form a non-degenerate 2D spatial distribution ($|T| > 0$), shielding the local domain from nodal collapse or spatial collinearity. Directionally, the assigned vector directors $\vec{t}_k$ must provide coherent tangential circulation around the evaluation point $P(x_P, y_P)$, maximizing the directional moment $M_k = (\Delta\mathbf{x}_k \times \vec{t}_k)_z \gg 0$.
 
 % ---------------------------------------------------------
 % SUBSECTION 3.2: SINGULARITY ANALYSIS IN THE COMPLETE P1 BASIS (6x6 MATRIX)
@@ -1246,7 +1246,7 @@ When evaluated on unconstrained meshless clouds, the 3-node solenoidal basis $\m
 However, as revealed in Fig.~\ref{fig:convergencia_interpolacao_L1_vs_P1}b, the RMS error of the curl operator $\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|_{\mathrm{RMS}}$ \textbf{stagnates at an $\mathcal{O}(1)$ error plateau} ($\approx 0.85$, varying between $8.33 \times 10^{-1}$ and $8.88 \times 10^{-1}$, asymptotic rate $\mathcal{O}(h^{-0.01}) \approx \mathcal{O}(1)$), failing to converge under spatial refinement ($N = 4{,}192$). This persistent noise floor confirms the modal aliasing mechanism derived in Section~\ref{subsec:L1_aliasing_analysis}, wherein unrepresented normal field derivatives leak into the rotational coefficient via the inverted placement matrix $\mathbf{A}^{-1}$.
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=\linewidth]{figura_convergencia_interpolacao_L1_vs_P1.pdf}
+    \includegraphics[width=0.82\linewidth]{figura_convergencia_interpolacao_L1_vs_P1.pdf}
     \caption{Log-log convergence comparison between the incomplete Whitney-like base $\mathcal{L}^1$ (3 support nodes) and the complete linear base $\mathcal{P}^1$ (6 support nodes) over $\Omega = [0, \pi] \times [0, \pi]$ evaluated across a fixed Cartesian grid of $1{,}600$ internal points for the analytical $TE_{11}$ cavity mode: (a) electric field RMS error displaying an observed convergence rate of $\mathcal{O}(h^{0.97})$ for $\mathcal{L}^1$ versus an observed rate of $\mathcal{O}(h^{2.17})$ for $\mathcal{P}^1$, delivering a $19.8\times$ error reduction on the finest grid ($h = 0.0654$~m); (b) curl operator RMS error demonstrating $\mathcal{O}(1)$ error stagnation for $\mathcal{L}^1$ (plateau at $\approx 0.85$ due to missing cross-derivatives), in contrast to asymptotic $\mathcal{O}(h^{0.97})$ convergence for $\mathcal{P}^1$, yielding a $25.9\times$ error reduction.}
     \label{fig:convergencia_interpolacao_L1_vs_P1}
 \end{figure}
@@ -1302,12 +1302,12 @@ To evaluate the stabilization mechanism provided by the scale-invariant dimensio
 
 Although extensive Monte Carlo characterization across multi-seed ensembles remains future work, this benchmark sequence provides a representative stochastic stress test for the automated qualification pipeline, assessing whether the scale-invariant determinant threshold can dynamically detect and bypass localized pathological candidate sextets without manual intervention. Figure~\ref{fig:robustez_perturbacao_estocastica} illustrates the resulting convergence behavior and parametric sensitivity analysis comparing an unconstrained permissive threshold against the stabilized formulation with scale-invariant thresholding.
 
-\begin{figure*}[!t]
+\begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.98\textwidth]{figura_robustez_perturbacao_estocastica.pdf}
+\includegraphics[width=0.82\linewidth]{figura_robustez_perturbacao_estocastica.pdf}
 \caption{Numerical robustness and conditioning analysis in the tested stochastic realization for the 2D VNMM complete base $\mathcal{P}^1$ under spatial-directional perturbations (uniform nodal jitter of $25\%$ and random director angles $\theta_k \in [0, 2\pi)$) over $\Omega = [0, \pi]^2$: (a) Convergence under stochastic mesh refinement comparing an overly permissive threshold ($\widehat{\mathrm{Tol}} = 0.05$), highlighting curl degradation due to ill-conditioned sextets ($\kappa_2(\widehat{\mathbf{A}}) > 13$, unscaled $\kappa_2(\mathbf{A}) > 180$), against restored strict monotonic convergence when applying the scale-invariant threshold $\widehat{\mathrm{Tol}} = 0.80$; (b) Interpolation error and candidate search neighborhood $K_{\mathrm{avg}}$ as a function of the dimensionless threshold $\widehat{\mathrm{Tol}}$ for the fine grid ($N = 4{,}192$), identifying the stable operating regime for $\widehat{\mathrm{Tol}} \in [0.80, 1.50]$.}
 \label{fig:robustez_perturbacao_estocastica}
-\end{figure*}
+\end{figure}
 
 \subsubsection{Degradation Under Overly Permissive Thresholds (\texorpdfstring{$\widehat{\mathrm{Tol}} \ll 1$}{Tol << 1})}
 \label{subsubsec:quartic_law_failure}
@@ -1381,7 +1381,7 @@ Figure~\ref{fig:espectro_cavidade_regularizacao} presents the discrete eigenvalu
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=\linewidth]{figura_espectro_cavidade_com_sem_regularizacao.pdf}
+    \includegraphics[width=0.82\linewidth]{figura_espectro_cavidade_com_sem_regularizacao.pdf}
     \caption{Discrete eigenvalue spectrum $\lambda = k_c^2$ for the $TE_z$ square PEC cavity: (a) Unregularized curl-curl formulation ($s_{\mathrm{div}} = 0.0$), illustrating the severe spectral contamination caused by discrete gradient nullspace leakage ($\nabla \times (\nabla \phi) \neq \mathbf{0}$), where non-zero spurious modes infiltrate the physical sequence; (b) Div-curl regularized formulation ($s_{\mathrm{div}} = 6.0$), demonstrating effective spectral purification across the useful physical bandwidth with no spurious modes observed among the tested resonances, shifting gradient modes to $\lambda > 50$ for the tested cavity discretization and yielding a mean cutoff wavenumber error of $1.00\%$ under baseline $10 \times 10, 2 \times 2$ Gauss integration (which benefits from pre-asymptotic under-integration softening relative to the true spatial discretization floor of $3.32\%$, as investigated in Section~\ref{subsubsec:quadrature_sensitivity}).}
     \label{fig:espectro_cavidade_regularizacao}
 \end{figure}
@@ -1530,12 +1530,12 @@ Furthermore, to eliminate geometric grid-topology bias across both methods, conv
     \label{eq:h_dof_definition}
 \end{equation}
 
-\begin{figure*}[!t]
+\begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.98\textwidth]{figura_convergencia_vnmm_vs_fem.pdf}
+\includegraphics[width=0.82\linewidth]{figura_convergencia_vnmm_vs_fem.pdf}
 \caption{Comparative convergence study across 6 refinement levels ($N \in \{9$, $13$, $17$, $21$, $25$, $29\}$): (a) Mean relative spectral error in cutoff wavenumber $k_c$ (\%) as a function of total active degrees of freedom $N_{\mathrm{DoF}}$; (b) Convergence rate as a function of characteristic DoF spacing $h_{\mathrm{DoF}} = \sqrt{|\Omega|/N_{\mathrm{DoF}}}$. Pure Edge FEM exhibits an observed slope of $\mathcal{O}(h_{\mathrm{DoF}}^{1.93})$, while Pure VNMM exhibits an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.80})$ over the tested refinement interval, demonstrating rapid error reduction without mesh connectivity.}
 \label{fig:convergence_vnmm_fem}
-\end{figure*}
+\end{figure}
 
 \subsubsection{Convergence and Accuracy Comparison}
 Table~\ref{tab:convergence_6_meshes} and Fig.~\ref{fig:convergence_vnmm_fem} report the convergence history across 6 successive mesh levels ($N \in \{9$, $13$, $17$, $21$, $25$, $29\}$).
@@ -1615,12 +1615,12 @@ $N$ & $N_{\mathrm{DoF}}$ & $h_{\mathrm{DoF}}$ [m] & Error (\%) & $N_{\mathrm{DoF
 }
 \end{table}
 
-\begin{figure*}[!t]
+\begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.98\textwidth]{figura_convergencia_cavidade_aleatoria.pdf}
+\includegraphics[width=0.82\linewidth]{figura_convergencia_cavidade_aleatoria.pdf}
 \caption{Comparative spectral convergence study across 6 refinement levels ($N \in \{9$, $13$, $17$, $21$, $25$, $29\}$) under spatial and directional disorder: (a) Mean relative spectral error in cutoff wavenumber $k_c$ (\%) as a function of total active degrees of freedom $N_{\mathrm{DoF}}$; (b) Convergence rate as a function of characteristic DoF spacing $h_{\mathrm{DoF}} = \sqrt{|\Omega|/N_{\mathrm{DoF}}}$. The regular grid exhibits an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.80})$, while the irregular cloud ($25\%$ spatial jitter and random director orientations $\theta_k \in [0, 2\pi)$) exhibits an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.20})$ across the evaluated single-realization sequence, which is empirically compatible with the expected behavior of a complete linear polynomial approximation.}
 \label{fig:convergencia_cavidade_aleatoria}
-\end{figure*}
+\end{figure}
 
 \subsubsection{Convergence Behavior and Physical Discussion}
 

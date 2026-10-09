@@ -139,18 +139,18 @@ def gerar_figura_malha_conforme_vnmm_L1():
         ax.quiver(mid[0], mid[1], tk[0], tk[1], color='#c0392b', scale=10.5, width=0.009,
                   headwidth=4.5, headlength=5.5, zorder=7)
                   
-        # Specific adjustments for perfectly clear orientation without overlap
+        # Specific adjustments for perfectly clear orientation without overlap with the triangle
         if k == 0:  # Bottom edge
-            label_pos = mid + np.array([-0.05, -0.15])
+            label_pos = mid + np.array([0.0, -0.22])
         elif k == 1:  # Right/vertical edge
-            label_pos = mid + np.array([0.22, 0.08])
+            label_pos = mid + np.array([0.36, 0.08])
         elif k == 2:  # Slanted edge
-            label_pos = mid + np.array([-0.22, 0.08])
+            label_pos = mid + np.array([-0.32, 0.18])
             
-        ax.annotate(f"$P_{k+1}, \\mathbf{{t}}_{k+1}$", xy=mid, xytext=label_pos,
+        ax.annotate(rf"$(P_{k+1}, \vec{{t}}_{k+1})$", xy=mid, xytext=label_pos,
                     fontsize=10.0, fontweight='bold', color='#8b0000', zorder=8,
                     ha='center', va='center',
-                    bbox=dict(boxstyle="round,pad=0.18", facecolor="#ffffff", edgecolor="#c0392b", alpha=0.92, lw=0.85))
+                    bbox=dict(boxstyle="round,pad=0.18", facecolor="#ffffff", edgecolor="#c0392b", alpha=0.95, lw=0.85))
                     
     # Evaluation point P inside the triangle
     P_eval = tri_centroid + np.array([0.01, -0.04])
@@ -180,10 +180,10 @@ def gerar_figura_malha_conforme_vnmm_L1():
     caminho_art_pdf = os.path.join(DIRETORIO_ARTIGO, "figura_malha_conforme_vnmm_L1.pdf")
     caminho_art_png = os.path.join(DIRETORIO_ARTIGO, "figura_malha_conforme_vnmm_L1.png")
     
-    fig.savefig(caminho_rel_pdf)
-    fig.savefig(caminho_rel_png)
-    fig.savefig(caminho_art_pdf)
-    fig.savefig(caminho_art_png)
+    fig.savefig(caminho_rel_pdf, bbox_inches='tight')
+    fig.savefig(caminho_rel_png, bbox_inches='tight')
+    fig.savefig(caminho_art_pdf, bbox_inches='tight')
+    fig.savefig(caminho_art_png, bbox_inches='tight')
     plt.close(fig)
     print(f"Saved: {caminho_rel_pdf} and {caminho_art_pdf}")
 

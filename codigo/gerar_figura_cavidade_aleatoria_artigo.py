@@ -4,14 +4,7 @@
 Generate publication-quality figure for Spectral Validation on Irregular Point Clouds
 comparing Regular Grid vs. Irregular Cloud across 6 refinement levels (N in {9, 13, 17, 21, 25, 29}),
 strictly mirroring the variables, metrics, numerical conditions, and styling of Figure 8 (VNMM vs. Edge FEM).
-
-Numerical conditions (identical to Section 5.5 / Table 8):
-- Discretization levels: N in {9, 13, 17, 21, 25, 29}
-- Equivalent nodal grid parameter: N_v in {15, 22, 29, 36, 43, 49}
-- Active DoFs: N_DoF = (N_v - 2)^2 in {169, 400, 729, 1156, 1681, 2209}
-- Background quadrature: cell scaffolding N_cx = N_v - 1, Gauss 3x3 (9 points/cell)
-- Div-curl penalty parameter: s_div = 6.0
-- Determinant threshold: natural quartic scaling Tol_det(h) ~ O(h^4) without static floor
+Vertical 2x1 layout for optimal readability and compatibility with caption font size.
 
 Subplot (a): Mean relative spectral error in k_c (%) vs. Active Degrees of Freedom (N_DoF)
 Subplot (b): Convergence rate vs. Characteristic DoF Spacing h_DoF = sqrt(|Omega| / N_DoF) [m]
@@ -25,12 +18,12 @@ plt.rcParams.update({
     "font.family": "sans-serif",
     "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
     "mathtext.fontset": "dejavusans",
-    "axes.labelsize": 11,
+    "axes.labelsize": 11.0,
     "axes.titlesize": 11.5,
     "xtick.labelsize": 9.5,
     "ytick.labelsize": 9.5,
-    "legend.fontsize": 9.2,
-    "figure.titlesize": 12.5,
+    "legend.fontsize": 9.0,
+    "figure.titlesize": 12.0,
     "axes.linewidth": 1.0,
     "grid.linewidth": 0.6,
     "grid.alpha": 0.45,
@@ -54,7 +47,7 @@ dofs = np.array([169, 400, 729, 1156, 1681, 2209])
 # Characteristic DoF spacing: h_DoF = sqrt(|Omega| / N_DoF) = pi / sqrt(N_DoF)
 h_dof = np.sqrt(np.pi**2 / dofs)
 
-# Mean relative error in k_c (%) across the 6 refinement levels (identical conditions: Gauss 3x3, Nc = Nv-1, s_div=6.0)
+# Mean relative error in k_c (%) across the 6 refinement levels
 err_reg = np.array([10.233, 3.667, 1.645, 0.839, 0.493, 0.259])
 err_aleat = np.array([24.577, 11.775, 5.858, 3.108, 1.967, 1.632])
 
@@ -62,25 +55,25 @@ err_aleat = np.array([24.577, 11.775, 5.858, 3.108, 1.967, 1.632])
 p_reg = np.polyfit(np.log(h_dof), np.log(err_reg), 1)[0]
 p_aleat = np.polyfit(np.log(h_dof), np.log(err_aleat), 1)[0]
 
-fig, (ax_dofs, ax_h) = plt.subplots(1, 2, figsize=(11.5, 4.8))
-fig.subplots_adjust(left=0.08, right=0.97, bottom=0.15, top=0.92, wspace=0.22)
+fig, (ax_dofs, ax_h) = plt.subplots(2, 1, figsize=(6.2, 6.6))
+fig.subplots_adjust(left=0.14, right=0.96, bottom=0.08, top=0.96, hspace=0.28)
 
 # -----------------------------------------------------------------------------
 # Subplot (a): Convergence vs Problem Size (N_DoF)
 # -----------------------------------------------------------------------------
 ax_dofs.loglog(dofs, err_reg, 'o-', color=COLOR_NAVY, markerfacecolor=COLOR_NAVY,
                linewidth=2.0, markersize=7.0,
-               label=r"Pure VNMM: Regular Grid (Alternating Directors)")
+               label=r"Pure VNMM: Regular Grid")
 ax_dofs.loglog(dofs, err_aleat, 's-', color=COLOR_CRIMSON, markerfacecolor=COLOR_CRIMSON,
                linewidth=2.0, markersize=7.0,
-               label=r"Pure VNMM: Irregular Cloud (25% Jitter, Random $\theta_k$)")
+               label=r"Pure VNMM: Irregular Cloud (25% Jitter)")
 
 ax_dofs.set_xlabel(r"Number of Active Degrees of Freedom ($N_{\mathrm{DoF}}$)")
 ax_dofs.set_ylabel(r"Mean Relative Error in $k_c$ (%)")
-ax_dofs.set_title(r"(a) Spectral Convergence vs. Problem Size ($N_{\mathrm{DoF}}$)")
+ax_dofs.set_title(r"(a)", loc='center', fontweight='bold', fontsize=11.5)
 ax_dofs.grid(True, which="both", linestyle="--", alpha=0.45)
-ax_dofs.legend(loc="upper right", framealpha=0.92, fontsize=9.0)
-ax_dofs.set_ylim(0.18, 35.0)
+ax_dofs.legend(loc="upper right", framealpha=0.92, fontsize=8.8)
+ax_dofs.set_ylim(0.12, 50.0)
 
 # -----------------------------------------------------------------------------
 # Subplot (b): Convergence vs Characteristic DoF Spacing h_DoF
@@ -101,10 +94,10 @@ ax_h.loglog(h_ref, c_ref1 * (h_ref**1), 'gray', linestyle='-.', alpha=0.55, labe
 
 ax_h.set_xlabel(r"Characteristic DoF Spacing $h_{\mathrm{DoF}} = \sqrt{|\Omega|/N_{\mathrm{DoF}}}$ [m]")
 ax_h.set_ylabel(r"Mean Relative Error in $k_c$ (%)")
-ax_h.set_title(r"(b) Convergence with Characteristic Spacing ($h_{\mathrm{DoF}} \to 0$)")
+ax_h.set_title(r"(b)", loc='center', fontweight='bold', fontsize=11.5)
 ax_h.grid(True, which="both", linestyle="--", alpha=0.45)
-ax_h.legend(loc="lower right", framealpha=0.92, fontsize=9.0)
-ax_h.set_ylim(0.18, 35.0)
+ax_h.legend(loc="lower right", framealpha=0.92, fontsize=8.0, ncol=2)
+ax_h.set_ylim(0.08, 45.0)
 
 # Save figure in artigo and relatorios
 dir_raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -113,10 +106,10 @@ caminho_png_artigo = os.path.join(dir_raiz, "artigo", "figura_convergencia_cavid
 caminho_pdf_rel = os.path.join(dir_raiz, "relatorios", "figura_convergencia_cavidade_aleatoria.pdf")
 caminho_png_rel = os.path.join(dir_raiz, "relatorios", "figura_convergencia_cavidade_aleatoria.png")
 
-fig.savefig(caminho_pdf_artigo)
-fig.savefig(caminho_png_artigo)
-fig.savefig(caminho_pdf_rel)
-fig.savefig(caminho_png_rel)
+fig.savefig(caminho_pdf_artigo, bbox_inches='tight')
+fig.savefig(caminho_png_artigo, bbox_inches='tight')
+fig.savefig(caminho_pdf_rel, bbox_inches='tight')
+fig.savefig(caminho_png_rel, bbox_inches='tight')
 plt.close(fig)
 
 print("Successfully generated Figure 9 with unified conditions:")
