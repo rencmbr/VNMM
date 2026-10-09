@@ -200,7 +200,7 @@ def criar_figura_equivalencia_dual():
     ax_b.text(P_eval[0] + 0.05, P_eval[1] - 0.03, r"$\mathbf{P}$",
               fontsize=10.5, fontweight="bold", color="#6c3483")
 
-    labels_nos = [r"$(P_1, \mathbf{t}_1)$", r"$(P_2, \mathbf{t}_2)$", r"$(P_3, \mathbf{t}_3)$"]
+    labels_nos = [r"$(P_1, \vec{t}_1)$", r"$(P_2, \vec{t}_2)$", r"$(P_3, \vec{t}_3)$"]
     vec_len = 0.28
     off_t_list = [np.array([0.0, -0.19]), np.array([0.22, 0.05]), np.array([-0.22, 0.05])]
     ha_list = ["center", "left", "right"]
@@ -269,7 +269,7 @@ def criar_figura_equivalencia_dual():
     ax_c.annotate("", xy=(x3 + 0.05, y0), xytext=(x3 - 0.03, y0),
                   arrowprops=dict(arrowstyle="-|>", color=c_vnmm, lw=2.4, mutation_scale=14), zorder=4)
     ax_c.text(x3 - 0.04, y_bot, r"$P_k$", fontsize=10.0, fontweight="bold", color=c_vnmm, ha="center")
-    ax_c.text(x3 + 0.05, y_bot, r"$\mathbf{t}_k$", fontsize=10.0, fontweight="bold", color=c_vnmm, ha="center")
+    ax_c.text(x3 + 0.05, y_bot, r"$\vec{t}_k$", fontsize=10.0, fontweight="bold", color=c_vnmm, ha="center")
 
     ax_c.set_xlim(0.0, 1.0)
     ax_c.set_ylim(-0.05, 1.05)
