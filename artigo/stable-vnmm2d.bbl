@@ -1,0 +1,299 @@
+\begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\expandafter\ifx\csname href\endcsname\relax
+  \def\href#1#2{#2} \def\path#1{#1}\fi
+
+\bibitem{jin2014finite}
+J.~M. Jin, The Finite Element Method in Electromagnetics, 3rd Edition, John
+  Wiley \& Sons, Hoboken, NJ, 2014.
+
+\bibitem{harrington2001time}
+R.~F. Harrington, Time-Harmonic Electromagnetic Fields, IEEE Press, Piscataway,
+  NJ, 2001.
+
+\bibitem{monk2003finite}
+P.~Monk, Finite Element Methods for Maxwell's Equations, Oxford University
+  Press, Oxford, 2003.
+\newblock \href {https://doi.org/10.1093/acprof:oso/9780198508885.001.0001}
+  {\path{doi:10.1093/acprof:oso/9780198508885.001.0001}}.
+
+\bibitem{yee1966numerical}
+K.~Yee, Numerical solution of initial boundary value problems involving
+  {M}axwell's equations in isotropic media, IEEE Transactions on Antennas and
+  Propagation 14~(3) (1966) 302--307.
+\newblock \href {https://doi.org/10.1109/TAP.1966.1138693}
+  {\path{doi:10.1109/TAP.1966.1138693}}.
+
+\bibitem{bossavit1990spurious}
+A.~Bossavit, Solving {M}axwell equations in a closed cavity, and the question
+  of 'spurious modes', IEEE Transactions on Magnetics 26~(2) (1990) 702--705.
+\newblock \href {https://doi.org/10.1109/20.106414}
+  {\path{doi:10.1109/20.106414}}.
+
+\bibitem{boffi1999computational}
+D.~Boffi, P.~Fernandes, L.~Gastaldi, I.~Perugia, Computational models of
+  electromagnetic resonators: Analysis of edge element approximation, SIAM
+  Journal on Numerical Analysis 36~(4) (1999) 1264--1290.
+\newblock \href {https://doi.org/10.1137/S003614299731853X}
+  {\path{doi:10.1137/S003614299731853X}}.
+
+\bibitem{nedelec1980mixed}
+J.~C. N{\'e}d{\'e}lec, Mixed finite elements in {$\mathbb{R}^3$}, Numerische
+  Mathematik 35~(3) (1980) 315--341.
+\newblock \href {https://doi.org/10.1007/BF01396415}
+  {\path{doi:10.1007/BF01396415}}.
+
+\bibitem{bossavit1998computational}
+A.~Bossavit, Computational Electromagnetism: Variational Formulations,
+  Complementarity, Edge Elements, Academic Press, San Diego, CA, 1998.
+
+\bibitem{idelsohn2006mesh}
+S.~R. Idelsohn, E.~O{\~n}ate, To mesh or not to mesh... that is the
+  question..., Computer Methods in Applied Mechanics and Engineering
+  195~(37--40) (2006) 4681--4696.
+\newblock \href {https://doi.org/10.1016/j.cma.2005.11.006}
+  {\path{doi:10.1016/j.cma.2005.11.006}}.
+
+\bibitem{liu2009mesh}
+G.~R. Liu, Mesh Free Methods: Moving Beyond the Finite Element Method, 2nd
+  Edition, CRC Press, Boca Raton, FL, 2009.
+
+\bibitem{slak2018refined}
+J.~Slak, G.~Kosec, Refined meshless local strong form solution of cauchy-navier
+  equation on an irregular domain, Engineering Analysis with Boundary Elements
+  90 (2018) 1--11.
+\newblock \href {https://doi.org/10.1016/j.enganabound.2018.01.001}
+  {\path{doi:10.1016/j.enganabound.2018.01.001}}.
+
+\bibitem{liu2005introduction}
+G.~R. Liu, Y.~T. Gu, An Introduction to Meshfree Methods and Their Programming,
+  Springer, Dordrecht, Netherlands, 2005.
+\newblock \href {https://doi.org/10.1007/1-4020-3228-5}
+  {\path{doi:10.1007/1-4020-3228-5}}.
+
+\bibitem{atluri2002meshless}
+S.~N. Atluri, S.-P. Shen, The Meshless Local {P}etrov-{G}alerkin ({MLPG})
+  Method, Tech Science Press, Encino, CA, 2002.
+
+\bibitem{belytschko1994element}
+T.~Belytschko, Y.~Y. Lu, L.~Gu, Element-free {G}alerkin methods, International
+  Journal for Numerical Methods in Engineering 37~(2) (1994) 229--256.
+\newblock \href {https://doi.org/10.1002/nme.1620370205}
+  {\path{doi:10.1002/nme.1620370205}}.
+
+\bibitem{atluri1998new}
+S.~N. Atluri, T.~Zhu, A new meshless local {P}etrov-{G}alerkin ({MLPG})
+  approach in computational mechanics, Computational Mechanics 22~(2) (1998)
+  117--127.
+\newblock \href {https://doi.org/10.1007/s004660050346}
+  {\path{doi:10.1007/s004660050346}}.
+
+\bibitem{liu2001point}
+G.~R. Liu, Y.~T. Gu, A point interpolation method for two-dimensional solids,
+  International Journal for Numerical Methods in Engineering 50~(4) (2001)
+  937--951.
+\newblock \href
+  {https://doi.org/10.1002/1097-0207(20010210)50:4<937::AID-NME62>3.0.CO;2-X}
+  {\path{doi:10.1002/1097-0207(20010210)50:4<937::AID-NME62>3.0.CO;2-X}}.
+
+\bibitem{viana1999moving}
+S.~A. Viana, R.~C. Mesquita, Moving least square reproducing kernel method for
+  electromagnetic field computation, IEEE Transactions on Magnetics 35~(3)
+  (1999) 1372--1375.
+\newblock \href {https://doi.org/10.1109/20.767218}
+  {\path{doi:10.1109/20.767218}}.
+
+\bibitem{parreira2006element}
+G.~F. Parreira, E.~J. Silva, A.~R. Fonseca, R.~C. Mesquita, The
+  {E}lement-{F}ree {G}alerkin method in three-dimensional electromagnetic
+  problems, IEEE Transactions on Magnetics 42~(4) (2006) 711--714.
+\newblock \href {https://doi.org/10.1109/TMAG.2006.872014}
+  {\path{doi:10.1109/TMAG.2006.872014}}.
+
+\bibitem{coppoli2012induction}
+E.~H.~R. Coppoli, R.~C. Mesquita, R.~S. Silva, Induction machines modeling with
+  meshless methods, IEEE Transactions on Magnetics 48~(2) (2012) 847--850.
+\newblock \href {https://doi.org/10.1109/TMAG.2011.2174211}
+  {\path{doi:10.1109/TMAG.2011.2174211}}.
+
+\bibitem{cingoski1998element}
+V.~Cingoski, N.~Miyamoto, H.~Yamashita, Element-free {G}alerkin method for
+  electromagnetic field computations, IEEE Transactions on Magnetics 34~(5)
+  (1998) 3236--3239.
+\newblock \href {https://doi.org/10.1109/20.717759}
+  {\path{doi:10.1109/20.717759}}.
+
+\bibitem{fonseca2008imposing}
+A.~R. Fonseca, S.~A. Viana, E.~J. Silva, R.~C. Mesquita, Imposing boundary
+  conditions in the meshless local {P}etrov--{G}alerkin method, IET Science,
+  Measurement \& Technology 2~(6) (2008) 387--394.
+\newblock \href {https://doi.org/10.1049/iet-smt:20080082}
+  {\path{doi:10.1049/iet-smt:20080082}}.
+
+\bibitem{nicomedes2012meshless}
+W.~L. Nicomedes, R.~C. Mesquita, F.~J.~S. Moreira, The meshless local
+  {P}etrov--{G}alerkin method in two-dimensional electromagnetic wave analysis,
+  IEEE Transactions on Antennas and Propagation 60~(4) (2012) 1957--1968.
+\newblock \href {https://doi.org/10.1109/TAP.2012.2186223}
+  {\path{doi:10.1109/TAP.2012.2186223}}.
+
+\bibitem{nicomedes2015mixed}
+W.~L. Nicomedes, Mixed meshfree methods in computational electromagnetism:
+  Mathematical foundations and problems in wave scattering, Ph.D. thesis,
+  Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica,
+  Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil (2015).
+
+\bibitem{lima2016metodos}
+N.~Z. Lima, M{\'e}todos sem malha aplicados ao eletromagnetismo: Formas fracas
+  enfraquecidas e fun{\c{c}}{\~o}es de forma vetoriais, Ph.D. thesis, Programa
+  de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade
+  Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil (2016).
+
+\bibitem{ortiz2023tese}
+L.~A.~G. Ortiz, M{\'e}todo sem malha nodal utilizando fun{\c{c}}{\~o}es de
+  forma vetoriais baseadas em {H(curl)}, Ph.D. thesis, Programa de
+  P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade Federal
+  de Minas Gerais (UFMG), Belo Horizonte, Brasil (2023).
+
+\bibitem{lima2017edge}
+N.~Z. Lima, R.~C. Mesquita, Edge meshless method applied to vector
+  electromagnetic problems, IEEE Transactions on Magnetics 53~(6) (2017) 1--4.
+\newblock \href {https://doi.org/10.1109/TMAG.2017.2653769}
+  {\path{doi:10.1109/TMAG.2017.2653769}}.
+
+\bibitem{silva2018new}
+P.~M.~I. Silva, R.~C. Mesquita, N.~Z. Lima, New vectorial {$H(\mathrm{curl})$}
+  shape functions for the edge meshless method, IET Science, Measurement \&
+  Technology 12~(6) (2018) 821--828.
+\newblock \href {https://doi.org/10.1049/iet-smt.2018.0111}
+  {\path{doi:10.1049/iet-smt.2018.0111}}.
+
+\bibitem{ortiz2021creating}
+L.~A.~G. Ortiz, R.~C. Mesquita, N.~Z. Lima, Creating higher order vector shape
+  functions based on {$H(\mathrm{curl})$} for the edge meshless method, Journal
+  of Electromagnetic Waves and Applications 35~(11) (2021) 1511--1528.
+\newblock \href {https://doi.org/10.1080/09205071.2021.1901787}
+  {\path{doi:10.1080/09205071.2021.1901787}}.
+
+\bibitem{ortiz2021nodal}
+L.~A.~G. Ortiz, R.~C. Mesquita, N.~Z. Lima, Nodal meshless method with
+  vectorial shape functions based on {H(curl)}, IEEE Transactions on Magnetics
+  57~(6) (2021) 1--4.
+\newblock \href {https://doi.org/10.1109/TMAG.2021.3061526}
+  {\path{doi:10.1109/TMAG.2021.3061526}}.
+
+\bibitem{goncalves2023vector}
+B.~M.~F. Gon{\c{c}}alves, E.~J. Silva, R.~C. Mesquita, Vector nodal meshless
+  method for {3-D} applications, IEEE Transactions on Magnetics 59~(5) (2023)
+  1--4.
+\newblock \href {https://doi.org/10.1109/TMAG.2022.3233527}
+  {\path{doi:10.1109/TMAG.2022.3233527}}.
+
+\bibitem{goncalves2025tese}
+B.~M.~F. Gon{\c{c}}alves, Constru{\c{c}}{\~a}o das fun{\c{c}}{\~o}es de forma
+  {3-D} para o m{\'e}todo sem malha nodal vetorial, Ph.D. thesis, Programa de
+  P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade Federal
+  de Minas Gerais (UFMG), Belo Horizonte, Brasil (2025).
+
+\bibitem{goncalves2026periodic}
+B.~M.~F. Gon{\c{c}}alves, E.~J. Silva, R.~C. Mesquita, M.~M. Afonso,
+  B.~Ramdane, Periodic boundary conditions in {V}ector {N}odal {M}eshless
+  {M}ethod, IEEE Transactions on Magnetics 62 (2026).
+\newblock \href {https://doi.org/10.1109/TMAG.2025.3609622}
+  {\path{doi:10.1109/TMAG.2025.3609622}}.
+
+\bibitem{parreira2006efficient}
+G.~F. Parreira, A.~R. Fonseca, A.~C. Lisboa, E.~J. Silva, R.~C. Mesquita,
+  Efficient algorithms and data structures for {E}lement-{F}ree {G}alerkin
+  method, IEEE Transactions on Magnetics 42~(4) (2006) 659--662.
+\newblock \href {https://doi.org/10.1109/TMAG.2006.871432}
+  {\path{doi:10.1109/TMAG.2006.871432}}.
+
+\bibitem{li2007meshfree}
+S.~Li, W.~K. Liu, Meshfree Particle Methods, Springer Science \& Business
+  Media, Berlin, Germany, 2007.
+\newblock \href {https://doi.org/10.1007/978-3-540-71471-2}
+  {\path{doi:10.1007/978-3-540-71471-2}}.
+
+\bibitem{nedelec1986new}
+J.~C. N{\'e}d{\'e}lec, A new family of mixed finite elements in
+  {$\mathbb{R}^3$}, Numerische Mathematik 50~(1) (1986) 57--81.
+\newblock \href {https://doi.org/10.1007/BF01389668}
+  {\path{doi:10.1007/BF01389668}}.
+
+\bibitem{golub2013matrix}
+G.~H. Golub, C.~F. Van~Loan, Matrix Computations, 4th Edition, Johns Hopkins
+  University Press, Baltimore, MD, USA, 2013.
+
+\bibitem{bentley1975multidimensional}
+J.~L. Bentley, Multidimensional binary search trees used for associative
+  searching, Communications of the ACM 18~(9) (1975) 509--517.
+\newblock \href {https://doi.org/10.1145/361002.361007}
+  {\path{doi:10.1145/361002.361007}}.
+
+\bibitem{fasshauer2007meshfree}
+G.~E. Fasshauer, Meshfree Approximation Methods with {MATLAB}, Vol.~6 of
+  Interdisciplinary Mathematical Sciences, World Scientific Publishing,
+  Singapore, 2007.
+\newblock \href {https://doi.org/10.1142/6437} {\path{doi:10.1142/6437}}.
+
+\bibitem{wu2026high}
+X.~Wu, X.~Wang, D.~Yang, Z.~Zhao, A high precision galerkin meshless method
+  with moving kriging interpolation and kd-tree for anisotropic thermal
+  transfer problems, Engineering Analysis with Boundary Elements 193 (2026)
+  107014.
+\newblock \href
+  {https://doi.org/https://doi.org/10.1016/j.enganabound.2026.107014}
+  {\path{doi:https://doi.org/10.1016/j.enganabound.2026.107014}}.
+
+\bibitem{chen2001stabilized}
+J.-S. Chen, C.-T. Wu, S.~Yoon, Y.~You, A stabilized conforming nodal
+  integration for {G}alerkin mesh-free methods, International Journal for
+  Numerical Methods in Engineering 50~(2) (2001) 435--466.
+\newblock \href
+  {https://doi.org/10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}
+  {\path{doi:10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}}.
+
+\bibitem{saad2011numerical}
+Y.~Saad, Numerical Methods for Large Eigenvalue Problems, revised Edition,
+  SIAM, Philadelphia, PA, 2011.
+\newblock \href {https://doi.org/10.1137/1.9781611970739}
+  {\path{doi:10.1137/1.9781611970739}}.
+
+\bibitem{lehoucq1998arpack}
+R.~B. Lehoucq, D.~C. Sorensen, C.~Yang, {ARPACK} Users' Guide: Solution of
+  Large-Scale Eigenvalue Problems with Implicitly Restarted {A}rnoldi Methods,
+  SIAM, Philadelphia, PA, 1998.
+\newblock \href {https://doi.org/10.1137/1.9780898719628}
+  {\path{doi:10.1137/1.9780898719628}}.
+
+\bibitem{virtanen2020scipy}
+P.~Virtanen, R.~Gommers, T.~E. Oliphant, et~al., {{SciPy} 1.0: Fundamental
+  Algorithms for Scientific Computing in Python}, Nature Methods 17~(3) (2020)
+  261--272.
+\newblock \href {https://doi.org/10.1038/s41592-019-0686-2}
+  {\path{doi:10.1038/s41592-019-0686-2}}.
+
+\bibitem{dolbow1999numerical}
+J.~Dolbow, T.~Belytschko, Numerical integration of {G}alerkin weak forms in
+  meshfree methods, International Journal for Numerical Methods in Engineering
+  46~(5) (1999) 657--683.
+\newblock \href {https://doi.org/10.1007/s004660050403}
+  {\path{doi:10.1007/s004660050403}}.
+
+\bibitem{deberg2008computational}
+M.~de~Berg, O.~Cheong, M.~van Kreveld, M.~Overmars, Computational Geometry:
+  Algorithms and Applications, 3rd Edition, Springer-Verlag, Berlin,
+  Heidelberg, 2008.
+\newblock \href {https://doi.org/10.1007/978-3-540-77974-2}
+  {\path{doi:10.1007/978-3-540-77974-2}}.
+
+\bibitem{tsukerman1992overlapping}
+I.~A. Tsukerman, Overlapping finite elements for problems with movement, IEEE
+  Transactions on Magnetics 28~(5) (1992) 2247--2249.
+\newblock \href {https://doi.org/10.1109/20.179458}
+  {\path{doi:10.1109/20.179458}}.
+
+\end{thebibliography}
