@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
     "mathtext.fontset": "dejavusans",
     "axes.labelsize": 11.0,
     "axes.titlesize": 11.5,

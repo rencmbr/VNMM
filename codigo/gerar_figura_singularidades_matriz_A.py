@@ -34,7 +34,7 @@ def gerar_figura_singularidades():
     """Generates Figure 2 in high resolution."""
     plt.rcParams.update({
         'font.family': 'sans-serif',
-        'font.sans-serif': ['DejaVu Sans', 'Arial', 'Helvetica'],
+        'font.sans-serif': ['Arial', 'Helvetica', 'DejaVu Sans'],
         'mathtext.fontset': 'dejavusans',
         'pdf.fonttype': 42,
         'ps.fonttype': 42
@@ -68,7 +68,7 @@ def gerar_figura_singularidades():
     # PANEL (a): Global Vector Parallelism (t1 || t2 || t3)
     # =========================================================================
     ax_a = fig.add_subplot(gs[0, 0])
-    style_ax(ax_a, r"$\mathbf{(a)}$")
+    style_ax(ax_a, "(a)")
 
     # Shift triangle slightly left so t2 is completely within the frame
     p1_a = np.array([0.15, 0.30])
@@ -82,15 +82,15 @@ def gerar_figura_singularidades():
     t_par = np.array([np.cos(theta_a), np.sin(theta_a)])
     nodes_a = [p1_a, p2_a, p3_a]
     colors = [c_red, c_blue, c_green]
-    lbl_off_a = [(-0.07, -0.06), (0.04, -0.06), (-0.05, 0.06)]
-    arr_off_a = [(0.04, 0.04), (0.04, 0.04), (0.04, 0.04)]
+    lbl_off_a = [(-0.09, -0.08), (0.07, -0.08), (-0.08, 0.07)]
+    arr_off_a = [(0.01, -0.11), (0.05, 0.04), (0.05, 0.04)]
 
     for i in range(3):
         ax_a.plot(nodes_a[i][0], nodes_a[i][1], 'o', color=c_tri, markersize=5.5, zorder=5)
         ax_a.text(nodes_a[i][0] + lbl_off_a[i][0], nodes_a[i][1] + lbl_off_a[i][1], rf"$P_{i+1}$",
                   fontsize=10.0, fontweight="bold", color=colors[i], ha="center", va="center")
 
-        p_start = nodes_a[i] - 0.10 * t_par
+        p_start = nodes_a[i]
         p_end = nodes_a[i] + 0.24 * t_par
         ax_a.plot([p_start[0], p_end[0]], [p_start[1], p_end[1]], color="#95a5a6", linestyle=":", lw=1.2, alpha=0.65, zorder=2)
 
@@ -104,15 +104,15 @@ def gerar_figura_singularidades():
     # PANEL (b): Concurrency of Lines of Action (Focal Point Pc)
     # =========================================================================
     ax_b = fig.add_subplot(gs[0, 1])
-    style_ax(ax_b, r"$\mathbf{(b)}$")
+    style_ax(ax_b, "(b)")
 
     Pc = np.array([0.50, 0.52])
     p1_b = np.array([0.20, 0.26])
     p2_b = np.array([0.80, 0.26])
     p3_b = np.array([0.50, 0.88])
     nodes_b = [p1_b, p2_b, p3_b]
-    lbl_off_b = [(-0.08, -0.06), (0.07, -0.06), (0.08, 0.01)]
-    arr_off_b = [(-0.05, 0.05), (0.05, 0.05), (-0.06, 0.0)]
+    lbl_off_b = [(-0.09, -0.08), (0.09, -0.08), (0.09, 0.03)]
+    arr_off_b = [(-0.06, 0.06), (0.06, 0.06), (-0.08, 0.0)]
 
     tb = [(Pc - pt) / np.linalg.norm(Pc - pt) for pt in nodes_b]
     for i in range(3):
@@ -120,15 +120,16 @@ def gerar_figura_singularidades():
         ax_b.text(nodes_b[i][0] + lbl_off_b[i][0], nodes_b[i][1] + lbl_off_b[i][1], rf"$P_{i+1}$",
                   fontsize=10.0, fontweight="bold", color=colors[i], ha="center", va="center")
 
-        p_start = nodes_b[i] - 0.08 * tb[i]
+        p_start = nodes_b[i]
         p_end = nodes_b[i] + 0.48 * tb[i]
         ax_b.plot([p_start[0], p_end[0]], [p_start[1], p_end[1]], color="#e74c3c", linestyle="--", lw=1.2, alpha=0.6, zorder=2)
 
         end = nodes_b[i] + 0.18 * tb[i]
         arrow = FancyArrowPatch(nodes_b[i], end, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=colors[i], lw=2.2, zorder=4)
         ax_b.add_patch(arrow)
+        ha_b = "right" if i == 2 else "center"
         ax_b.text(end[0] + arr_off_b[i][0], end[1] + arr_off_b[i][1], rf"$\vec{{t}}_{i+1}$",
-                  fontsize=10.0, color=colors[i], ha="center", va="center")
+                  fontsize=10.0, color=colors[i], ha=ha_b, va="center")
 
     ax_b.plot(Pc[0], Pc[1], 'X', color=c_red, markersize=8.5, markeredgecolor='black', markeredgewidth=1.0, zorder=8)
     ax_b.text(Pc[0] + 0.05, Pc[1] + 0.03, r"$P_c$", fontsize=10.5, fontweight="bold", color=c_red, ha="left", va="bottom")
@@ -137,7 +138,7 @@ def gerar_figura_singularidades():
     # PANEL (c): Shared Line of Action (P1, P2 in L)
     # =========================================================================
     ax_c = fig.add_subplot(gs[0, 2])
-    style_ax(ax_c, r"$\mathbf{(c)}$")
+    style_ax(ax_c, "(c)")
 
     theta_c = np.deg2rad(30.0)
     dir_L = np.array([np.cos(theta_c), np.sin(theta_c)])
@@ -145,35 +146,35 @@ def gerar_figura_singularidades():
     p2_c = p1_c + 0.46 * dir_L
     p3_c = np.array([0.46, 0.82])
 
-    p_start = p1_c - 0.08 * dir_L
+    p_start = p1_c - 0.03 * dir_L
     p_end = p1_c + 0.72 * dir_L
     ax_c.plot([p_start[0], p_end[0]], [p_start[1], p_end[1]], color="#e74c3c", linestyle="-.", lw=1.6, alpha=0.75, zorder=2)
     ax_c.text(p_end[0] + 0.04, p_end[1] + 0.02, r"$\mathcal{L}$", fontsize=11.5, fontweight="bold", color=c_red, ha="left", va="center")
 
-    # P1 label placed to the left/bottom without touching line (red)
+    # P1 label placed clearly below the line with ample distance (red)
     ax_c.plot(p1_c[0], p1_c[1], 'o', color=c_tri, markersize=5.5, zorder=5)
-    ax_c.text(p1_c[0] - 0.07, p1_c[1] - 0.05, r"$P_1$", fontsize=10.0, fontweight="bold", color=c_red, ha="center", va="center")
+    ax_c.text(p1_c[0] - 0.03, p1_c[1] - 0.10, r"$P_1$", fontsize=10.0, fontweight="bold", color=c_red, ha="center", va="center")
 
-    # P2 label placed below line (blue)
+    # P2 label placed below line with clear offset (blue)
     ax_c.plot(p2_c[0], p2_c[1], 'o', color=c_tri, markersize=5.5, zorder=5)
-    ax_c.text(p2_c[0] + 0.05, p2_c[1] - 0.06, r"$P_2$", fontsize=10.0, fontweight="bold", color=c_blue, ha="center", va="center")
+    ax_c.text(p2_c[0] + 0.08, p2_c[1] - 0.09, r"$P_2$", fontsize=10.0, fontweight="bold", color=c_blue, ha="center", va="center")
 
-    # P3 label placed to the right (green)
+    # P3 label placed to the right with clear offset (green)
     ax_c.plot(p3_c[0], p3_c[1], 'o', color=c_tri, markersize=5.5, zorder=5)
-    ax_c.text(p3_c[0] + 0.06, p3_c[1] + 0.02, r"$P_3$", fontsize=10.0, fontweight="bold", color=c_green, ha="center", va="center")
+    ax_c.text(p3_c[0] + 0.08, p3_c[1] + 0.03, r"$P_3$", fontsize=10.0, fontweight="bold", color=c_green, ha="left", va="center")
 
     # t1 arrow and label (above line)
     end1 = p1_c + 0.17 * dir_L
     arrow1 = FancyArrowPatch(p1_c, end1, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=c_red, lw=2.2, zorder=4)
     ax_c.add_patch(arrow1)
-    ax_c.text(p1_c[0] + 0.08 * dir_L[0] - 0.04, p1_c[1] + 0.08 * dir_L[1] + 0.07, r"$\vec{t}_1$",
+    ax_c.text(p1_c[0] + 0.08 * dir_L[0] - 0.04, p1_c[1] + 0.08 * dir_L[1] + 0.09, r"$\vec{t}_1$",
               fontsize=10.0, color=c_red, ha="center", va="center")
 
     # t2 arrow and label (above line, before end)
     end2 = p2_c + 0.17 * dir_L
     arrow2 = FancyArrowPatch(p2_c, end2, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=c_blue, lw=2.2, zorder=4)
     ax_c.add_patch(arrow2)
-    ax_c.text(p2_c[0] + 0.08 * dir_L[0] - 0.04, p2_c[1] + 0.08 * dir_L[1] + 0.07, r"$\vec{t}_2$",
+    ax_c.text(p2_c[0] + 0.08 * dir_L[0] - 0.04, p2_c[1] + 0.08 * dir_L[1] + 0.09, r"$\vec{t}_2$",
               fontsize=10.0, color=c_blue, ha="center", va="center")
 
     # t3 arrow and label
@@ -181,13 +182,13 @@ def gerar_figura_singularidades():
     end3 = p3_c + 0.17 * t3_c
     arrow3 = FancyArrowPatch(p3_c, end3, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=c_green, lw=2.2, zorder=4)
     ax_c.add_patch(arrow3)
-    ax_c.text(end3[0] - 0.06, end3[1] - 0.03, r"$\vec{t}_3$", fontsize=10.0, color=c_green, ha="center", va="center")
+    ax_c.text(end3[0] - 0.08, end3[1] + 0.01, r"$\vec{t}_3$", fontsize=10.0, color=c_green, ha="right", va="center")
 
     # =========================================================================
     # PANEL (d): Nodal Coincidence / Spatial Collapse (P1 ~ P2)
     # =========================================================================
     ax_d = fig.add_subplot(gs[1, 0])
-    style_ax(ax_d, r"$\mathbf{(d)}$")
+    style_ax(ax_d, "(d)")
 
     p1_d = np.array([0.34, 0.43])
     p2_d = np.array([0.41, 0.48])
@@ -199,42 +200,42 @@ def gerar_figura_singularidades():
 
     # P1 dot and label placed clearly outside the ellipse to the bottom-left (red)
     ax_d.plot(p1_d[0], p1_d[1], 'o', color=c_red, markersize=5.5, zorder=5)
-    ax_d.text(0.20, 0.38, r"$P_1$", fontsize=10.0, fontweight="bold", color=c_red, ha="center", va="center")
+    ax_d.text(0.14, 0.33, r"$P_1$", fontsize=10.0, fontweight="bold", color=c_red, ha="center", va="center")
 
     # P2 dot and label placed clearly outside the ellipse to the top-left (blue)
     ax_d.plot(p2_d[0], p2_d[1], 'o', color=c_blue, markersize=5.5, zorder=5)
-    ax_d.text(0.33, 0.60, r"$P_2$", fontsize=10.0, fontweight="bold", color=c_blue, ha="center", va="center")
+    ax_d.text(0.26, 0.64, r"$P_2$", fontsize=10.0, fontweight="bold", color=c_blue, ha="center", va="center")
 
     # P3 dot and label (green)
     ax_d.plot(p3_d[0], p3_d[1], 'o', color=c_green, markersize=5.5, zorder=5)
-    ax_d.text(p3_d[0] + 0.06, p3_d[1] - 0.04, r"$P_3$", fontsize=10.0, fontweight="bold", color=c_green, ha="center", va="center")
+    ax_d.text(p3_d[0] + 0.08, p3_d[1] - 0.04, r"$P_3$", fontsize=10.0, fontweight="bold", color=c_green, ha="left", va="center")
 
     # t1 arrow and label
     t1_d = np.array([0.90, -0.30]) / np.linalg.norm([0.90, -0.30])
     end1 = p1_d + 0.18 * t1_d
     arrow1 = FancyArrowPatch(p1_d, end1, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=c_red, lw=2.2, zorder=4)
     ax_d.add_patch(arrow1)
-    ax_d.text(end1[0] + 0.06, end1[1], r"$\vec{t}_1$", fontsize=10.0, color=c_red, ha="center", va="center")
+    ax_d.text(end1[0] + 0.07, end1[1] - 0.01, r"$\vec{t}_1$", fontsize=10.0, color=c_red, ha="left", va="center")
 
     # t2 arrow and label
     t2_d = np.array([0.65, 0.75]) / np.linalg.norm([0.65, 0.75])
     end2 = p2_d + 0.18 * t2_d
     arrow2 = FancyArrowPatch(p2_d, end2, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=c_blue, lw=2.2, zorder=4)
     ax_d.add_patch(arrow2)
-    ax_d.text(end2[0] + 0.05, end2[1] + 0.05, r"$\vec{t}_2$", fontsize=10.0, color=c_blue, ha="center", va="center")
+    ax_d.text(end2[0] + 0.06, end2[1] + 0.06, r"$\vec{t}_2$", fontsize=10.0, color=c_blue, ha="left", va="center")
 
     # t3 arrow and label
     t3_d = np.array([-0.3, 0.95]) / np.linalg.norm([-0.3, 0.95])
-    end3 = p3_d + 0.18 * t3_d
+    end3 = p3_d + 0.13 * t3_d
     arrow3 = FancyArrowPatch(p3_d, end3, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=c_green, lw=2.2, zorder=4)
     ax_d.add_patch(arrow3)
-    ax_d.text(end3[0] + 0.06, end3[1] - 0.02, r"$\vec{t}_3$", fontsize=10.0, color=c_green, ha="center", va="center")
+    ax_d.text(end3[0] - 0.07, end3[1] - 0.02, r"$\vec{t}_3$", fontsize=10.0, color=c_green, ha="right", va="center")
 
     # =========================================================================
     # PANEL (e): Decoupling: Spatial Geometry vs. Vector Alignment
     # =========================================================================
     ax_e = fig.add_subplot(gs[1, 1])
-    style_ax(ax_e, r"$\mathbf{(e)}$")
+    style_ax(ax_e, "(e)")
 
     ax_e.axhline(0.50, color="#bdc3c7", linestyle=":", lw=1.2, zorder=1)
 
@@ -269,7 +270,7 @@ def gerar_figura_singularidades():
     # PANEL (f): Admissible and Stable Support (Circulation)
     # =========================================================================
     ax_f = fig.add_subplot(gs[1, 2])
-    style_ax(ax_f, r"$\mathbf{(f)}$")
+    style_ax(ax_f, "(f)")
 
     P_eval = np.array([0.50, 0.53])
     v1_f = np.array([0.18, 0.28])
@@ -290,38 +291,38 @@ def gerar_figura_singularidades():
 
     # Dashed extensions
     for i in range(3):
-        p_start = nodes_f[i] - 0.20 * dirs_f[i]
-        p_end = nodes_f[i] + 0.32 * dirs_f[i]
+        p_start = nodes_f[i] - 0.12 * dirs_f[i]
+        p_end = nodes_f[i] + 0.22 * dirs_f[i]
         ax_f.plot([p_start[0], p_end[0]], [p_start[1], p_end[1]], color="#27ae60", linestyle="--", lw=1.2, alpha=0.55, zorder=2)
         ax_f.plot(nodes_f[i][0], nodes_f[i][1], 'o', color=c_tri, markersize=5.5, zorder=5)
 
     # Label P1, P2, P3 (red, blue, green)
-    ax_f.text(m1_f[0], m1_f[1] - 0.08, r"$P_1$", fontsize=10.0, fontweight="bold", color=c_red, ha="center", va="center")
-    ax_f.text(m2_f[0] + 0.07, m2_f[1] - 0.02, r"$P_2$", fontsize=10.0, fontweight="bold", color=c_blue, ha="center", va="center")
-    ax_f.text(m3_f[0] - 0.08, m3_f[1] + 0.03, r"$P_3$", fontsize=10.0, fontweight="bold", color=c_green, ha="center", va="center")
+    ax_f.text(m1_f[0], m1_f[1] - 0.10, r"$P_1$", fontsize=10.0, fontweight="bold", color=c_red, ha="center", va="center")
+    ax_f.text(m2_f[0] + 0.09, m2_f[1] - 0.01, r"$P_2$", fontsize=10.0, fontweight="bold", color=c_blue, ha="left", va="center")
+    ax_f.text(m3_f[0] - 0.09, m3_f[1] + 0.03, r"$P_3$", fontsize=10.0, fontweight="bold", color=c_green, ha="right", va="center")
 
     # Arrows and labels for t1, t2, t3
-    # t1: arrow along bottom, label above arrow inside triangle
+    # t1: arrow along bottom, label below arrow outside triangle
     end_f1 = m1_f + 0.18 * dirs_f[0]
     arrow_f1 = FancyArrowPatch(m1_f, end_f1, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=colors[0], lw=2.2, zorder=4)
     ax_f.add_patch(arrow_f1)
-    ax_f.text(end_f1[0] + 0.05, end_f1[1] + 0.04, r"$\vec{t}_1$", fontsize=10.0, color=colors[0], ha="center", va="center")
+    ax_f.text(end_f1[0] + 0.01, end_f1[1] - 0.09, r"$\vec{t}_1$", fontsize=10.0, color=colors[0], ha="center", va="center")
 
     # t2: arrow along right edge, label to the right
     end_f2 = m2_f + 0.18 * dirs_f[1]
     arrow_f2 = FancyArrowPatch(m2_f, end_f2, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=colors[1], lw=2.2, zorder=4)
     ax_f.add_patch(arrow_f2)
-    ax_f.text(end_f2[0] + 0.05, end_f2[1] + 0.03, r"$\vec{t}_2$", fontsize=10.0, color=colors[1], ha="center", va="center")
+    ax_f.text(end_f2[0] + 0.07, end_f2[1] + 0.04, r"$\vec{t}_2$", fontsize=10.0, color=colors[1], ha="left", va="center")
 
     # t3: arrow along left edge, label to the left
     end_f3 = m3_f + 0.18 * dirs_f[2]
     arrow_f3 = FancyArrowPatch(m3_f, end_f3, arrowstyle="-|>,head_length=5.5,head_width=3.8", color=colors[2], lw=2.2, zorder=4)
     ax_f.add_patch(arrow_f3)
-    ax_f.text(end_f3[0] - 0.06, end_f3[1] - 0.04, r"$\vec{t}_3$", fontsize=10.0, color=colors[2], ha="center", va="center")
+    ax_f.text(end_f3[0] - 0.08, end_f3[1] + 0.02, r"$\vec{t}_3$", fontsize=10.0, color=colors[2], ha="right", va="center")
 
     # Center point P and arc
     ax_f.plot(P_eval[0], P_eval[1], '*', color=c_orange, markersize=10, markeredgecolor='black', markeredgewidth=1.0, zorder=8)
-    ax_f.text(P_eval[0] + 0.05, P_eval[1] - 0.04, r"$P$", fontsize=10.5, fontweight="bold", color=c_orange, ha="left", va="center")
+    ax_f.text(P_eval[0] + 0.08, P_eval[1] - 0.05, r"$P$", fontsize=10.5, fontweight="bold", color=c_orange, ha="left", va="center")
 
     # Circulation arc: radius 0.10 (diameter 0.20)
     arc = Arc(P_eval, 0.20, 0.20, angle=0, theta1=20, theta2=280, color=c_orange, linestyle=":", lw=1.8, zorder=6)

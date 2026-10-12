@@ -30,7 +30,7 @@ from gerar_figura_convergencia_L1_vs_P1_pi import gerar_malha_nodal_pi, campo_ex
 # Global Publication Styling (Elsevier standard)
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
     "mathtext.fontset": "dejavusans",
     "axes.labelsize": 11,
     "axes.titlesize": 11.5,
@@ -212,9 +212,9 @@ def main():
                    label=r"Curl RMS: With Floor ($\mathrm{Tol}_{\mathrm{floor}} = 1.5 \times 10^{-5}$)")
                    
     ax_conv.loglog(h_vals, E_rms_sem, '^--', color=COLOR_GRAY, markerfacecolor='white',
-                   markeredgewidth=1.8, label=r"$\mathbf{E}$ RMS: Pure Quartic")
+                   markeredgewidth=1.8, label=r"$\vec{E}$ RMS: Pure Quartic")
     ax_conv.loglog(h_vals, E_rms_com, 'o-', color=COLOR_NAVY, markerfacecolor=COLOR_NAVY,
-                   label=r"$\mathbf{E}$ RMS: With Floor ($\mathrm{Tol}_{\mathrm{floor}} = 1.5 \times 10^{-5}$)")
+                   label=r"$\vec{E}$ RMS: With Floor ($\mathrm{Tol}_{\mathrm{floor}} = 1.5 \times 10^{-5}$)")
                    
     # Linhas teóricas
     href = np.linspace(h_vals.min() * 0.85, h_vals.max() * 1.15, 60)
@@ -240,9 +240,9 @@ def main():
     ax_tol.set_yscale('log')
     
     l1 = ax_tol.plot(tols_arr, err_rot_sw, 'd-', color=COLOR_CRIMSON, linewidth=2.0,
-                     markerfacecolor=COLOR_CRIMSON, label=r"Curl RMS $\|(\nabla \times \mathbf{E})_z - (\nabla \times \mathbf{E}^h)_z\|$")
+                     markerfacecolor=COLOR_CRIMSON, label=r"Curl RMS $\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|$")
     l2 = ax_tol.plot(tols_arr, err_E_sw, 'o-', color=COLOR_NAVY, linewidth=2.0,
-                     markerfacecolor=COLOR_NAVY, label=r"Field RMS $\|\mathbf{E} - \mathbf{E}^h\|$")
+                     markerfacecolor=COLOR_NAVY, label=r"Field RMS $\|\vec{E} - \vec{E}^h\|$")
                      
     ax_tol.set_xlabel(r"Determinant Threshold Criterion $\mathrm{Tol}_{\mathrm{det}}$")
     ax_tol.set_ylabel(r"RMS Error")

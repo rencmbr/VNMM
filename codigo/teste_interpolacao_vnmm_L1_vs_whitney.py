@@ -571,8 +571,8 @@ def gerar_graficos_comparacao(malha_exemplo, res_convergencia, diretorio_saida):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.2))
     
     # Subplot (a): Comparação Direta entre os Métodos
-    ax1.loglog(h_vals, diff_mid, 'o-', color='crimson', lw=2.0, label=r"$\|\mathbf{E}^{\mathrm{VNMM}} - \mathbf{E}^{\mathrm{FEM\_mid}}\|_{\mathrm{RMS}}$ (Identidade $\approx 10^{-16}$)")
-    ax1.loglog(h_vals, diff_gauss, 's--', color='navy', lw=2.0, label=r"$\|\mathbf{E}^{\mathrm{VNMM}} - \mathbf{E}^{\mathrm{FEM\_Gauss}}\|_{\mathrm{RMS}}$ ($\mathcal{O}(h^2)$ Quadratura)")
+    ax1.loglog(h_vals, diff_mid, 'o-', color='crimson', lw=2.0, label=r"$\|\vec{E}^{\mathrm{VNMM}} - \vec{E}^{\mathrm{FEM\_mid}}\|_{\mathrm{RMS}}$ (Identidade $\approx 10^{-16}$)")
+    ax1.loglog(h_vals, diff_gauss, 's--', color='navy', lw=2.0, label=r"$\|\vec{E}^{\mathrm{VNMM}} - \vec{E}^{\mathrm{FEM\_Gauss}}\|_{\mathrm{RMS}}$ ($\mathcal{O}(h^2)$ Quadratura)")
     
     # Linha de referência O(h^2)
     c2 = diff_gauss[-1] / (h_vals[-1]**2)
@@ -586,10 +586,10 @@ def gerar_graficos_comparacao(malha_exemplo, res_convergencia, diretorio_saida):
     ax1.legend(loc='best', fontsize=9.5)
     
     # Subplot (b): Erro em Relação ao Campo Exato TE11
-    ax2.loglog(h_vals, err_vnmm_E, 'b-o', lw=2.0, label=r"Erro Campo $\mathbf{E}$ (VNMM $\mathcal{L}^1$): $\mathcal{O}(h^1)$")
-    ax2.loglog(h_vals, err_fem_E, 'b--^', lw=1.5, markerfacecolor='none', label=r"Erro Campo $\mathbf{E}$ (Whitney FEM): $\mathcal{O}(h^1)$")
-    ax2.loglog(h_vals, err_vnmm_rot, 'r-s', lw=2.0, label=r"Erro Rotacional $(\nabla \times \mathbf{E})_z$ (VNMM): $\mathcal{O}(1)$")
-    ax2.loglog(h_vals, err_fem_rot, 'r--d', lw=1.5, markerfacecolor='none', label=r"Erro Rotacional $(\nabla \times \mathbf{E})_z$ (Whitney): $\mathcal{O}(1)$")
+    ax2.loglog(h_vals, err_vnmm_E, 'b-o', lw=2.0, label=r"Erro Campo $\vec{E}$ (VNMM $\mathcal{L}^1$): $\mathcal{O}(h^1)$")
+    ax2.loglog(h_vals, err_fem_E, 'b--^', lw=1.5, markerfacecolor='none', label=r"Erro Campo $\vec{E}$ (Whitney FEM): $\mathcal{O}(h^1)$")
+    ax2.loglog(h_vals, err_vnmm_rot, 'r-s', lw=2.0, label=r"Erro Rotacional $(\nabla \times \vec{E})_z$ (VNMM): $\mathcal{O}(1)$")
+    ax2.loglog(h_vals, err_fem_rot, 'r--d', lw=1.5, markerfacecolor='none', label=r"Erro Rotacional $(\nabla \times \vec{E})_z$ (Whitney): $\mathcal{O}(1)$")
     
     # Linha O(h^1)
     c1 = err_vnmm_E[-1] / (h_vals[-1]**1)
@@ -628,12 +628,12 @@ def gerar_relatorio_md(res_poly, res_te11, res_conv, caminho_relatorio):
     conteudo.append("1. **Posicionamento dos Nós VNMM:** Os nós globais do VNMM são alocados rigorosamente nos **pontos médios de cada aresta única** da triangulação conforme. As direções vetoriais $\\mathbf{t}_k$ são unitárias e colineares a cada aresta.\n")
     conteudo.append("2. **Seleção dos Nós de Suporte:** Para qualquer ponto de avaliação $\\mathbf{P}$ contido em um triângulo $T$, a tríade de suporte de 3 nós do VNMM é composta exclusivamente pelos **nós situados nos pontos médios das 3 arestas do próprio triângulo $T$**.\n")
     conteudo.append("3. **Graus de Liberdade e Discretização:**\n")
-    conteudo.append("   - No **VNMM 2D $\\mathcal{L}^1$**, os graus de liberdade são as projeções pontuais direcionais nos pontos médios: $e_k = \\mathbf{E}(M_k) \\cdot \\mathbf{t}_k$.\n")
-    conteudo.append("   - No **FEM de Whitney**, os graus de liberdade são as circulações ao longo das arestas: $\\alpha_k = \\oint_{e_k} \\mathbf{E} \\cdot d\\boldsymbol{\\ell}$. Avaliam-se duas variantes: (a) integração por quadratura de Gauss de alta precisão (padrão de formulações variacionais) e (b) regra do ponto médio $\\alpha_k^{\\mathrm{mid}} = L_k (\\mathbf{E}(M_k) \\cdot \\mathbf{t}_k)$.\n\n")
+    conteudo.append("   - No **VNMM 2D $\\mathcal{L}^1$**, os graus de liberdade são as projeções pontuais direcionais nos pontos médios: $e_k = \\vec{E}(M_k) \\cdot \\vec{t}_k$.\n")
+    conteudo.append("   - No **FEM de Whitney**, os graus de liberdade são as circulações ao longo das arestas: $\\alpha_k = \\oint_{e_k} \\vec{E} \\cdot d\\boldsymbol{\\ell}$. Avaliam-se duas variantes: (a) integração por quadratura de Gauss de alta precisão (padrão de formulações variacionais) e (b) regra do ponto médio $\\alpha_k^{\\mathrm{mid}} = L_k (\\vec{E}(M_k) \\cdot \\vec{t}_k)$.\n\n")
     
     conteudo.append("---\n\n")
     conteudo.append("## 2. Teste com Campo Polinomial Exato da Base $\\mathcal{L}^1$\n\n")
-    conteudo.append("Para um campo afim da base linear $\\mathbf{E}(\\mathbf{x}) = [a_1 + \\alpha y, a_2 - \\alpha x]^T$, a regra do ponto médio é analiticamente exata ao longo de qualquer aresta reta. Os resultados numéricos obtidos foram:\n\n")
+    conteudo.append("Para um campo afim da base linear $\\vec{E}(\\mathbf{x}) = [a_1 + \\alpha y, a_2 - \\alpha x]^T$, a regra do ponto médio é analiticamente exata ao longo de qualquer aresta reta. Os resultados numéricos obtidos foram:\n\n")
     d_mid_max = res_poly['diff_mid_max']
     d_mid_rms = res_poly['diff_mid_rms']
     e_vnmm_rms = res_poly['err_vnmm_E_rms']
@@ -646,7 +646,7 @@ def gerar_relatorio_md(res_poly, res_te11, res_conv, caminho_relatorio):
     
     conteudo.append("---\n\n")
     conteudo.append("## 3. Teste com Campo Eletromagnético Não-Linear ($TE_{11}$ Cavidade)\n\n")
-    conteudo.append("Para o modo ressonante não-linear $\\mathbf{E}(x, y) = [\\cos(x)\\sin(y), -\\sin(x)\\cos(y)]$, a circulação contínua ao longo de arestas não-infinitesimais difere da aproximação de ponto médio apenas pelo erro de quadratura $\\mathcal{O}(L_k^3)$:\n\n")
+    conteudo.append("Para o modo ressonante não-linear $\\vec{E}(x, y) = [\\cos(x)\\sin(y), -\\sin(x)\\cos(y)]$, a circulação contínua ao longo de arestas não-infinitesimais difere da aproximação de ponto médio apenas pelo erro de quadratura $\\mathcal{O}(L_k^3)$:\n\n")
     conteudo.append("| Comparação | Diferença Máxima | Diferença RMS |\n")
     conteudo.append("| :--- | :---: | :---: |\n")
     d_te11_m_max = res_te11['diff_mid_max']
@@ -658,8 +658,8 @@ def gerar_relatorio_md(res_poly, res_te11, res_conv, caminho_relatorio):
     
     conteudo.append("---\n\n")
     conteudo.append("## 4. Tabelas de Convergência com Refinamento de Malha\n\n")
-    conteudo.append("### 4.1 Convergência do Campo Elétrico $\\mathbf{E}$ e Equivalência Estrutural\n\n")
-    conteudo.append("| Malha | $N_{\\mathrm{tri}}$ | $N_{\\mathrm{edges}}$ | $h_{\\mathrm{méd}}$ [m] | Dif. RMS $\\mathbf{E}$ (VNMM - FEM Mid) | Dif. RMS $\\mathbf{E}$ (VNMM - FEM Gauss) | Erro RMS $\\mathbf{E}$ (VNMM $\\mathcal{L}^1$) | Erro RMS $\\mathbf{E}$ (FEM Gauss) |\n")
+    conteudo.append("### 4.1 Convergência do Campo Elétrico $\\vec{E}$ e Equivalência Estrutural\n\n")
+    conteudo.append("| Malha | $N_{\\mathrm{tri}}$ | $N_{\\mathrm{edges}}$ | $h_{\\mathrm{méd}}$ [m] | Dif. RMS $\\vec{E}$ (VNMM - FEM Mid) | Dif. RMS $\\vec{E}$ (VNMM - FEM Gauss) | Erro RMS $\\vec{E}$ (VNMM $\\mathcal{L}^1$) | Erro RMS $\\vec{E}$ (FEM Gauss) |\n")
     conteudo.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
     for r in res_conv:
         conteudo.append(
@@ -669,8 +669,8 @@ def gerar_relatorio_md(res_poly, res_te11, res_conv, caminho_relatorio):
         )
     conteudo.append("\n")
     
-    conteudo.append("### 4.2 Análise Detalhada do Rotacional $(\\nabla \\times \\mathbf{E})_z$ em Relação ao Valor Teórico\n\n")
-    conteudo.append("A tabela a seguir apresenta os erros absolutos do rotacional em relação ao valor analítico exato $(\\nabla \\times \\mathbf{E})_{\\mathrm{teor}}$, bem como as diferenças diretas entre os métodos:\n\n")
+    conteudo.append("### 4.2 Análise Detalhada do Rotacional $(\\nabla \\times \\vec{E})_z$ em Relação ao Valor Teórico\n\n")
+    conteudo.append("A tabela a seguir apresenta os erros absolutos do rotacional em relação ao valor analítico exato $(\\nabla \\times \\vec{E})_{\\mathrm{teor}}$, bem como as diferenças diretas entre os métodos:\n\n")
     conteudo.append("| Malha | $h_{\\mathrm{méd}}$ [m] | Erro RMS Rot (VNMM $\\mathcal{L}^1$) | Erro RMS Rot (FEM Gauss) | Erro RMS Rot (FEM Mid) | Dif. RMS Rot (VNMM - FEM Mid) | Dif. RMS Rot (VNMM - FEM Gauss) | Erro Máx Rot (VNMM) | Erro Máx Rot (FEM Gauss) |\n")
     conteudo.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
     for r in res_conv:
@@ -685,7 +685,7 @@ def gerar_relatorio_md(res_poly, res_te11, res_conv, caminho_relatorio):
     conteudo.append("## 5. Principais Conclusões Científicas\n\n")
     conteudo.append("1. **Identidade Construtiva Estrita:** Quando os graus de liberdade de circulação do FEM de Whitney são discretizados pela regra do ponto médio, a interpolação VNMM 2D $\\mathcal{L}^1$ e a interpolação FEM coincidem em todos os pontos do domínio com discrepância nula (da ordem do piso de ponto flutuante $\\sim 10^{-16}$).\n")
     conteudo.append("2. **Significado Físico-Matemático:** O método sem malha VNMM 2D $\\mathcal{L}^1$ com nós nos pontos médios das arestas de uma triangulação representa exatamente a **forma nodal colocalizada (dual pontual)** dos elementos de aresta de Whitney de 1ª ordem.\n")
-    conteudo.append("3. **Convergência Idêntica:** Ambas as formulações compartilham a mesma taxa de convergência $\\mathcal{O}(h^1)$ para o campo $\\mathbf{E}$ e o mesmo patamar de estagnação $\\mathcal{O}(1)$ para o rotacional $(\\nabla \\times \\mathbf{E})_z$ decorrente da ausência dos monômios cruzados na base linear incompleta $\\mathcal{L}^1$.\n")
+    conteudo.append("3. **Convergência Idêntica:** Ambas as formulações compartilham a mesma taxa de convergência $\\mathcal{O}(h^1)$ para o campo $\\vec{E}$ e o mesmo patamar de estagnação $\\mathcal{O}(1)$ para o rotacional $(\\nabla \\times \\vec{E})_z$ decorrente da ausência dos monômios cruzados na base linear incompleta $\\mathcal{L}^1$.\n")
     conteudo.append("4. **Justificativa Teórica para a Base Completa $\\mathcal{P}^1$ (6 nós):** Essa equivalência comprova que a estagnação observada na base $\\mathcal{L}^1$ é inerente à estrutura do espaço de Whitney de 1ª família. Para superar esse limite e atingir convergência $\\mathcal{O}(h^1)$ no rotacional e superconvergência $\\mathcal{O}(h^2)$ no campo, a transição para a base completa $\\mathcal{P}^1$ de 6 nós no VNMM torna-se fundamental.\n\n")
     
     with open(caminho_relatorio, 'w', encoding='utf-8') as f:

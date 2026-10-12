@@ -21,7 +21,7 @@ Este relatório documenta a análise paramétrica comparativa de convergência d
   - **Fronteira:** $N_{\mathrm{front}}$ nós distribuídos uniformemente ao longo do perímetro com vetores tangenciais unitários anti-horários.
   - **Interior:** $N_{\mathrm{int}}$ nós gerados via **grade cartesiana estratificada com perturbação estocástica (*jitter* de 25%)** e vetores unitários de orientação angular aleatória uniforme $\mathbf{t}_k = [\cos\theta_k, \sin\theta_k]^T$.
 - **Campo Analítico Exato:** Modo ressonante fundamental $TE_{11}$ da cavidade PEC:
-  $$\mathbf{E}(x, y) = \begin{bmatrix} \cos(x) \sin(y) \\ -\sin(x) \cos(y) \end{bmatrix}, \qquad (\nabla \times \mathbf{E})_z = -2 \cos(x) \cos(y)$$
+  $$\vec{E}(x, y) = \begin{bmatrix} \cos(x) \sin(y) \\ -\sin(x) \cos(y) \end{bmatrix}, \qquad (\nabla \times \vec{E})_z = -2 \cos(x) \cos(y)$$
 
 ---
 
@@ -50,13 +50,13 @@ onde $Tol_{\mathrm{piso}} = 1.5 \times 10^{-5}$ para o domínio $[0, \pi]^2$.
 1. Quando os 6 vizinhos imediatos formam uma configuração desfavorável com determinante menor que $Tol_{\mathrm{piso}}$, o algoritmo **rejeita o sexteto degenerado**.
 2. A vizinhança de busca $K$ é automaticamente expandida de forma incremental ($K = 12 \to 16 \to 20$) via KD-Tree.
 3. Essa expansão mínima de vizinhança fornece nós com diversidade angular suficiente para formar um sexteto robusto, mantendo $K_{\mathrm{méd}} \le 12$ nós em toda a faixa de densidade.
-4. **Resultado:** A estabilidade de condicionamento é assegurada, e a superconvergência $\mathcal{O}(h^2)$ no campo $\mathbf{E}$ e estrita $\mathcal{O}(h^1)$ no rotacional são plenamente preservadas até a malha de $4.192$ nós.
+4. **Resultado:** A estabilidade de condicionamento é assegurada, e a superconvergência $\mathcal{O}(h^2)$ no campo $\vec{E}$ e estrita $\mathcal{O}(h^1)$ no rotacional são plenamente preservadas até a malha de $4.192$ nós.
 
 ---
 
 ## 3. Tabela Comparativa de Resultados Numéricos
 
-| Malha | $N_{\mathrm{total}}$ | $h_{\mathrm{avg}}$ [m] | Erro RMS $\mathbf{E}$ ($\mathcal{L}^1$) | Erro RMS $\mathbf{E}$ ($\mathcal{P}^1$) | Ganho $\mathbf{E}$ | Erro RMS Rot ($\mathcal{L}^1$) | Erro RMS Rot ($\mathcal{P}^1$) | Ganho Rot | $K_{\mathrm{méd}}$ ($\mathcal{P}^1$) |
+| Malha | $N_{\mathrm{total}}$ | $h_{\mathrm{nom}}$ [m] | Erro RMS $\vec{E}$ ($\mathcal{L}^1$) | Erro RMS $\vec{E}$ ($\mathcal{P}^1$) | Ganho $\vec{E}$ | Erro RMS Rot ($\mathcal{L}^1$) | Erro RMS Rot ($\mathcal{P}^1$) | Ganho Rot | $K_{\mathrm{méd}}$ ($\mathcal{P}^1$) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | Esparsa (N=84) | 84 | 0.5236 | 1.9136e-01 | 1.2430e-01 | **  1.5x** | 8.6074e-01 | 2.5542e-01 | **  3.4x** | 11.1 |
 | Média-Esparsa (N=186) | 186 | 0.3491 | 1.1462e-01 | 3.9749e-02 | **  2.9x** | 8.3762e-01 | 1.6616e-01 | **  5.0x** | 11.2 |

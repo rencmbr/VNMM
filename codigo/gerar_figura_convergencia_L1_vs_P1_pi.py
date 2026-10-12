@@ -31,7 +31,7 @@ from funcoes_forma_vnmm_2d_6_P1 import funcoes_forma_vnmm_2d_6_P1
 # Global Publication Styling (IEEE Trans. / Elsevier standard)
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
     "mathtext.fontset": "dejavusans",
     "axes.labelsize": 11,
     "axes.titlesize": 11.5,
@@ -304,9 +304,9 @@ def gerar_figura_publicacao(resultados):
     ax_E.loglog(href, c_h1 * (href**1), 'gray', linestyle='-.', alpha=0.45, label=r"Theoretical $\mathcal{O}(h^1)$")
     
     ganho_E = E_rms_L1[-1] / E_rms_P1[-1]
-    ax_E.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{avg}}$ [m]")
-    ax_E.set_ylabel(r"Electric Field RMS Error $\|\mathbf{E} - \mathbf{E}^h\|_{\mathrm{RMS}}$")
-    ax_E.set_title(r"(a) Electric Field Convergence ($\mathbf{E}$)")
+    ax_E.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{nom}}$ [m]")
+    ax_E.set_ylabel(r"Electric Field RMS Error $\|\vec{E} - \vec{E}^h\|_{\mathrm{RMS}}$")
+    ax_E.set_title(r"(a) Electric Field Convergence ($\vec{E}$)")
     ax_E.set_ylim(5.0e-4, 0.35)
     ax_E.grid(True, which="both", linestyle="--", alpha=0.5)
     ax_E.legend(loc="lower right", framealpha=0.92, fontsize=9.0)
@@ -320,9 +320,9 @@ def gerar_figura_publicacao(resultados):
     c_rot1 = rot_rms_P1[2] / (h_vals[2]**1)
     ax_rot.loglog(href, c_rot1 * (href**1), 'k:', alpha=0.55, label=r"Theoretical $\mathcal{O}(h^1)$")
     
-    ax_rot.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{avg}}$ [m]")
-    ax_rot.set_ylabel(r"Curl RMS Error $\|(\nabla \times \mathbf{E})_z - (\nabla \times \mathbf{E}^h)_z\|_{\mathrm{RMS}}$")
-    ax_rot.set_title(r"(b) Curl Operator Convergence ($(\nabla \times \mathbf{E})_z$)")
+    ax_rot.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{nom}}$ [m]")
+    ax_rot.set_ylabel(r"Curl RMS Error $\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|_{\mathrm{RMS}}$")
+    ax_rot.set_title(r"(b) Curl Operator Convergence ($(\nabla \times \vec{E})_z$)")
     ax_rot.set_ylim(1.5e-2, 1.8)
     ax_rot.grid(True, which="both", linestyle="--", alpha=0.5)
     ax_rot.legend(loc="lower right", framealpha=0.92, fontsize=9.0)
@@ -331,11 +331,14 @@ def gerar_figura_publicacao(resultados):
     
     pdf_path = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_interpolacao_L1_vs_P1.pdf")
     png_path = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_interpolacao_L1_vs_P1.png")
+    artigo_pdf_path = os.path.join(DIRETORIO_RAIZ, "artigo", "figura_convergencia_interpolacao_L1_vs_P1.pdf")
     fig.savefig(pdf_path)
     fig.savefig(png_path)
+    fig.savefig(artigo_pdf_path)
     plt.close(fig)
     print(f"Figuras salvas com sucesso em:")
-    print(f"  PDF: {pdf_path}")
+    print(f"  PDF (relatorios): {pdf_path}")
+    print(f"  PDF (artigo): {artigo_pdf_path}")
     print(f"  PNG: {png_path}")
     
     ganho_rot = rot_rms_L1[-1] / rot_rms_P1[-1]
@@ -375,7 +378,7 @@ def gerar_relatorio_md(resultados, metricas, caminho_relatorio):
     conteudo.append("  - **Fronteira:** $N_{\\mathrm{front}}$ nós distribuídos uniformemente ao longo do perímetro com vetores tangenciais unitários anti-horários.\n")
     conteudo.append("  - **Interior:** $N_{\\mathrm{int}}$ nós gerados via **grade cartesiana estratificada com perturbação estocástica (*jitter* de 25%)** e vetores unitários de orientação angular aleatória uniforme $\\mathbf{t}_k = [\\cos\\theta_k, \\sin\\theta_k]^T$.\n")
     conteudo.append("- **Campo Analítico Exato:** Modo ressonante fundamental $TE_{11}$ da cavidade PEC:\n")
-    conteudo.append("  $$\\mathbf{E}(x, y) = \\begin{bmatrix} \\cos(x) \\sin(y) \\\\ -\\sin(x) \\cos(y) \\end{bmatrix}, \\qquad (\\nabla \\times \\mathbf{E})_z = -2 \\cos(x) \\cos(y)$$\n\n")
+    conteudo.append("  $$\\vec{E}(x, y) = \\begin{bmatrix} \\cos(x) \\sin(y) \\\\ -\\sin(x) \\cos(y) \\end{bmatrix}, \\qquad (\\nabla \\times \\vec{E})_z = -2 \\cos(x) \\cos(y)$$\n\n")
     
     conteudo.append("---\n\n")
     conteudo.append("## 2. Seleção Adaptativa do Suporte Nodal e Garantia de Convergência em Malhas Densas\n\n")
@@ -401,11 +404,11 @@ def gerar_relatorio_md(resultados, metricas, caminho_relatorio):
     conteudo.append("1. Quando os 6 vizinhos imediatos formam uma configuração desfavorável com determinante menor que $Tol_{\\mathrm{piso}}$, o algoritmo **rejeita o sexteto degenerado**.\n")
     conteudo.append("2. A vizinhança de busca $K$ é automaticamente expandida de forma incremental ($K = 12 \\to 16 \\to 20$) via KD-Tree.\n")
     conteudo.append("3. Essa expansão mínima de vizinhança fornece nós com diversidade angular suficiente para formar um sexteto robusto, mantendo $K_{\\mathrm{méd}} \\le 12$ nós em toda a faixa de densidade.\n")
-    conteudo.append("4. **Resultado:** A estabilidade de condicionamento é assegurada, e a superconvergência $\\mathcal{O}(h^2)$ no campo $\\mathbf{E}$ e estrita $\\mathcal{O}(h^1)$ no rotacional são plenamente preservadas até a malha de $4.192$ nós.\n\n")
+    conteudo.append("4. **Resultado:** A estabilidade de condicionamento é assegurada, e a superconvergência $\\mathcal{O}(h^2)$ no campo $\\vec{E}$ e estrita $\\mathcal{O}(h^1)$ no rotacional são plenamente preservadas até a malha de $4.192$ nós.\n\n")
     
     conteudo.append("---\n\n")
     conteudo.append("## 3. Tabela Comparativa de Resultados Numéricos\n\n")
-    conteudo.append("| Malha | $N_{\\mathrm{total}}$ | $h_{\\mathrm{avg}}$ [m] | Erro RMS $\\mathbf{E}$ ($\\mathcal{L}^1$) | Erro RMS $\\mathbf{E}$ ($\\mathcal{P}^1$) | Ganho $\\mathbf{E}$ | Erro RMS Rot ($\\mathcal{L}^1$) | Erro RMS Rot ($\\mathcal{P}^1$) | Ganho Rot | $K_{\\mathrm{méd}}$ ($\\mathcal{P}^1$) |\n")
+    conteudo.append("| Malha | $N_{\\mathrm{total}}$ | $h_{\\mathrm{nom}}$ [m] | Erro RMS $\\vec{E}$ ($\\mathcal{L}^1$) | Erro RMS $\\vec{E}$ ($\\mathcal{P}^1$) | Ganho $\\vec{E}$ | Erro RMS Rot ($\\mathcal{L}^1$) | Erro RMS Rot ($\\mathcal{P}^1$) | Ganho Rot | $K_{\\mathrm{méd}}$ ($\\mathcal{P}^1$) |\n")
     conteudo.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
     for r in resultados:
         g_E = r['err_E_L1_rms'] / r['err_E_P1_rms']

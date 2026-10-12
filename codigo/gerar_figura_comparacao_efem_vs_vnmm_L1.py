@@ -29,7 +29,7 @@ from funcoes_forma_vnmm_2d_3_L1 import funcoes_forma_vnmm_2d_3_L1
 # Configurações de estilo de publicação IEEE/Elsevier
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
     "mathtext.fontset": "dejavusans",
     "axes.labelsize": 11.5,
     "axes.titlesize": 12.0,
@@ -295,8 +295,9 @@ def main():
     print(f"  Diferença Mútua Maxima: {np.max(d_E_rms):.3e} (Rigorosamente zero a nível de precisão de máquina)")
     print("-"*75)
     
-    # 4. Geração da Figura de Publicação (Layout Vertical 2x1 para legibilidade ideal)
-    fig, (ax_E, ax_rot) = plt.subplots(2, 1, figsize=(6.2, 6.5))
+    # 4. Geração da Figura de Publicação (Layout Vertical 2x1 otimizado)
+    fig, (ax_E, ax_rot) = plt.subplots(2, 1, figsize=(6.2, 7.0))
+    fig.subplots_adjust(left=0.18, right=0.96, bottom=0.08, top=0.95, hspace=0.35)
     
     # --- Subplot (a): Campo Elétrico ---
     # Plota VNMM com linha e marcadores sólidos
@@ -312,17 +313,17 @@ def main():
     ax_E.loglog(href, c_h1 * (href**1), 'k:', alpha=0.55, lw=1.4, label=r"Theoretical $\mathcal{O}(h^1)$ slope")
     
     # Callout anotando a sobreposição de precisão de máquina
-    ax_E.annotate("Machine Precision Identity:\n" r"$\|\mathbf{E}^{\mathrm{VNMM}} - \mathbf{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \leq 1.6 \times 10^{-16}$",
-                  xy=(h_vals[4], e_E_vnmm[4]), xytext=(0.28, 0.023),
+    ax_E.annotate("Machine Precision Identity:\n" r"$\|\vec{E}^{\mathrm{VNMM}} - \vec{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \leq 1.6 \times 10^{-16}$",
+                  xy=(h_vals[4], e_E_vnmm[4]), xytext=(0.26, 0.023),
                   arrowprops=dict(arrowstyle="->", color=COLOR_NAVY, lw=1.3),
-                  fontsize=9.2, fontweight="bold", color="#082b4c",
-                  bbox=dict(boxstyle="round,pad=0.35", facecolor="#ebf3fb", edgecolor=COLOR_NAVY, alpha=0.95))
+                  fontsize=8.8, fontweight="bold", color="#082b4c",
+                  bbox=dict(boxstyle="round,pad=0.32", facecolor="#ebf3fb", edgecolor=COLOR_NAVY, alpha=0.95))
                   
     ax_E.set_xlabel(r"Characteristic Average Mesh Size $h_{\mathrm{avg}}$ [m]")
-    ax_E.set_ylabel(r"Electric Field RMS Error $\|\mathbf{E} - \mathbf{E}^h\|_{\mathrm{RMS}}$", labelpad=6)
-    ax_E.set_title(r"(a) Electric Field Convergence ($\mathbf{E}$)")
+    ax_E.set_ylabel(r"Electric Field RMS Error" "\n" r"$\|\vec{E} - \vec{E}^h\|_{\mathrm{RMS}}$", labelpad=8)
+    ax_E.set_title(r"(a) Electric Field Convergence ($\vec{E}$)")
     ax_E.grid(True, which="both", linestyle="--", alpha=0.5)
-    ax_E.legend(loc="upper left", framealpha=0.92)
+    ax_E.legend(loc="upper left", framealpha=0.92, fontsize=9.2)
     
     # --- Subplot (b): Rotacional ---
     ax_rot.loglog(h_vals, e_rot_vnmm, 'd-', color=COLOR_TEAL, lw=2.0, markersize=6.8,
@@ -335,19 +336,17 @@ def main():
     ax_rot.loglog(href, c_rot * (href**p_rot_vnmm), 'k:', alpha=0.55, lw=1.4,
                   label=f"Fitted slope $\\approx \\mathcal{{O}}(h^{{{p_rot_vnmm:.2f}}})$")
                   
-    ax_rot.annotate("Identical Curl Fields:\n" r"$\|(\nabla \times \mathbf{E})^{\mathrm{VNMM}} - (\nabla \times \mathbf{E})^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \leq 2.5 \times 10^{-15}$",
-                    xy=(h_vals[4], e_rot_vnmm[4]), xytext=(0.19, 0.040),
+    ax_rot.annotate("Identical Curl Fields:\n" r"$\|(\nabla \times \vec{E})^{\mathrm{VNMM}} - (\nabla \times \vec{E})^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \leq 2.5 \times 10^{-15}$",
+                    xy=(h_vals[4], e_rot_vnmm[4]), xytext=(0.18, 0.038),
                     arrowprops=dict(arrowstyle="->", color=COLOR_TEAL, lw=1.3),
-                    fontsize=9.2, fontweight="bold", color="#094a3d",
-                    bbox=dict(boxstyle="round,pad=0.35", facecolor="#e8f8f4", edgecolor=COLOR_TEAL, alpha=0.95))
+                    fontsize=8.8, fontweight="bold", color="#094a3d",
+                    bbox=dict(boxstyle="round,pad=0.32", facecolor="#e8f8f4", edgecolor=COLOR_TEAL, alpha=0.95))
                     
     ax_rot.set_xlabel(r"Characteristic Average Mesh Size $h_{\mathrm{avg}}$ [m]")
-    ax_rot.set_ylabel(r"Curl Operator RMS Error $\|(\nabla \times \mathbf{E})_z - (\nabla \times \mathbf{E}^h)_z\|_{\mathrm{RMS}}$", labelpad=6)
-    ax_rot.set_title(r"(b) Curl Operator Convergence ($(\nabla \times \mathbf{E})_z$)")
+    ax_rot.set_ylabel(r"Curl Operator RMS Error" "\n" r"$\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|_{\mathrm{RMS}}$", labelpad=8)
+    ax_rot.set_title(r"(b) Curl Operator Convergence ($(\nabla \times \vec{E})_z$)")
     ax_rot.grid(True, which="both", linestyle="--", alpha=0.5)
-    ax_rot.legend(loc="upper left", framealpha=0.92)
-    
-    fig.tight_layout(pad=1.5)
+    ax_rot.legend(loc="upper left", framealpha=0.92, fontsize=9.2)
     
     caminho_pdf_rel = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_efem_vs_vnmm_L1.pdf")
     caminho_png_rel = os.path.join(DIRETORIO_RELATORIOS, "figura_convergencia_efem_vs_vnmm_L1.png")
@@ -374,15 +373,15 @@ def main():
         f.write(f"- Mesma grade fixa e invariante de amostragem interna ({len(pontos_amostragem)} pontos em $[0, \\pi] \\times [0, \\pi]$).\n")
         f.write("- Interpolação pontual baseada nos graus de liberdade locais de cada triângulo (ponto médio das arestas).\n\n")
         f.write("## Tabela Comparativa de Erros\n\n")
-        f.write("| Malha | $h_{\\mathrm{avg}}$ [m] | Erro RMS $\\mathbf{E}$ (VNMM $\\mathcal{L}^1$) | Erro RMS $\\mathbf{E}$ (EFEM Whitney) | Erro RMS Rot (VNMM $\\mathcal{L}^1$) | Erro RMS Rot (EFEM Whitney) | $\\|\\mathbf{E}^{\\mathrm{VNMM}} - \\mathbf{E}^{\\mathrm{EFEM}}\\|_{\\mathrm{RMS}}$ |\n")
+        f.write("| Malha | $h_{\\mathrm{avg}}$ [m] | Erro RMS $\\vec{E}$ (VNMM $\\mathcal{L}^1$) | Erro RMS $\\vec{E}$ (EFEM Whitney) | Erro RMS Rot (VNMM $\\mathcal{L}^1$) | Erro RMS Rot (EFEM Whitney) | $\\|\\vec{E}^{\\mathrm{VNMM}} - \\vec{E}^{\\mathrm{EFEM}}\\|_{\\mathrm{RMS}}$ |\n")
         f.write("| :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
         for i, n in enumerate(divisoes):
             f.write(f"| {n}x{n} | {h_vals[i]:.4f} | {e_E_vnmm[i]:.4e} | {e_E_efem[i]:.4e} | {e_rot_vnmm[i]:.4e} | {e_rot_efem[i]:.4e} | `{d_E_rms[i]:.2e}` |\n")
         f.write("\n## Taxas Assintóticas Obtidas $\\mathcal{O}(h^p)$\n\n")
-        f.write(f"- **Campo Elétrico $\\mathbf{{E}}$ (VNMM $\\mathcal{{L}}^1$):** $\\mathcal{{O}}(h^{{{p_E_vnmm:.2f}}})$\n")
-        f.write(f"- **Campo Elétrico $\\mathbf{{E}}$ (EFEM Whitney):** $\\mathcal{{O}}(h^{{{p_E_efem:.2f}}})$\n")
-        f.write(f"- **Rotacional $(\\nabla \\times \\mathbf{{E}})_z$ (VNMM $\\mathcal{{L}}^1$):** $\\mathcal{{O}}(h^{{{p_rot_vnmm:.2f}}})$\n")
-        f.write(f"- **Rotacional $(\\nabla \\times \\mathbf{{E}})_z$ (EFEM Whitney):** $\\mathcal{{O}}(h^{{{p_rot_efem:.2f}}})$\n")
+        f.write(f"- **Campo Elétrico $\\vec{{E}}$ (VNMM $\\mathcal{{L}}^1$):** $\\mathcal{{O}}(h^{{{p_E_vnmm:.2f}}})$\n")
+        f.write(f"- **Campo Elétrico $\\vec{{E}}$ (EFEM Whitney):** $\\mathcal{{O}}(h^{{{p_E_efem:.2f}}})$\n")
+        f.write(f"- **Rotacional $(\\nabla \\times \\vec{{E}})_z$ (VNMM $\\mathcal{{L}}^1$):** $\\mathcal{{O}}(h^{{{p_rot_vnmm:.2f}}})$\n")
+        f.write(f"- **Rotacional $(\\nabla \\times \\vec{{E}})_z$ (EFEM Whitney):** $\\mathcal{{O}}(h^{{{p_rot_efem:.2f}}})$\n")
     print(f"  Tabela: {caminho_tabela}")
 
 

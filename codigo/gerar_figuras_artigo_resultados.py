@@ -25,7 +25,7 @@ import matplotlib.transforms as mtransforms
 # -----------------------------------------------------------------------------
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
     "mathtext.fontset": "dejavusans",
     "axes.labelsize": 11.0,
     "axes.titlesize": 11.5,
@@ -99,7 +99,7 @@ def generate_figure_1():
     ax_E.loglog(h_ref, c_h1 * (h_ref**1), 'gray', linestyle='-.', alpha=0.45, label=r"Reference $\mathcal{O}(h^1)$ slope")
     
     ax_E.set_ylim(3.0e-4, 1.8)
-    ax_E.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{avg}}$ [m]")
+    ax_E.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{nom}}$ [m]")
     ax_E.set_ylabel(r"Electric Field RMS Error $\|\vec{E} - \vec{E}^h\|_{\mathrm{RMS}}$")
     ax_E.set_title(r"(a)", loc='center', fontweight='bold', fontsize=11.5)
     ax_E.grid(True, which="both", linestyle="--", alpha=0.5)
@@ -115,7 +115,7 @@ def generate_figure_1():
     ax_rot.loglog(h_ref, c_curl1 * (h_ref**1), 'k:', alpha=0.55, label=r"Reference $\mathcal{O}(h^1)$ slope")
     
     ax_rot.set_ylim(8.0e-4, 2.5)
-    ax_rot.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{avg}}$ [m]")
+    ax_rot.set_xlabel(r"Characteristic Nodal Spacing $h_{\mathrm{nom}}$ [m]")
     ax_rot.set_ylabel(r"Curl RMS Error $\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|_{\mathrm{RMS}}$")
     ax_rot.set_title(r"(b)", loc='center', fontweight='bold', fontsize=11.5)
     ax_rot.grid(True, which="both", linestyle="--", alpha=0.5)
@@ -350,7 +350,7 @@ def generate_figure_4():
     l1 = ax_tol.plot(tol_hat_sweep, rot_rms_sweep, 'd-', color=COLOR_CRIMSON, linewidth=2.0,
                      markerfacecolor=COLOR_CRIMSON, label="Curl RMS")
     l2 = ax_tol.plot(tol_hat_sweep, E_rms_sweep, 'o-', color=COLOR_NAVY, linewidth=2.0,
-                     markerfacecolor=COLOR_NAVY, label="Field RMS")
+                     markerfacecolor=COLOR_NAVY, label=r"Field $\vec{E}$ RMS")
     
     ax_tol.set_xlabel(r"Dimensionless Threshold $\widehat{\mathrm{Tol}}$")
     ax_tol.set_ylabel("RMS Interpolation Error", color="#2c3e50")

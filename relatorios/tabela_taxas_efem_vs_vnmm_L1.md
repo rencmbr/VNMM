@@ -7,7 +7,7 @@
 
 ## Tabela Comparativa de Erros
 
-| Malha | $h_{\mathrm{avg}}$ [m] | Erro RMS $\mathbf{E}$ (VNMM $\mathcal{L}^1$) | Erro RMS $\mathbf{E}$ (EFEM Whitney) | Erro RMS Rot (VNMM $\mathcal{L}^1$) | Erro RMS Rot (EFEM Whitney) | $\|\mathbf{E}^{\mathrm{VNMM}} - \mathbf{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}}$ |
+| Malha | $h_{\mathrm{avg}}$ [m] | Erro RMS $\vec{E}$ (VNMM $\mathcal{L}^1$) | Erro RMS $\vec{E}$ (EFEM Whitney) | Erro RMS Rot (VNMM $\mathcal{L}^1$) | Erro RMS Rot (EFEM Whitney) | $\|\vec{E}^{\mathrm{VNMM}} - \vec{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}}$ |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | 4x4 | 0.8953 | 1.6782e-01 | 1.6782e-01 | 2.5365e-01 | 2.5365e-01 | `1.49e-16` |
 | 6x6 | 0.5971 | 1.1432e-01 | 1.1432e-01 | 1.6883e-01 | 1.6883e-01 | `1.50e-16` |
@@ -19,7 +19,7 @@
 
 ## Taxas Assintóticas Obtidas $\mathcal{O}(h^p)$
 
-- **Campo Elétrico $\mathbf{E}$ (VNMM $\mathcal{L}^1$):** $\mathcal{O}(h^{1.00})$
-- **Campo Elétrico $\mathbf{E}$ (EFEM Whitney):** $\mathcal{O}(h^{1.00})$
-- **Rotacional $(\nabla \times \mathbf{E})_z$ (VNMM $\mathcal{L}^1$):** $\mathcal{O}(h^{0.96})$
-- **Rotacional $(\nabla \times \mathbf{E})_z$ (EFEM Whitney):** $\mathcal{O}(h^{0.96})$
+- **Campo Elétrico $\vec{E}$ (VNMM $\mathcal{L}^1$):** $\mathcal{O}(h^{1.00})$
+- **Campo Elétrico $\vec{E}$ (EFEM Whitney):** $\mathcal{O}(h^{1.00})$
+- **Rotacional $(\nabla \times \vec{E})_z$ (VNMM $\mathcal{L}^1$):** $\mathcal{O}(h^{0.96})$
+- **Rotacional $(\nabla \times \vec{E})_z$ (EFEM Whitney):** $\mathcal{O}(h^{0.96})$

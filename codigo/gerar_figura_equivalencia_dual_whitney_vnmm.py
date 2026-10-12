@@ -42,7 +42,7 @@ def criar_figura_equivalencia_dual():
     """
     plt.rcParams.update({
         'font.family': 'sans-serif',
-        'font.sans-serif': ['DejaVu Sans', 'Arial', 'Helvetica'],
+        'font.sans-serif': ['Arial', 'Helvetica', 'DejaVu Sans'],
         'mathtext.fontset': 'dejavusans',
         'axes.labelsize': 10.2,
         'axes.titlesize': 10.5,
@@ -332,7 +332,7 @@ def criar_figura_equivalencia_dual():
     divider = make_axes_locatable(ax_e)
     cax = divider.append_axes("right", size="5.5%", pad=0.08)
     cbar = fig.colorbar(cf_e, cax=cax)
-    cbar.set_label(r"Magnitude $\|\mathbf{E}\|$", fontsize=10.0)
+    cbar.set_label(r"Magnitude $\|\vec{E}\|$", fontsize=10.0)
     cbar.ax.tick_params(labelsize=9.0)
 
     # Output file paths

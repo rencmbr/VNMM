@@ -22,7 +22,7 @@ os.makedirs(DIRETORIO_ARTIGO, exist_ok=True)
 # Publication styling (IEEE / Elsevier standard)
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
+    "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
     "mathtext.fontset": "dejavusans",
     "axes.labelsize": 10.8,
     "axes.titlesize": 11.2,
