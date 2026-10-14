@@ -146,11 +146,11 @@ def generate_figure_2():
     kc_exact = np.sqrt(lambda_exact)
     
     # Computed eigenvalues without regularization (s_div = 0.0)
-    lambda_s0 = np.array([0.8659, 0.9921, 1.0608, 1.6836, 1.9761, 3.5889, 4.2328, 4.5317, 4.8789, 5.2358])
-    is_spurious_s0 = [False, False, True, True, False, False, False, True, False, False]
+    lambda_s0 = np.array([0.9127, 1.0368, 1.0795, 1.7091, 2.0485, 3.6800, 4.3059, 5.0050, 5.0925, 6.2524])
+    is_spurious_s0 = [False, False, True, True, False, True, False, False, False, True]
     
     # Computed eigenvalues with div-curl regularization (s_div = 6.0)
-    lambda_s6 = np.array([0.9679, 0.9836, 1.9409, 3.9275, 4.0724, 4.8925, 5.0287, 8.0743, 9.1089, 9.3409])
+    lambda_s6 = np.array([0.9788, 0.9940, 1.9706, 3.8566, 4.0798, 5.0120, 5.0666, 7.8063, 9.3389, 9.3929])
     
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6.5, 7.2))
     fig.subplots_adjust(left=0.12, right=0.96, bottom=0.08, top=0.96, hspace=0.34)
@@ -210,7 +210,7 @@ def generate_figure_2():
         ax2.text(idx + width/2, lambda_s6[i] + 0.15, f"{err_pct:.1f}%", ha="center", va="bottom",
                  fontsize=7.5, color="#0e6251", fontweight="bold")
         
-    ax2.annotate("Spurious-Free Bandwidth:\nAll gradient modes $\\lambda > 50$\nMean $k_c$ error = 1.00%",
+    ax2.annotate("Spurious-Free Bandwidth:\nAll gradient modes $\\lambda > 50$\nMean $k_c$ error = 1.09%",
                  xy=(4.1, 4.1), xytext=(1.5, 5.8),
                  arrowprops=dict(arrowstyle="->", color=COLOR_TEAL, lw=1.3),
                  fontsize=8.3, fontweight="bold", color="#0e6251",
@@ -243,7 +243,7 @@ def generate_figure_3():
     # 2. Pure VNMM 2D (P1): Edge-equivalent nodal density
     dofs_vnmm = np.array([169, 400, 729, 1156, 1681, 2209])
     h_vnmm = np.sqrt(np.pi**2 / dofs_vnmm)
-    err_vnmm = np.array([10.233, 3.667, 1.645, 0.839, 0.493, 0.259])
+    err_vnmm = np.array([9.484, 3.454, 1.534, 0.737, 0.463, 0.285])
     
     fig, (ax_dofs, ax_h) = plt.subplots(2, 1, figsize=(6.2, 6.6))
     fig.subplots_adjust(left=0.14, right=0.96, bottom=0.08, top=0.96, hspace=0.28)

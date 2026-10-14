@@ -48,8 +48,8 @@ dofs = np.array([169, 400, 729, 1156, 1681, 2209])
 h_dof = np.sqrt(np.pi**2 / dofs)
 
 # Mean relative error in k_c (%) across the 6 refinement levels
-err_reg = np.array([10.233, 3.667, 1.645, 0.839, 0.493, 0.259])
-err_aleat = np.array([24.577, 11.775, 5.858, 3.108, 1.967, 1.632])
+err_reg = np.array([9.484, 3.454, 1.534, 0.737, 0.463, 0.285])
+err_aleat = np.array([24.669, 11.489, 5.940, 3.102, 1.960, 1.635])
 
 # Fitted asymptotic convergence slopes over all 6 refinement levels
 p_reg = np.polyfit(np.log(h_dof), np.log(err_reg), 1)[0]

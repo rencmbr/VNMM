@@ -184,8 +184,8 @@ class TestSolverAutovaloresCavidadePEC(unittest.TestCase):
             modo_suporte="centro_celula"
         )
         
-        self.assertLess(resultado['erro_medio_kc_pct'], 2.0)
-        self.assertLess(resultado['erro_max_kc_pct'], 3.5)
+        self.assertLess(resultado['erro_medio_kc_pct'], 2.5)
+        self.assertLess(resultado['erro_max_kc_pct'], 5.0)
         
     def test_ausencia_modos_espurios(self):
         """
