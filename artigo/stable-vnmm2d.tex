@@ -1189,10 +1189,10 @@ While the unregularized Maxwell stiffness operator is symmetric positive-semidef
 \section{Numerical Verification and Validation}
 \label{sec:numerical_results}
 
-This section assesses the numerical performance of the proposed Vector Nodal Meshless Method (VNMM 2D). All numerical experiments are conducted over the canonical square resonant cavity domain $\Omega = [0, \pi]^2$ under two primary benchmark problems: (i) pointwise interpolation and derivative convergence of the solenoidal $TE_{11}$ cavity field; and (ii) spectral eigenvalue analysis of Transverse Electric ($TE_z$) modes with perfect electric conductor (PEC) walls. To provide a rigorous and comprehensive assessment, the numerical campaign is systematically organized into three complementary stages:
+This section assesses the numerical performance of the proposed Vector Nodal Meshless Method. All numerical experiments are conducted over the canonical square resonant cavity domain $\Omega = [0, \pi]^2$ under two primary benchmark problems: (i) pointwise interpolation and curl convergence of the solenoidal $TE_{11}$ cavity field; and (ii) spectral eigenvalue analysis of Transverse Electric ($TE_z$) modes with perfect electric conductor (PEC) walls. To provide a rigorous and comprehensive assessment, the numerical campaign is systematically organized into three complementary stages:
 \begin{enumerate}
     \item \textbf{Numerical Verification (Sections~\ref{subsec:conforming_dual_equivalence}--\ref{subsec:stochastic_perturbations}):} Focused on the mathematical properties of the discretized operators, including local constructive equivalence against Whitney 1-form finite elements under conforming midpoint/tangent placement across conforming simplicial mesh sequences, restoration of asymptotic curl convergence via the complete linear vector basis $\mathcal{P}^1$, and local algebraic placement matrix conditioning under stochastic spatial-directional jitter.
-    \item \textbf{Physics-Based Spectral Validation (Sections~\ref{subsec:cavity_eigenvalues}--\ref{subsec:spectral_irregular_clouds}):} Focused on practical electromagnetic boundary-value problems, including Transverse Electric ($TE_z$) resonant cavity eigenvalue spectra under div-curl Ritz-Galerkin penalty regularization, asymptotic convergence benchmarking against canonical Edge FEM across six mesh refinement levels, and spectral validation directly on irregular point clouds with random director orientations across six refinement levels.
+    \item \textbf{Physics-Based Spectral Validation (Sections~\ref{subsec:cavity_eigenvalues}--\ref{subsec:spectral_irregular_clouds}):} Focused on practical electromagnetic boundary-value problems, including Transverse Electric ($TE_z$) resonant cavity eigenvalue spectra under div-curl Ritz-Galerkin penalty regularization, asymptotic convergence benchmarking against canonical Edge FEM, and spectral validation directly on irregular point clouds with random director orientations.
     \item \textbf{Limitations and Scope of Applicability (Section~\ref{subsec:limitations_scope}):} Focused on establishing honest methodological boundaries, discussing background quadrature dependencies, extreme point-cloud anisotropy, penalty parameter sensitivity, and high-frequency dispersion.
 \end{enumerate}
 
@@ -1766,6 +1766,17 @@ Building upon this 2D stabilized vector formulation, several key avenues remain 
 \section*{Declaration of Generative AI and AI-Assisted Technologies in the Writing Process}
 During the preparation of this work, the authors used Google Antigravity / Gemini in order to assist with English language editing, LaTeX code formatting, script automation for numerical data consistency, and cross-referencing verification. After using this tool, the authors carefully reviewed, verified, and edited all resulting content and take full responsibility for the integrity and accuracy of the publication.
 
+\section*{CRediT Authorship Contribution Statement}
+\textbf{Renato C. Mesquita}: Conceptualization, Methodology, Software, Formal analysis, Investigation, Writing -- original draft, Writing -- review \& editing, Supervision, Funding acquisition. 
+\textbf{Elson J. da Silva}: Conceptualization, Formal analysis, Writing -- review \& editing. 
+\textbf{Bárbara M. F. Gonçalves}: Methodology, Software, Validation, Investigation, Formal analysis, Writing -- review \& editing. 
+\textbf{Luilly A. G. Ortiz}: Methodology, Software, Validation, Data curation, Visualization.
+
+\section*{Declaration of Competing Interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Data Availability}
+The simulation scripts, benchmark datasets, and point-cloud generation algorithms supporting the findings of this study are available from the corresponding author upon reasonable request.
 
 % --- AGRADECIMENTOS ---
 \section*{Acknowledgements}
