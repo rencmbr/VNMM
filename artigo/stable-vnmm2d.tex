@@ -55,6 +55,11 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem{remark}{Remark}
 \usepackage{graphicx}                 % Para inclusão de figuras
+% Parâmetros para harmonizar posicionamento de figuras e evitar páginas exclusivas de flutuantes
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.80}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.75}
 \usepackage{tabularx}
 \usepackage{booktabs}                 % Para tabelas elegantes no padrão IEEE/Elsevier
 \usepackage{bm}                       % Para notação de vetores em negrito
@@ -235,7 +240,7 @@ Table~\ref{tab:meshless_comparison} summarizes the structural distinctions acros
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\caption{Conceptual comparison of spatial discretization paradigms in computational electromagnetics.}
+\caption{Conceptual comparison of some spatial discretization paradigms in computational electromagnetics.}
 \label{tab:meshless_comparison}
 \begin{tabularx}{\linewidth}{@{}
 >{\raggedright\arraybackslash}p{0.18\linewidth}
@@ -484,13 +489,12 @@ The VNMM 2D was originally conceptualized as the zero-edge-length asymptotic lim
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figura_equivalencia_dual_whitney_vnmm.pdf}
-\caption{Local constructive equivalence under conforming midpoint/tangent placement between lowest-order Whitney edge elements (FEM 1-forms) and the VNMM 2D $\mathcal{L}^1$ vector formulation: 
-(a) Primal triangular cell $\Omega_e$ with vertices $V_1, V_2, V_3$ and oriented edges $e_1, e_2, e_3$; 
-(b) VNMM 2D support stencil with vector nodes $(P_k, \vec{t}_k)$ placed at the edge midpoints and compact support $\Omega_x$; 
-(c) Conceptual dual collapse limit as edge length contracts ($L_k \to 0$), identifying the discrete circulation integral $L_k^{-1} \int_{e_k} \vec{E}\cdot\vec{t}_k\,ds$ directly with the tangential projection at a point, $e_k = \vec{E}(P_k)\cdot\vec{t}_k$; 
-(d) Vector field and magnitude contour of the Whitney 1-form $\vec{w}_1(\mathbf{x}) = \lambda_1 \nabla\lambda_2 - \lambda_2 \nabla\lambda_1$ associated with active edge $e_1$; 
-(e) Vector field and magnitude contour of the normalized VNMM $\mathcal{L}^1$ vector basis function $\frac{1}{L_1}\vec{N}_1(\mathbf{x})$ associated with active node $(P_1, \vec{t}_1)$. 
-Both fields are algebraically identical over $\Omega_e$.}
+\caption{Local equivalence between Whitney edge elements and the VNMM $\mathcal{L}^1$ basis. 
+(a) Triangular cell $\Omega_e$ with vertices $V_i$ and oriented edges $e_k$; 
+(b) VNMM support stencil with vector nodes $(P_k, \vec{t}_k)$ placed at edge midpoints; 
+(c) Asymptotic collapse ($L_k \to 0$) mapping edge circulations to directional projections $e_k$; 
+(d) Whitney 1-form $\vec{w}_1$ for edge $e_1$; 
+(e) Normalized VNMM basis $\vec{N}_1/L_1$ for node $(P_1, \vec{t}_1)$, displaying identical vector fields over $\Omega_e$.}
 \label{fig:whitney_vnmm_dual_equivalence}
 \end{figure*}
 
@@ -760,13 +764,13 @@ For this matrix, algebraic singularity ($\det(\mathbf{A}) = 0$) occurs when the 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figura_singularidades_matriz_A.pdf}
-\caption{Geometric and directional singularity configurations of the VNMM 2D local placement matrix $\mathbf{A} \in \mathbb{R}^{3 \times 3}$ for the $\mathcal{L}^1$ solenoidal vector basis:
-(a) \textbf{Global vector parallelism} ($\vec{t}_1 \parallel \vec{t}_2 \parallel \vec{t}_3$): yields $t_{kx} = c\,t_{ky}$ for all $k$, causing linear dependency between the first two columns ($\operatorname{Col}_1(\mathbf{A}) = c\,\operatorname{Col}_2(\mathbf{A})$);
-(b) \textbf{Concurrent lines of action}: when the lines of action of all three directors intersect at a common focal point $P_c(x_c, y_c)$, the relation $t_{kx}(y_k - y_c) - t_{ky}(x_k - x_c) = 0$ renders the rotational column a linear combination of the translation columns, yielding $\operatorname{Col}_3(\mathbf{A}) = y_c\operatorname{Col}_1(\mathbf{A}) - x_c\operatorname{Col}_2(\mathbf{A})$, causing $\det(\mathbf{A}) = 0$;
-(c) \textbf{Shared line of action}: nodes $P_1, P_2$ lying on a common line $\mathcal{L}$ with $\vec{t}_1 = \vec{t}_2 \parallel (P_2 - P_1)$ share identical directional moments, $y_2 t_{2x} - x_2 t_{2y} = y_1 t_{1x} - x_1 t_{1y}$, producing duplicate rows $\operatorname{Row}_2(\mathbf{A}) = \operatorname{Row}_1(\mathbf{A})$;
-(d) \textbf{Nodal coincidence / spatial collapse}: as $\|P_1 - P_2\| \to 0$, if $\vec{t}_1 = \vec{t}_2$ identical rows are formed; if $\vec{t}_1 \neq \vec{t}_2$, two distinct vector degrees of freedom are colocated at a single spatial point, degenerating the 2D spatial sampling base into a 1D line;
-(e) \textbf{Decoupling of spatial geometry and vector alignment}: illustrates why geometric proximity algorithms alone fail---(top) spatially non-collinear nodes ($\operatorname{Area}(T) > 0$) with parallel directors yield $\det(\mathbf{A}) = 0$; (bottom) collinear nodes ($\operatorname{Area}(T) = 0$) with non-parallel directors can yield $\det(\mathbf{A}) \neq 0$ (algebraically invertible), yet fail to span 2D transverse derivatives;
-(f) \textbf{Admissible and stable support}: dual qualification requiring non-collinear spatial distribution ($\operatorname{Area}(T) > 0$) and non-vanishing circulation around evaluation point $P$, promoting bounded condition numbers for accurate field and curl reconstruction.}
+\caption{Singularity configurations and support qualification for the VNMM $\mathcal{L}^1$ placement matrix $\mathbf{A}$. 
+(a) Global vector parallelism ($\vec{t}_1 \parallel \vec{t}_2 \parallel \vec{t}_3$); 
+(b) Concurrent lines of action intersecting at focal point $P_c$; 
+(c) Collinear nodes sharing a common line of action; 
+(d) Nodal coincidence ($\|P_1 - P_2\| \to 0$); 
+(e) Decoupling of nodal geometry and director alignment: spatially non-collinear nodes with parallel directors yield $\det(\mathbf{A}) = 0$ (top), whereas collinear nodes with non-parallel directors fail to span 2D derivatives (bottom); 
+(f) Admissible support: non-collinear distribution ($\operatorname{Area}(T) > 0$) with non-vanishing circulation around evaluation point $P$.}
 \label{fig:vnmm_singularities_matrix_A}
 \end{figure*}
 
@@ -1220,8 +1224,8 @@ The geometric arrangement follows the dual configuration established in Section~
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.65\linewidth]{figura_malha_conforme_vnmm_L1.pdf}
-    \caption{Conforming dual topology representation over the square domain $\Omega = [0, \pi] \times [0, \pi]$, displaying the underlying triangular finite element mesh alongside the dual VNMM $\mathcal{L}^1$ vector nodal cloud. Vector nodes are co-located at edge midpoints $M_k$ with unit directional vectors $\vec{t}_k$ aligned along the triangle edges. This exact midpoint co-location guarantees that support triads $\{P_1, P_2, P_3\}$ form local triangles matching the EFEM cells, establishing pointwise local dual equivalence.}
+    \includegraphics[width=0.52\linewidth]{figura_malha_conforme_vnmm_L1.pdf}
+    \caption{Conforming dual topology for Whitney EFEM and VNMM $\mathcal{L}^1$ over $\Omega = [0, \pi]^2$. Underlying triangular mesh overlaid with dual vector nodes placed at edge midpoints $M_k$ with tangent directors $\vec{t}_k$.}
     \label{fig:malha_conforme_vnmm_L1}
 \end{figure}
 
@@ -1239,8 +1243,10 @@ Similarly, Fig.~\ref{fig:convergencia_efem_vs_vnmm_L1}b illustrates the curl ope
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.82\linewidth]{figura_convergencia_efem_vs_vnmm_L1.pdf}
-    \caption{Asymptotic convergence rates comparing the Edge Finite Element Method (EFEM, Whitney 1-forms) and the Vector Nodal Meshless Method (VNMM $\mathcal{L}^1$, 3 support nodes) evaluated over the exact same conforming triangular mesh sequence: (a) electric field RMS error $\|\vec{E} - \vec{E}^h\|_{\mathrm{RMS}}$ exhibiting strictly identical $\mathcal{O}(h^{1.00})$ convergence with machine-precision difference $\|\vec{E}^{\mathrm{VNMM}} - \vec{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \le 1.6 \times 10^{-16}$; (b) curl operator RMS error $\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|_{\mathrm{RMS}}$ displaying identical $\mathcal{O}(h^{0.96})$ convergence with mutual difference $\|(\nabla \times \vec{E})^{\mathrm{VNMM}} - (\nabla \times \vec{E})^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \le 2.5 \times 10^{-15}$, confirming the local constructive equivalence between Whitney edge elements and VNMM $\mathcal{L}^1$ under conforming midpoint/tangent placement.}
+    \includegraphics[width=0.62\linewidth]{figura_convergencia_efem_vs_vnmm_L1.pdf}
+    \caption{Convergence comparison between Whitney EFEM and VNMM $\mathcal{L}^1$ on conforming triangular meshes. 
+    (a) Electric field RMS error $\|\vec{E} - \vec{E}^h\|_{\mathrm{RMS}}$ showing identical $\mathcal{O}(h^{1.00})$ convergence; 
+    (b) Curl operator RMS error displaying identical $\mathcal{O}(h^{0.96})$ convergence down to machine precision, confirming numerical identity.}
     \label{fig:convergencia_efem_vs_vnmm_L1}
 \end{figure}
 
@@ -1262,8 +1268,10 @@ When evaluated on unconstrained meshless clouds, the 3-node solenoidal basis $\m
 However, as revealed in Fig.~\ref{fig:convergencia_interpolacao_L1_vs_P1}b, the RMS error of the curl operator $\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|_{\mathrm{RMS}}$ \textbf{stagnates at an $\mathcal{O}(1)$ error plateau} ($\approx 0.85$, varying between $8.33 \times 10^{-1}$ and $8.88 \times 10^{-1}$, asymptotic rate $\mathcal{O}(h^{-0.01}) \approx \mathcal{O}(1)$), failing to converge under spatial refinement ($N_{\mathrm{total}} = 4{,}192$). This persistent noise floor confirms the modal aliasing mechanism derived in Section~\ref{subsec:L1_aliasing_analysis}, wherein unrepresented normal field derivatives leak into the rotational coefficient via the inverted placement matrix $\mathbf{A}^{-1}$.
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.82\linewidth]{figura_convergencia_interpolacao_L1_vs_P1.pdf}
-    \caption{Log-log convergence comparison between the incomplete Whitney-like basis $\mathcal{L}^1$ (3 support nodes) and the complete linear basis $\mathcal{P}^1$ (6 support nodes) over $\Omega = [0, \pi] \times [0, \pi]$ evaluated across a fixed Cartesian grid of $1{,}600$ internal points for the analytical $TE_{11}$ cavity mode: (a) electric field RMS error displaying an observed convergence rate of $\mathcal{O}(h^{0.97})$ for $\mathcal{L}^1$ versus an observed rate of $\mathcal{O}(h^{2.17})$ for $\mathcal{P}^1$, delivering a $19.8\times$ error reduction on the finest grid ($h_{\mathrm{nom}} = 0.0654$~m); (b) curl operator RMS error demonstrating $\mathcal{O}(1)$ error stagnation for $\mathcal{L}^1$ (plateau at $\approx 0.85$ due to unrepresented normal/longitudinal derivatives ($\partial E_x/\partial x, \partial E_y/\partial y$)), in contrast to asymptotic $\mathcal{O}(h^{0.97})$ convergence for $\mathcal{P}^1$, yielding a $25.9\times$ error reduction.}
+    \includegraphics[width=0.62\linewidth]{figura_convergencia_interpolacao_L1_vs_P1.pdf}
+    \caption{Convergence of $\mathcal{L}^1$ and $\mathcal{P}^1$ bases on unconstrained point clouds for the $TE_{11}$ mode. 
+    (a) Electric field RMS error showing $\mathcal{O}(h^{0.97})$ ($\mathcal{L}^1$) versus $\mathcal{O}(h^{2.17})$ ($\mathcal{P}^1$); 
+    (b) Curl operator RMS error highlighting $\mathcal{O}(1)$ stagnation for $\mathcal{L}^1$ and restored $\mathcal{O}(h^{0.97})$ convergence for $\mathcal{P}^1$.}
     \label{fig:convergencia_interpolacao_L1_vs_P1}
 \end{figure}
 
@@ -1280,7 +1288,7 @@ Consequently, while $\mathcal{L}^1$ is suitable for conforming triangular meshes
 
 \begin{table}[!htbp]
 \centering
-\caption{Comparative vector interpolation error metrics and asymptotic convergence between the incomplete basis $\mathcal{L}^1$ (3 support nodes) and complete basis $\mathcal{P}^1$ (6 support nodes) across stochastically perturbed point clouds ($25\%$ spatial jitter and random director orientations $\theta_k \in [0, 2\pi)$) over $\Omega = [0, \pi] \times [0, \pi]$, evaluated across a fixed grid of $1{,}600$ internal points for the analytical $TE_{11}$ cavity mode.}
+\caption{Comparative interpolation and curl error metrics between $\mathcal{L}^1$ and $\mathcal{P}^1$ bases on perturbed point clouds for the $TE_{11}$ mode across six refinement levels.}
 \label{tab:interpolacao_L1_vs_P1}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{} c c c c c c c c c @{}}
@@ -1318,8 +1326,10 @@ Although extensive Monte Carlo characterization across multi-seed ensembles rema
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.82\linewidth]{figura_robustez_perturbacao_estocastica.pdf}
-\caption{Numerical robustness and conditioning analysis in the tested stochastic realization for the 2D VNMM complete basis $\mathcal{P}^1$ under spatial-directional perturbations (uniform nodal jitter of $25\%$ and random director angles $\theta_k \in [0, 2\pi)$) over $\Omega = [0, \pi]^2$: (a) Convergence of electric field and curl operator RMS errors under stochastic mesh refinement comparing an overly permissive threshold ($\widehat{\mathrm{Tol}} = 0.05$), highlighting curl degradation due to ill-conditioned sextets ($\kappa_2(\widehat{\mathbf{A}}) > 13$, unscaled $\kappa_2(\mathbf{A}) > 180$), against restored strict monotonic convergence when applying the scale-invariant threshold $\widehat{\mathrm{Tol}} = 0.80$; (b) Interpolation error and candidate search neighborhood $K_{\mathrm{avg}}$ as a function of the dimensionless threshold $\widehat{\mathrm{Tol}}$ for the fine point cloud ($N_{\mathrm{total}} = 4{,}192$), identifying the stable operating regime for $\widehat{\mathrm{Tol}} \in [0.80, 1.50]$.}
+\includegraphics[width=0.62\linewidth]{figura_robustez_perturbacao_estocastica.pdf}
+\caption{Conditioning and robustness of the VNMM $\mathcal{P}^1$ basis under spatial-directional perturbations. 
+(a) Electric field and curl RMS errors versus nominal spacing $h_{\mathrm{nom}}$, comparing a permissive threshold ($\widehat{\mathrm{Tol}} = 0.05$) against the calibrated threshold ($\widehat{\mathrm{Tol}} = 0.80$); 
+(b) Error metrics and average support size $K_{\mathrm{avg}}$ versus $\widehat{\mathrm{Tol}}$ on the fine cloud ($N_{\mathrm{total}} = 4{,}192$), identifying the stable window $\widehat{\mathrm{Tol}} \in [0.80, 1.50]$.}
 \label{fig:robustez_perturbacao_estocastica}
 \end{figure}
 
@@ -1351,7 +1361,7 @@ To identify the best-performing compromise between conditioning, curl error, and
 
 \begin{table}[!htbp]
 \centering
-\caption{Parametric error sensitivity, support neighborhood size $K_{\mathrm{avg}}$, and placement matrix conditioning as a function of the scale-invariant dimensionless threshold $\widehat{\mathrm{Tol}}$ for the stochastically perturbed fine point cloud ($N_{\mathrm{total}} = 4{,}192, h_{\mathrm{nom}} = 0.0654$~m) over $\Omega = [0, \pi]^2$ (with $100\%$ support qualification success across all $1{,}600$ evaluation points).}
+\caption{Sensitivity of error metrics, support neighborhood $K_{\mathrm{avg}}$, and conditioning to the dimensionless threshold $\widehat{\mathrm{Tol}}$ on the fine point cloud ($N_{\mathrm{total}} = 4{,}192$).}
 \label{tab:stochastic_sensitivity_ultradense}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{} c c c c c @{}}
@@ -1424,8 +1434,10 @@ The empirical impact of this nullspace leakage is clearly observed in Fig.~\ref{
 
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.82\linewidth]{figura_espectro_cavidade_com_sem_regularizacao.pdf}
-    \caption{Discrete eigenvalue spectrum $\lambda = k_c^2$ for the $TE_z$ square PEC cavity: (a) Unregularized curl-curl formulation ($s_{\mathrm{div}} = 0.0$), illustrating the severe spectral contamination caused by discrete gradient nullspace leakage ($\nabla \times (\nabla \phi) \neq \mathbf{0}$), where non-zero spurious modes infiltrate the physical sequence; (b) Div-curl regularized formulation ($s_{\mathrm{div}} = 6.0$), demonstrating effective spectral purification across the useful physical bandwidth with no spurious modes observed among the tested resonances.}
+    \includegraphics[width=0.62\linewidth]{figura_espectro_cavidade_com_sem_regularizacao.pdf}
+    \caption{Discrete eigenvalue spectrum $\lambda = k_c^2$ for the $TE_z$ square PEC cavity. 
+    (a) Unregularized curl-curl formulation ($s_{\mathrm{div}} = 0.0$), showing spectral contamination from spurious gradient modes; 
+    (b) Div-curl regularized formulation ($s_{\mathrm{div}} = 6.0$), displaying a purified spectrum matching analytical modes.}
     \label{fig:espectro_cavidade_regularizacao}
 \end{figure}
 
@@ -1443,7 +1455,7 @@ The numerical performance of the regularized VNMM 2D ($\mathcal{P}^1$, $s_{\math
 
 \begin{table}[!htbp]
 \centering
-\caption{Comparison of the first 10 physical $TE_{nm}$ resonant modes in the square PEC cavity $\Omega = [0, \pi]^2$ between analytical reference values and the proposed regularized VNMM 2D formulation ($\mathcal{P}^1$, $s_{\mathrm{div}} = 6.0$, $\widehat{\mathrm{Tol}} = 0.80$, $361$ active DoFs, staggered boundary without corner nodes).}
+\caption{Comparison of the first 10 physical $TE_{nm}$ resonant modes in the square PEC cavity against analytical references ($361$ active DoFs).}
 \label{tab:cavity_eigenvalues_base_case}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{} c c c c c c c @{}}
@@ -1476,7 +1488,7 @@ To address the dependency on background integration scaffolding and assess the s
 
 \begin{table}[!htbp]
 \centering
-\caption{Sensitivity of resonant cavity spectral accuracy, discrete operator convergence, and assembly cost to background cell discretization and Gauss quadrature order ($N_x \times N_y = 21 \times 21$, $361$ active DoFs, $s_{\mathrm{div}} = 6.0$, $\widehat{\mathrm{Tol}} = 0.80$, staggered boundary without corners, reference grid: $40 \times 40$ cells, $4 \times 4$ Gauss).}
+\caption{Sensitivity of cavity spectral accuracy, discrete matrix operators, and assembly time to background cell density and Gauss quadrature order ($361$ active DoFs).}
 \label{tab:quadrature_sensitivity}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{} c c c c c c c c @{}}
@@ -1551,8 +1563,10 @@ Furthermore, to eliminate geometric grid-topology bias across both methods, conv
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.82\linewidth]{figura_convergencia_vnmm_vs_fem.pdf}
-\caption{Comparative convergence study across 6 refinement levels ($N \in \{9, 13, 17, 21, 25, 29\}$): (a) Mean relative spectral error in cutoff wavenumber $k_c$ (\%) as a function of total active degrees of freedom $N_{\mathrm{DoF}}$; (b) Convergence rate as a function of characteristic DoF spacing $h_{\mathrm{DoF}} = \sqrt{|\Omega|/N_{\mathrm{DoF}}}$. Pure Edge FEM exhibits an observed slope of $\mathcal{O}(h_{\mathrm{DoF}}^{1.93})$, while Pure VNMM exhibits an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$ over the tested refinement interval, demonstrating rapid error reduction without mesh connectivity.}
+\includegraphics[width=0.62\linewidth]{figura_convergencia_vnmm_vs_fem.pdf}
+\caption{Spectral convergence comparison between Edge FEM and VNMM $\mathcal{P}^1$ for cavity $TE_z$ modes. 
+(a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm{DoF}}$; 
+(b) Convergence versus characteristic spacing $h_{\mathrm{DoF}}$, showing fitted rates of $\mathcal{O}(h_{\mathrm{DoF}}^{1.93})$ (Edge FEM) and $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$ (VNMM).}
 \label{fig:convergence_vnmm_fem}
 \end{figure}
 
@@ -1561,7 +1575,7 @@ Table~\ref{tab:convergence_6_meshes} and Fig.~\ref{fig:convergence_vnmm_fem} rep
 
 \begin{table}[!htbp]
 \centering
-\caption{Comparative convergence of resonant wavenumber $k_c$ for $TE_z$ modes in a 2D PEC cavity over 6 mesh refinement levels between Edge FEM (Whitney 1st-kind) and Pure VNMM 2D ($\mathcal{P}^1$ complete basis, $3 \times 3$ Gauss quadrature, background cells $N_{cx} = N_{cy} = N_v - 1$, $s_{\mathrm{div}} = 6.0$, $\widehat{\mathrm{Tol}} = 0.80$, staggered boundary without corner nodes).}
+\caption{Comparative convergence of resonant wavenumber $k_c$ for cavity $TE_z$ modes between Edge FEM and VNMM $\mathcal{P}^1$ across six refinement levels.}
 \label{tab:convergence_6_meshes}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{} c *{3}{c} *{3}{c} @{}}
@@ -1614,7 +1628,7 @@ Table~\ref{tab:convergencia_cavidade_aleatoria} compiles the comparative converg
 
 \begin{table}[!htbp]
 \centering
-\caption{Comparative spectral convergence of resonant wavenumber $k_c$ for $TE_z$ modes in a 2D PEC cavity over 6 refinement levels between Pure VNMM 2D on structured Cartesian grids (alternating directors, staggered boundary without corner nodes) and on irregular point clouds ($25\%$ spatial jitter, random director orientations $\theta_k \in [0, 2\pi)$, staggered boundary without corner nodes) under identical numerical conditions ($3 \times 3$ Gauss quadrature, background cells $N_{cx} = N_{cy} = N_v - 1$, $s_{\mathrm{div}} = 6.0$, $\widehat{\mathrm{Tol}} = 0.80$).}
+\caption{Comparative spectral convergence of resonant wavenumber $k_c$ for cavity $TE_z$ modes on regular versus irregular point clouds across six refinement levels.}
 \label{tab:convergencia_cavidade_aleatoria}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{} c *{3}{c} *{3}{c} @{}}
@@ -1636,8 +1650,10 @@ $N$ & $N_{\mathrm{DoF}}$ & $h_{\mathrm{DoF}}$ [m] & Error (\%) & $N_{\mathrm{DoF
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.82\linewidth]{figura_convergencia_cavidade_aleatoria.pdf}
-\caption{Comparative spectral convergence study across 6 refinement levels ($N \in \{9, 13, 17, 21, 25, 29\}$) under spatial and directional disorder: (a) Mean relative spectral error in cutoff wavenumber $k_c$ (\%) as a function of total active degrees of freedom $N_{\mathrm{DoF}}$; (b) Convergence rate as a function of characteristic DoF spacing $h_{\mathrm{DoF}} = \sqrt{|\Omega|/N_{\mathrm{DoF}}}$. The regular grid exhibits an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$, while the irregular cloud ($25\%$ spatial jitter and random director orientations $\theta_k \in [0, 2\pi)$) exhibits an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.20})$ across the evaluated single-realization sequence, which is empirically compatible with the expected behavior of a complete linear polynomial approximation.}
+\includegraphics[width=0.62\linewidth]{figura_convergencia_cavidade_aleatoria.pdf}
+\caption{Spectral convergence of VNMM $\mathcal{P}^1$ on regular versus irregular point clouds. 
+(a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm{DoF}}$; 
+(b) Convergence versus characteristic spacing $h_{\mathrm{DoF}}$, showing fitted slopes of $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$ (regular grid) and $\mathcal{O}(h_{\mathrm{DoF}}^{2.20})$ (irregular cloud).}
 \label{fig:convergencia_cavidade_aleatoria}
 \end{figure}
 
@@ -1654,7 +1670,7 @@ Several critical findings emerge from the irregular point cloud eigenvalue bench
 
 \begin{table}[!htbp]
 \centering
-\caption{Discrete eigenvalue spectrum for the first 10 physical $TE_{nm}$ cavity modes computed on an irregular point cloud with $25\%$ spatial jitter, random director orientations, and staggered boundary without corner nodes on the finest tested resolution ($N = 29$, $N_v = 49$, $N_{\mathrm{total}} = 2401$, $2209$ active DoFs, $s_{\mathrm{div}} = 6.0$).}
+\caption{First 10 physical $TE_{nm}$ resonant cavity modes computed on the fine irregular point cloud against analytical references ($2{,}209$ active DoFs).}
 \label{tab:espectro_cavidade_aleatoria_fina}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{} c c c c c c c @{}}
