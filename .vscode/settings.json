@@ -23,5 +23,6 @@
   "latex-workshop.view.pdf.viewer": "tab",
   "latex-workshop.view.pdf.tab.editorGroup": "right",
   "latex-workshop.showContextMenu": true,
-  "latex-workshop.synctex.afterBuild.enabled": true
+  "latex-workshop.synctex.afterBuild.enabled": true,
+  "latex-workshop.formatting.latex": "latexindent"
 }

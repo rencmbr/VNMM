@@ -1,9 +1,10 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[10.5pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
-\usepackage[margin=1in]{geometry}
+\usepackage[top=1.5cm,bottom=1.5cm,left=1.8cm,right=1.8cm]{geometry}
 \usepackage{hyperref}
 \usepackage{charter}
 \usepackage{microtype}
+\usepackage{enumitem}
 
 \hypersetup{
     colorlinks=true,
@@ -13,34 +14,30 @@
 }
 
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{1em}
+\setlength{\parskip}{0.25em}
 
 \begin{document}
 
 \textbf{Prof. Alexander H.-D. Cheng} \\
-Editor-in-Chief \\
-\textit{Engineering Analysis with Boundary Elements} (Elsevier)
+Editor-in-Chief, \textit{Engineering Analysis with Boundary Elements} (Elsevier)
 
-\vspace{0.5em}
-\textbf{Date:} October 15, 2026 \\
-\textbf{Subject:} Submission of Original Research Article
+\textbf{Date:} October 18, 2026 \hfill \textbf{Subject:} Submission of Original Research Article
 
-\vspace{1em}
 Dear Prof. Cheng and Editorial Board,
 
 We are pleased to submit our original research manuscript entitled:
-
 \begin{center}
+\vspace{-0.2em}
 \textbf{``A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds''}
+\vspace{-0.2em}
 \end{center}
-
 by Renato C. Mesquita, Elson J. da Silva, Bárbara M. F. Gonçalves, and Luilly A. G. Ortiz, for consideration for publication as a regular research article in \textit{Engineering Analysis with Boundary Elements}.
 
 \textbf{Context and Relevance to EABE:} \\
-\textit{Engineering Analysis with Boundary Elements} is widely recognized as the premier international forum for cutting-edge developments in boundary integral techniques, mesh reduction methods, and advanced meshless formulations. In computational electromagnetics, node-based vector meshless methods offer unique potential for modeling complex, moving, or multi-scale geometries without the remeshing and mesh-distortion bottlenecks inherent to edge finite elements. However, vector nodal meshless methods (VNMM) have historically suffered from a fundamental roadblock: an $\mathcal{O}(1)$ error plateau in numerical curl evaluation that arises when working with arbitrary point clouds and vector director orientations.
+\textit{Engineering Analysis with Boundary Elements} is the premier international forum for advances in boundary integral techniques, mesh reduction methods, and meshless formulations. In computational electromagnetics, node-based vector meshless methods offer unique potential for modeling complex, moving, or multi-scale geometries without the remeshing and distortion bottlenecks of edge finite elements. However, vector nodal meshless methods (VNMM) have historically suffered from a fundamental roadblock: an $\mathcal{O}(1)$ error plateau in numerical curl evaluation on arbitrary point clouds and director orientations.
 
 \textbf{Main Novel Contributions of this Work:}
-\begin{enumerate}
+\begin{enumerate}[noitemsep,topsep=1pt,parsep=1pt]
     \item \textbf{Resolution of Derivative Modal Aliasing:} We demonstrate theoretically and numerically that the conventional Whitney-like incomplete solenoidal basis $\mathcal{L}^1$ stagnates at an $\mathcal{O}(1)$ curl error on arbitrary point clouds due to derivative modal aliasing (unrepresented normal derivatives leaking into rotational coefficients). Replacing $\mathcal{L}^1$ with the complete linear vector space $\mathcal{P}^1 = \mathcal{P}_1 \times \mathcal{P}_1$ restores all four components of the local Jacobian, eliminating stagnation and delivering consistent first-order ($\mathcal{O}(h)$) curl convergence.
     \item \textbf{Scale-Invariant Support Selection ($\widehat{\mathbf{A}}$ + $k$-d tree):} We introduce a support qualification criterion based on a dimensionless local placement matrix $\widehat{\mathbf{A}}$. Normalizing by the local length scale eliminates the quartic $\mathcal{O}(h^4)$ determinant decay, preventing unphysical support dilation as $h \to 0$, unifying regular and irregular clouds under a transferable threshold ($\widehat{\mathrm{Tol}} = 0.80$), and bounding stencil conditioning under severe ($25\%$) spatial-directional disorder.
     \item \textbf{Mathematical Demonstration of Global Non-Conformity:} We prove that while VNMM exhibits an exact constructive equivalence to lowest-order Whitney 1-forms on conforming simplices, dynamically changing support stencils on point clouds produce a globally non-conforming approximation ($V_h \not\subset H(\mathbf{curl})$). The discrete approximation therefore does not inherit the exactness of the discrete de Rham complex, causing irrotational gradient nullspace modes to leak into the physical spectrum.
@@ -48,22 +45,19 @@ by Renato C. Mesquita, Elson J. da Silva, Bárbara M. F. Gonçalves, and Luilly 
 \end{enumerate}
 
 \textbf{Mandatory Author Declarations:}
-\begin{itemize}
-    \item This manuscript represents original research and has not been published previously.
-    \item The manuscript is not under consideration for publication elsewhere.
+\begin{itemize}[noitemsep,topsep=1pt,parsep=0.5pt]
+    \item This manuscript represents original research and has not been published previously, nor is it under consideration elsewhere.
     \item The submission has been approved by all co-authors and by the responsible authorities at the institutes where the work was carried out.
     \item The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 \end{itemize}
 
-Thank you very much for your time and consideration of our work. We look forward to hearing from you.
+Thank you very much for your time and consideration of our work.
 
-\vspace{1.5em}
+\vspace{0.3em}
 Sincerely yours,
 
 \textbf{Prof. Renato C. Mesquita} (Corresponding Author) \\
-Department of Electrical Engineering \\
-Universidade Federal de Minas Gerais (UFMG) \\
-Av. Antônio Carlos, 6627, Belo Horizonte, MG 31270-901, Brazil \\
-E-mail: \href{mailto:renato@ufmg.br}{renato@ufmg.br}
+Department of Electrical Engineering, Universidade Federal de Minas Gerais (UFMG) \\
+Av. Antônio Carlos, 6627, Belo Horizonte, MG 31270-901, Brazil \quad | \quad E-mail: \href{mailto:renato@ufmg.br}{renato@ufmg.br}
 
 \end{document}

@@ -210,7 +210,9 @@ def generate_figure_2():
         ax2.text(idx + width/2, lambda_s6[i] + 0.15, f"{err_pct:.1f}%", ha="center", va="bottom",
                  fontsize=7.5, color="#0e6251", fontweight="bold")
         
-    ax2.annotate("Spurious-Free Bandwidth:\nAll gradient modes $\\lambda > 50$\nMean $k_c$ error = 1.09%",
+    ax2.annotate(r"No Spurious Modes ($\lambda \leq 10$):" "\n"
+                 r"Lowest spurious $\lambda_{\mathrm{spur}} = 10.16$" "\n"
+                 r"Mean $k_c$ error = 1.09%",
                  xy=(4.1, 4.1), xytext=(1.5, 5.8),
                  arrowprops=dict(arrowstyle="->", color=COLOR_TEAL, lw=1.3),
                  fontsize=8.3, fontweight="bold", color="#0e6251",
