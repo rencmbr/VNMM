@@ -195,6 +195,10 @@ J.~C. N{\'e}d{\'e}lec, A new family of mixed finite elements in
 \newblock \href {https://doi.org/10.1007/BF01389668}
   {\path{doi:10.1007/BF01389668}}.
 
+\bibitem{golub2013matrix}
+G.~H. Golub, C.~F. Van~Loan, Matrix Computations, 4th Edition, Johns Hopkins
+  University Press, Baltimore, MD, USA, 2013.
+
 \bibitem{bentley1975multidimensional}
 J.~L. Bentley, Multidimensional binary search trees used for associative
   searching, Communications of the ACM 18~(9) (1975) 509--517.
@@ -234,14 +238,6 @@ M.~Costabel, M.~Dauge, Weighted regularization of {Maxwell} equations in
 \newblock \href {https://doi.org/10.1007/s002110100388}
   {\path{doi:10.1007/s002110100388}}.
 
-\bibitem{chen2001stabilized}
-J.-S. Chen, C.-T. Wu, S.~Yoon, Y.~You, A stabilized conforming nodal
-  integration for {G}alerkin mesh-free methods, International Journal for
-  Numerical Methods in Engineering 50~(2) (2001) 435--466.
-\newblock \href
-  {https://doi.org/10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}
-  {\path{doi:10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}}.
-
 \bibitem{saad2011numerical}
 Y.~Saad, Numerical Methods for Large Eigenvalue Problems, revised Edition,
   SIAM, Philadelphia, PA, 2011.
@@ -262,13 +258,6 @@ P.~Virtanen, R.~Gommers, T.~E. Oliphant, et~al., {{SciPy} 1.0: Fundamental
 \newblock \href {https://doi.org/10.1038/s41592-019-0686-2}
   {\path{doi:10.1038/s41592-019-0686-2}}.
 
-\bibitem{dolbow1999numerical}
-J.~Dolbow, T.~Belytschko, Numerical integration of {G}alerkin weak forms in
-  meshfree methods, International Journal for Numerical Methods in Engineering
-  46~(5) (1999) 657--683.
-\newblock \href {https://doi.org/10.1007/s004660050403}
-  {\path{doi:10.1007/s004660050403}}.
-
 \bibitem{deberg2008computational}
 M.~de~Berg, O.~Cheong, M.~van Kreveld, M.~Overmars, Computational Geometry:
   Algorithms and Applications, 3rd Edition, Springer-Verlag, Berlin,
@@ -276,27 +265,13 @@ M.~de~Berg, O.~Cheong, M.~van Kreveld, M.~Overmars, Computational Geometry:
 \newblock \href {https://doi.org/10.1007/978-3-540-77974-2}
   {\path{doi:10.1007/978-3-540-77974-2}}.
 
-\bibitem{hesthaven2004high}
-J.~S. Hesthaven, T.~Warburton, High-order nodal discontinuous {G}alerkin
-  methods for the {M}axwell eigenvalue problem, Philosophical Transactions of
-  the Royal Society of London. Series A: Mathematical, Physical and Engineering
-  Sciences 362~(1816) (2004) 493--524.
-\newblock \href {https://doi.org/10.1098/rsta.2003.1332}
-  {\path{doi:10.1098/rsta.2003.1332}}.
-
-\bibitem{houston2004mixed}
-P.~Houston, I.~Perugia, D.~Sch{\"o}tzau, Mixed discontinuous {G}alerkin
-  approximation of the {M}axwell operator, SIAM Journal on Numerical Analysis
-  42~(1) (2004) 434--459.
-\newblock \href {https://doi.org/10.1137/S003614290241790X}
-  {\path{doi:10.1137/S003614290241790X}}.
-
-\bibitem{nguyen2011hybridizable}
-N.~C. Nguyen, J.~Peraire, B.~Cockburn, Hybridizable discontinuous {G}alerkin
-  methods for the time-harmonic {M}axwell's equations, Journal of Computational
-  Physics 230~(18) (2011) 7151--7175.
-\newblock \href {https://doi.org/10.1016/j.jcp.2011.05.018}
-  {\path{doi:10.1016/j.jcp.2011.05.018}}.
+\bibitem{chen2001stabilized}
+J.-S. Chen, C.-T. Wu, S.~Yoon, Y.~You, A stabilized conforming nodal
+  integration for {G}alerkin mesh-free methods, International Journal for
+  Numerical Methods in Engineering 50~(2) (2001) 435--466.
+\newblock \href
+  {https://doi.org/10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}
+  {\path{doi:10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}}.
 
 \bibitem{coppoli2012induction}
 E.~H.~R. Coppoli, R.~C. Mesquita, R.~S. Silva, Induction machines modeling with

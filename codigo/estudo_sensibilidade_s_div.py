@@ -26,9 +26,9 @@ def executar_varredura_s_div(
     s_div_list=None,
     Nx=21,
     Ny=21,
-    Ncx=10,
-    Ncy=10,
-    pontos_por_dir=2,
+    Ncx=20,
+    Ncy=20,
+    pontos_por_dir=3,
     base="P1"
 ):
     if s_div_list is None:

@@ -145,12 +145,12 @@ def generate_figure_2():
     lambda_exact = np.array([1.00, 1.00, 2.00, 4.00, 4.00, 5.00, 5.00, 8.00, 9.00, 9.00])
     kc_exact = np.sqrt(lambda_exact)
     
-    # Computed eigenvalues without regularization (s_div = 0.0)
-    lambda_s0 = np.array([0.9127, 1.0368, 1.0795, 1.7091, 2.0485, 3.6800, 4.3059, 5.0050, 5.0925, 6.2524])
-    is_spurious_s0 = [False, False, True, True, False, True, False, False, False, True]
+    # Computed eigenvalues without regularization (s_div = 0.0) under converged quadrature (20x20, 3x3 Gauss)
+    lambda_s0 = np.array([0.0010, 0.0013, 0.0020, 0.0031, 0.0040, 0.0068, 0.0073, 0.0080, 0.0110, 0.0149])
+    is_spurious_s0 = [True] * 10
     
-    # Computed eigenvalues with div-curl regularization (s_div = 6.0)
-    lambda_s6 = np.array([0.9788, 0.9940, 1.9706, 3.8566, 4.0798, 5.0120, 5.0666, 7.8063, 9.3389, 9.3929])
+    # Computed eigenvalues with div-curl regularization (s_div = 6.0) under converged quadrature (20x20, 3x3 Gauss)
+    lambda_s6 = np.array([1.0081, 1.0111, 2.0809, 4.2292, 4.2505, 5.5033, 5.5255, 9.1432, 10.2889, 10.3671])
     
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6.5, 7.2))
     fig.subplots_adjust(left=0.12, right=0.96, bottom=0.08, top=0.96, hspace=0.34)
@@ -162,12 +162,11 @@ def generate_figure_2():
                           edgecolor="#2c3e50", linewidth=1.0, label="Analytical Reference $\\lambda_{\\mathrm{exact}}$")
     
     for i, idx in enumerate(indices):
-        if is_spurious_s0[i]:
-            ax1.bar(idx + width/2, lambda_s0[i], width, color="#fadbd8", edgecolor=COLOR_CRIMSON,
-                    hatch="//", linewidth=1.4)
-        else:
-            ax1.bar(idx + width/2, lambda_s0[i], width, color="#34495e", alpha=0.85,
-                    edgecolor="#2c3e50", linewidth=1.0)
+        bar_h = max(lambda_s0[i], 0.22)
+        ax1.bar(idx + width/2, bar_h, width, color="#fadbd8", edgecolor=COLOR_CRIMSON,
+                hatch="//", linewidth=1.4)
+        ax1.text(idx + width/2, 0.32, f"{lambda_s0[i]:.3f}", ha="center", va="bottom",
+                 fontsize=7.2, color=COLOR_CRIMSON, rotation=90, fontweight="bold")
     
     ax1.set_xticks(indices)
     labels1 = ax1.set_xticklabels([f"Mode {i}" for i in indices], fontsize=9.2)
@@ -181,15 +180,16 @@ def generate_figure_2():
     
     legend_elements1 = [
         Patch(facecolor="#7f8c8d", alpha=0.55, edgecolor="#2c3e50", label="Analytical Reference"),
-        Patch(facecolor="#34495e", alpha=0.85, edgecolor="#2c3e50", label="Physical Mode"),
-        Patch(facecolor="#fadbd8", edgecolor=COLOR_CRIMSON, hatch="//", label="Spurious Mode")
+        Patch(facecolor="#fadbd8", edgecolor=COLOR_CRIMSON, hatch="//", label="Spurious Gradient Mode")
     ]
     ax1.legend(handles=legend_elements1, loc="upper left", framealpha=0.92, fontsize=8.6)
     
-    ax1.annotate("Gradient nullspace leakage:\n" r"$\nabla_h \times \nabla_h \phi \neq \mathbf{0}$",
-                 xy=(3.15, 1.3), xytext=(1.5, 6.2),
+    ax1.annotate("Gradient nullspace leakage:\n" r"$\nabla_h \times \nabla_h \phi \neq \mathbf{0}$" "\n"
+                 r"All lowest modes are spurious ($\lambda \sim 10^{-3}$)" "\n"
+                 r"Over 130 spurious states in $\lambda \leq 10$",
+                 xy=(3.15, 0.25), xytext=(1.5, 5.8),
                  arrowprops=dict(arrowstyle="->", color=COLOR_CRIMSON, lw=1.3),
-                 fontsize=8.5, fontweight="bold", color=COLOR_CRIMSON,
+                 fontsize=8.3, fontweight="bold", color=COLOR_CRIMSON,
                  bbox=dict(boxstyle="round,pad=0.28", facecolor="#fde8e8", edgecolor=COLOR_CRIMSON, alpha=0.95))
     
     # --- Subplot (b): Div-Curl Regularized Spectrum (s_div = 6.0) ---
@@ -211,9 +211,9 @@ def generate_figure_2():
                  fontsize=7.5, color="#0e6251", fontweight="bold")
         
     ax2.annotate(r"No Spurious Modes ($\lambda \leq 10$):" "\n"
-                 r"Lowest spurious $\lambda_{\mathrm{spur}} = 10.16$" "\n"
-                 r"Mean $k_c$ error = 1.09%",
-                 xy=(4.1, 4.1), xytext=(1.5, 5.8),
+                 r"Lowest spurious $\lambda_{\mathrm{spur}} = 11.84 > 10.37$" "\n"
+                 r"Mean $k_c$ error = 4.01%",
+                 xy=(4.1, 4.3), xytext=(1.5, 5.8),
                  arrowprops=dict(arrowstyle="->", color=COLOR_TEAL, lw=1.3),
                  fontsize=8.3, fontweight="bold", color="#0e6251",
                  bbox=dict(boxstyle="round,pad=0.28", facecolor="#e6f7f2", edgecolor=COLOR_TEAL, alpha=0.95))
