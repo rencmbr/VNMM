@@ -3,4 +3,4 @@ Highlights:
 - Dimensionless matrix A prevents support dilation as h -> 0.
 - Local equivalence to Whitney 1-forms proved on conforming simplices.
 - Dynamic meshless supports induce global non-conformity in H(curl).
-- Div-curl regularized weak form suppresses gradient leakage and spurious modes.
+- Div-curl regularization shifts spurious modes outside the operational spectrum.
