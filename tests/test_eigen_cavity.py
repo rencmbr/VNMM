@@ -3,126 +3,127 @@ import sys
 import unittest
 import numpy as np
 
-# Configuração de caminhos para os testes
-DIRETORIO_TESTS = os.path.dirname(os.path.abspath(__file__))
-DIRETORIO_RAIZ = os.path.dirname(DIRETORIO_TESTS)
-if DIRETORIO_RAIZ not in sys.path:
-    sys.path.insert(0, DIRETORIO_RAIZ)
+# Path setup for tests
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(TESTS_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
-from src.malha_cavidade import gerar_malha_cavidade
-from src.quadratura_gauss import gerar_celulas_quadratura, obter_pontos_pesos_gauss_1d
-from src.montador_vnmm import montar_matrizes_vnmm_2d
+from src.cavity_mesh import generate_cavity_mesh
+from src.gauss_quadrature import generate_quadrature_cells, get_gauss_points_weights_1d
+from src.vnmm_assembler import assemble_vnmm_matrices_2d
 from src.eigen_solver_cavity import (
-    aplicar_condicao_pec, 
-    resolver_problema_autovalores, 
-    resolver_autovalores_cavidade,
-    MODOS_ANALITICOS_REF
+    apply_pec_boundary_conditions, 
+    solve_generalized_eigenvalue_problem, 
+    solve_cavity_eigenvalues,
+    ANALYTICAL_REFERENCE_MODES
 )
+from src.fem_edge_2d import solve_edge_fem_cavity_eigenvalues
 
 
-class TestMalhaCavidadePEC(unittest.TestCase):
-    """Testes unitários da geração de malha e direcionalidade tangente PEC."""
+class TestPECCavityMesh(unittest.TestCase):
+    """Unit tests for cavity mesh generation and tangential PEC boundary directionality."""
     
-    def test_dimensoes_e_quantidades_nos(self):
+    def test_dimensions_and_node_counts(self):
         Nx, Ny = 7, 7
-        coords, vectors, is_boundary = gerar_malha_cavidade(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
+        coords, vectors, is_boundary = generate_cavity_mesh(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
         
         self.assertEqual(coords.shape, (Nx * Ny, 2))
         self.assertEqual(vectors.shape, (Nx * Ny, 2))
         self.assertEqual(is_boundary.shape, (Nx * Ny,))
         
-        # Quantidade de nós de fronteira em grade regular = 2*Nx + 2*Ny - 4
-        n_borda_esperado = 2 * Nx + 2 * Ny - 4
-        self.assertEqual(np.sum(is_boundary), n_borda_esperado)
+        # Expected boundary node count in regular grid = 2*Nx + 2*Ny - 4
+        expected_boundary_nodes = 2 * Nx + 2 * Ny - 4
+        self.assertEqual(np.sum(is_boundary), expected_boundary_nodes)
         
-    def test_direcionalidade_tangente_fronteiras_pec(self):
+    def test_tangential_pec_boundary_directionality(self):
         Nx, Ny = 9, 9
-        coords, vectors, is_boundary = gerar_malha_cavidade(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
+        coords, vectors, is_boundary = generate_cavity_mesh(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
         
         tol = 1e-7
-        for pt, vec, eh_borda in zip(coords, vectors, is_boundary):
+        for pt, vec, is_bnd in zip(coords, vectors, is_boundary):
             x, y = pt[0], pt[1]
-            norma_vec = np.linalg.norm(vec)
-            self.assertTrue(np.isclose(norma_vec, 1.0, atol=1e-12), "O vetor diretor deve ser unitário.")
+            vec_norm = np.linalg.norm(vec)
+            self.assertTrue(np.isclose(vec_norm, 1.0, atol=1e-12), "Director vector must be unitary.")
             
-            # Parede inferior (y=0) ou superior (y=pi)
+            # Bottom wall (y=0) or top wall (y=pi)
             if np.isclose(y, 0.0, atol=tol) or np.isclose(y, np.pi, atol=tol):
-                self.assertTrue(eh_borda, "Nó em y=0 ou y=pi deve ser classificado como fronteira.")
+                self.assertTrue(is_bnd, "Node at y=0 or y=pi must be classified as boundary.")
                 self.assertTrue(np.isclose(abs(vec[0]), 1.0, atol=1e-10))
                 self.assertTrue(np.isclose(vec[1], 0.0, atol=1e-10))
                 
-            # Parede lateral esquerda (x=0) ou direita (x=pi)
+            # Left wall (x=0) or right wall (x=pi)
             elif np.isclose(x, 0.0, atol=tol) or np.isclose(x, np.pi, atol=tol):
-                self.assertTrue(eh_borda, "Nó em x=0 ou x=pi deve ser classificado como fronteira.")
+                self.assertTrue(is_bnd, "Node at x=0 or x=pi must be classified as boundary.")
                 self.assertTrue(np.isclose(vec[0], 0.0, atol=1e-10))
                 self.assertTrue(np.isclose(abs(vec[1]), 1.0, atol=1e-10))
             else:
-                self.assertFalse(eh_borda, "Nó no interior não deve ser classificado como fronteira.")
+                self.assertFalse(is_bnd, "Interior node must not be classified as boundary.")
 
 
-class TestQuadraturaGauss2D(unittest.TestCase):
-    """Testes unitários da integração numérica em células de fundo."""
+class TestGaussQuadrature2D(unittest.TestCase):
+    """Unit tests for background cell numerical quadrature."""
     
-    def test_pesos_gauss_1d(self):
-        xi, w = obter_pontos_pesos_gauss_1d(2)
+    def test_gauss_weights_1d(self):
+        xi, w = get_gauss_points_weights_1d(2)
         self.assertEqual(len(xi), 2)
         self.assertTrue(np.isclose(np.sum(w), 2.0))
         
-    def test_integracao_area_total_dominio(self):
+    def test_domain_total_area_integration(self):
         Lx, Ly = np.pi, np.pi
-        pontos_g, pesos_g, celulas = gerar_celulas_quadratura(Lx=Lx, Ly=Ly, Ncx=6, Ncy=6, pontos_por_dir=2)
+        gauss_pts, gauss_wts, cells = generate_quadrature_cells(Lx=Lx, Ly=Ly, Ncx=6, Ncy=6, points_per_dir=2)
         
-        area_calculada = np.sum(pesos_g)
-        area_exata = Lx * Ly
-        self.assertTrue(np.isclose(area_calculada, area_exata, atol=1e-12), "A integral da função constante 1 deve ser Lx * Ly.")
+        calculated_area = np.sum(gauss_wts)
+        exact_area = Lx * Ly
+        self.assertTrue(np.isclose(calculated_area, exact_area, atol=1e-12), "Integral of constant function 1 must equal Lx * Ly.")
         
-    def test_integracao_polinomio_quadratico(self):
-        # Integral de f(x, y) = x^2 + y^2 em [0, pi]^2
-        # Integral exata = 2 * pi^4 / 3
+    def test_quadratic_polynomial_integration(self):
+        # Integral of f(x, y) = x^2 + y^2 on [0, pi]^2
+        # Exact integral = 2 * pi^4 / 3
         Lx, Ly = np.pi, np.pi
-        pontos_g, pesos_g, _ = gerar_celulas_quadratura(Lx=Lx, Ly=Ly, Ncx=8, Ncy=8, pontos_por_dir=2)
+        gauss_pts, gauss_wts, _ = generate_quadrature_cells(Lx=Lx, Ly=Ly, Ncx=8, Ncy=8, points_per_dir=2)
         
-        f_vals = pontos_g[:, 0]**2 + pontos_g[:, 1]**2
-        integral_num = np.sum(f_vals * pesos_g)
-        integral_exata = 2.0 * (np.pi**4) / 3.0
+        f_vals = gauss_pts[:, 0]**2 + gauss_pts[:, 1]**2
+        num_integral = np.sum(f_vals * gauss_wts)
+        exact_integral = 2.0 * (np.pi**4) / 3.0
         
-        self.assertTrue(np.isclose(integral_num, integral_exata, rtol=1e-10))
+        self.assertTrue(np.isclose(num_integral, exact_integral, rtol=1e-10))
 
 
-class TestMontadorMatrizesVNMM(unittest.TestCase):
-    """Testes de propriedades das matrizes esparsas globais e reduzidas."""
+class TestVNMMMatrixAssembler(unittest.TestCase):
+    """Tests for global and reduced sparse matrix properties."""
     
-    def test_simetria_e_positividade_matrizes_ponto_gauss(self):
+    def test_symmetry_and_positivity_gauss_point_support(self):
         Nx, Ny = 9, 9
-        coords, vectors, is_boundary = gerar_malha_cavidade(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
+        coords, vectors, is_boundary = generate_cavity_mesh(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
         
-        K, M = montar_matrizes_vnmm_2d(
-            coords, vectors, base="P1", s_div=6.0, Ncx=8, Ncy=8, 
-            pontos_por_dir=2, modo_suporte="ponto_gauss"
+        K, M = assemble_vnmm_matrices_2d(
+            coords, vectors, basis="P1", s_div=6.0, Ncx=8, Ncy=8, 
+            points_per_dir=2, support_mode="gauss_point"
         )
         
-        # 1. Simetria de K e M globais
+        # 1. Symmetry of global K and M
         diff_K = K - K.T
         diff_M = M - M.T
         self.assertTrue(diff_K.nnz == 0 or np.max(np.abs(diff_K.data)) < 1e-14)
         self.assertTrue(diff_M.nnz == 0 or np.max(np.abs(diff_M.data)) < 1e-14)
         
-        # 2. Redução PEC
-        K_red, M_red, idx_int = aplicar_condicao_pec(K, M, is_boundary)
-        self.assertEqual(K_red.shape[0], len(idx_int))
-        self.assertEqual(M_red.shape[0], len(idx_int))
+        # 2. PEC Reduction
+        K_red, M_red, int_idx = apply_pec_boundary_conditions(K, M, is_boundary)
+        self.assertEqual(K_red.shape[0], len(int_idx))
+        self.assertEqual(M_red.shape[0], len(int_idx))
         
-        # 3. Positividade da diagonal da matriz de massa M_red
+        # 3. Positivity of M_red diagonal
         diag_M = M_red.diagonal()
-        self.assertTrue(np.all(diag_M > 0.0), "Todos os elementos da diagonal de M_red devem ser estritamente positivos.")
+        self.assertTrue(np.all(diag_M > 0.0), "All diagonal elements of M_red must be strictly positive.")
 
-    def test_simetria_matrizes_centro_celula(self):
+    def test_symmetry_cell_center_support(self):
         Nx, Ny = 9, 9
-        coords, vectors, is_boundary = gerar_malha_cavidade(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
+        coords, vectors, is_boundary = generate_cavity_mesh(Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi)
         
-        K, M = montar_matrizes_vnmm_2d(
-            coords, vectors, base="P1", s_div=6.0, Ncx=8, Ncy=8, 
-            pontos_por_dir=2, modo_suporte="centro_celula"
+        K, M = assemble_vnmm_matrices_2d(
+            coords, vectors, basis="P1", s_div=6.0, Ncx=8, Ncy=8, 
+            points_per_dir=2, support_mode="cell_center"
         )
         
         diff_K = K - K.T
@@ -131,112 +132,108 @@ class TestMontadorMatrizesVNMM(unittest.TestCase):
         self.assertTrue(diff_M.nnz == 0 or np.max(np.abs(diff_M.data)) < 1e-14)
 
 
-class TestSolverAutovaloresCavidadePEC(unittest.TestCase):
-    """Testes de validação da Tabela 4-1 da tese de Luilly Ortiz (UFMG, 2023)."""
+class TestPECCavityEigenvalueSolver(unittest.TestCase):
+    """Validation tests against Table 4-1 of Luilly Ortiz (UFMG, 2023)."""
     
-    def test_autovalores_cavidade_luilly_tabela_4_1_ponto_gauss(self):
+    def test_cavity_eigenvalues_table_4_1_gauss_point(self):
         """
-        Valida os 10 primeiros autovalores numéricos do modo TEz na cavidade [0, pi]^2
-        usando suporte por ponto de Gauss (estilo EFG).
+        Validates the first 10 numerical TEz eigenvalues in cavity [0, pi]^2
+        using Gauss point support (EFG style).
         """
-        resultado = resolver_autovalores_cavidade(
+        result = solve_cavity_eigenvalues(
             Nx=21, 
             Ny=21, 
             Lx=np.pi, 
             Ly=np.pi, 
             Ncx=10,
             Ncy=10,
-            base="P1", 
-            tipo_interior="alternado", 
-            num_autovalores=10, 
+            basis="P1", 
+            interior_type="alternating", 
+            num_eigenvalues=10, 
             s_div=6.0,
-            pontos_por_dir=2,
-            modo_suporte="ponto_gauss"
+            points_per_dir=2,
+            support_mode="gauss_point"
         )
         
-        vals_num = resultado['autovalores_numericos']
-        vals_ref = resultado['autovalores_analiticos']
+        vals_num = result['numerical_eigenvalues']
+        vals_ref = result['analytical_eigenvalues']
         
-        self.assertEqual(len(vals_num), 10, "Devem ser retornados exatamente 10 autovalores.")
-        ref_esperado = np.array([1.0, 1.0, 2.0, 4.0, 4.0, 5.0, 5.0, 8.0, 9.0, 9.0])
-        np.testing.assert_allclose(vals_ref, ref_esperado, atol=1e-12)
+        self.assertEqual(len(vals_num), 10, "Exactly 10 eigenvalues must be returned.")
+        expected_ref = np.array([1.0, 1.0, 2.0, 4.0, 4.0, 5.0, 5.0, 8.0, 9.0, 9.0])
+        np.testing.assert_allclose(vals_ref, expected_ref, atol=1e-12)
         
-        # Erro médio de kc inferior a 1.5% e erro máx inferior a 2.5%
-        self.assertLess(resultado['erro_medio_kc_pct'], 1.5)
-        self.assertLess(resultado['erro_max_kc_pct'], 2.5)
+        # Mean kc error < 1.5% and max kc error < 2.5%
+        self.assertLess(result['mean_error_kc_pct'], 1.5)
+        self.assertLess(result['max_error_kc_pct'], 2.5)
 
-    def test_autovalores_cavidade_luilly_tabela_4_1_centro_celula(self):
+    def test_cavity_eigenvalues_table_4_1_cell_center(self):
         """
-        Valida os 10 primeiros autovalores numéricos do modo TEz com suporte fixado por célula.
+        Validates the first 10 numerical TEz eigenvalues with cell-center fixed support.
         """
-        resultado = resolver_autovalores_cavidade(
+        result = solve_cavity_eigenvalues(
             Nx=21, 
             Ny=21, 
             Lx=np.pi, 
             Ly=np.pi, 
             Ncx=20,
             Ncy=20,
-            base="P1", 
-            tipo_interior="alternado", 
-            num_autovalores=10, 
+            basis="P1", 
+            interior_type="alternating", 
+            num_eigenvalues=10, 
             s_div=6.0,
-            pontos_por_dir=2,
-            modo_suporte="centro_celula"
+            points_per_dir=2,
+            support_mode="cell_center"
         )
         
-        self.assertLess(resultado['erro_medio_kc_pct'], 2.5)
-        self.assertLess(resultado['erro_max_kc_pct'], 5.0)
+        self.assertLess(result['mean_error_kc_pct'], 2.5)
+        self.assertLess(result['max_error_kc_pct'], 5.0)
         
-    def test_ausencia_modos_espurios(self):
+    def test_absence_of_spurious_modes(self):
         """
-        Verifica se não ocorrem autovalores espúrios ou não-físicos no espectro.
+        Verifies that no spurious/non-physical modes contaminate the operational spectrum.
         """
-        resultado = resolver_autovalores_cavidade(
+        result = solve_cavity_eigenvalues(
             Nx=17, 
             Ny=17, 
             Lx=np.pi, 
             Ly=np.pi, 
-            base="P1", 
-            num_autovalores=8, 
+            basis="P1", 
+            num_eigenvalues=8, 
             s_div=6.0
         )
-        vals_num = resultado['autovalores_numericos']
+        vals_num = result['numerical_eigenvalues']
         
-        # Nenhum autovalor deve ser negativo ou menor que 0.8 (o menor modo físico TE10 tem lambda = 1.0)
-        self.assertTrue(np.all(vals_num >= 0.8), "Não devem existir autovalores abaixo do primeiro modo físico (lambda=1.0).")
+        # No eigenvalue below physical fundamental resonance (TE10, lambda=1.0)
+        self.assertTrue(np.all(vals_num >= 0.8), "No eigenvalues should lie below the fundamental physical mode.")
         
-        # Verifica monotonicidade estrita
-        self.assertTrue(np.all(np.diff(vals_num) >= -1e-8), "O espectro de autovalores deve ser monotonicamente crescente.")
+        # Strict monotonicity
+        self.assertTrue(np.all(np.diff(vals_num) >= -1e-8), "Eigenvalue spectrum must be monotonically ascending.")
 
 
 class TestFEMEdge2D(unittest.TestCase):
-    """Testes unitários do solver de Elementos Finitos de Aresta Triangulares 2D (Nédélec)."""
+    """Unit tests for 2D triangular Nédélec edge finite element solver."""
     
-    def test_solver_fem_aresta_cavidade(self):
-        from src.fem_edge_2d import resolver_autovalores_fem_aresta_2d
+    def test_edge_fem_cavity_solver(self):
+        res = solve_edge_fem_cavity_eigenvalues(Nex=11, Ney=11, num_eigenvalues=10)
         
-        res = resolver_autovalores_fem_aresta_2d(Nex=11, Ney=11, num_autovalores=10)
+        self.assertEqual(len(res['numerical_eigenvalues']), 10)
+        self.assertEqual(res['active_dofs'], 341)
+        self.assertEqual(res['discarded_null_modes'], 100)
         
-        self.assertEqual(len(res['autovalores_numericos']), 10)
-        self.assertEqual(res['N_incognitas'], 341)
-        self.assertEqual(res['n_nulos_descartados'], 100)
-        
-        # Erro médio do número de onda kc < 1.0%
-        self.assertLess(res['erro_medio_kc_pct'], 1.0)
-        # Erro máximo < 2.0%
-        self.assertLess(res['erro_max_kc_pct'], 2.0)
+        # Mean kc error < 1.0%
+        self.assertLess(res['mean_error_kc_pct'], 1.0)
+        # Max error < 2.0%
+        self.assertLess(res['max_error_kc_pct'], 2.0)
 
-    def test_solver_fem_aresta_malha_aleatoria(self):
-        from src.fem_edge_2d import resolver_autovalores_fem_aresta_2d
-        
-        res = resolver_autovalores_fem_aresta_2d(
-            Nex=12, Ney=12, num_autovalores=10, jitter_frac=0.25, seed=42
+    def test_edge_fem_random_mesh_solver(self):
+        res = solve_edge_fem_cavity_eigenvalues(
+            Nex=12, Ney=12, num_eigenvalues=10, jitter_frac=0.25, seed=42
         )
         
-        self.assertEqual(len(res['autovalores_numericos']), 10)
-        # Mesmo sob malha com jitter de 25%, erro médio de kc < 1.0%
-        self.assertLess(res['erro_medio_kc_pct'], 1.0)
-        self.assertLess(res['erro_max_kc_pct'], 2.5)
+        self.assertEqual(len(res['numerical_eigenvalues']), 10)
+        # Under 25% jitter, mean kc error < 1.0%
+        self.assertLess(res['mean_error_kc_pct'], 1.0)
+        self.assertLess(res['max_error_kc_pct'], 2.5)
 
 
 if __name__ == "__main__":

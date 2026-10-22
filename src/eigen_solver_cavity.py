@@ -4,13 +4,12 @@ import numpy as np
 import scipy.linalg as la
 from scipy.sparse.linalg import eigs
 
-from src.malha_cavidade import gerar_malha_cavidade
-from src.montador_vnmm import montar_matrizes_vnmm_2d
+from src.cavity_mesh import generate_cavity_mesh
+from src.vnmm_assembler import assemble_vnmm_matrices_2d
 
-
-# Autovalores e números de onda de corte analíticos da Tabela 4-1 (Luilly Ortiz, 2023)
-# lambda = n^2 + m^2 (TE_nm com n, m >= 0, (n,m) != (0,0)), kc = sqrt(lambda)
-MODOS_ANALITICOS_REF = [
+# Analytical reference eigenvalues and cutoff wavenumbers from Table 4-1 (Luilly Ortiz, 2023)
+# lambda = n^2 + m^2 (TE_nm with n, m >= 0, (n,m) != (0,0)), kc = sqrt(lambda)
+ANALYTICAL_REFERENCE_MODES = [
     (1, 0, 1.0, 1.0),            # TE10
     (0, 1, 1.0, 1.0),            # TE01
     (1, 1, 2.0, np.sqrt(2.0)),   # TE11
@@ -25,39 +24,50 @@ MODOS_ANALITICOS_REF = [
     (1, 3, 10.0, np.sqrt(10.0))  # TE13
 ]
 
+# Compatibility alias
+MODOS_ANALITICOS_REF = ANALYTICAL_REFERENCE_MODES
 
-def aplicar_condicao_pec(K, M, is_boundary):
+
+def apply_pec_boundary_conditions(K, M, is_boundary):
     """
-    Aplica a condição de Dirichlet homogênea (paredes PEC) eliminando os graus de liberdade
-    dos nós situados na fronteira, onde E_t = c_k = 0.
+    Applies homogeneous Dirichlet boundary conditions (PEC walls) by eliminating
+    degrees of freedom corresponding to boundary nodes, where E_t = c_k = 0.
     
-    Retorna as submatrizes reduzidas K_red e M_red, e o array com os índices dos nós internos.
+    Returns reduced submatrices K_red and M_red, and an array of internal node indices.
     """
-    idx_internos = np.where(~is_boundary)[0]
+    interior_indices = np.where(~is_boundary)[0]
     
-    K_red = K[idx_internos, :][:, idx_internos]
-    M_red = M[idx_internos, :][:, idx_internos]
+    K_red = K[interior_indices, :][:, interior_indices]
+    M_red = M[interior_indices, :][:, interior_indices]
     
-    return K_red, M_red, idx_internos
+    return K_red, M_red, interior_indices
 
 
-def resolver_problema_autovalores(
+def solve_generalized_eigenvalue_problem(
     K_red, 
     M_red, 
-    num_autovalores=10, 
+    num_eigenvalues=10, 
     sigma=0.5, 
-    metodo="eigh"
+    method="eigh",
+    # Compatibility aliases
+    num_autovalores=None,
+    metodo=None
 ):
     """
-    Resolve o problema generalizado de autovalores:
+    Solves the generalized eigenvalue problem:
         K_red * c_red = lambda * M_red * c_red
         
-    Retorna os autovalores ordenados crescentemente e os autovetores associados.
+    Returns ascendingly sorted eigenvalues and associated eigenvectors.
     """
+    if num_autovalores is not None:
+        num_eigenvalues = num_autovalores
+    if metodo is not None:
+        method = metodo
+
     N_int = K_red.shape[0]
     
-    if metodo == "eigh" or N_int < 300:
-        # Solução densa exata via la.eigh (Cholesky), com fallback para QZ (la.eig) se M_red não for estritamente DP
+    if method == "eigh" or N_int < 300:
+        # Exact dense solve via la.eigh (Cholesky), falling back to QZ (la.eig) if M_red is not SPD
         try:
             vals, vecs = la.eigh(K_red.toarray(), M_red.toarray())
         except (la.LinAlgError, np.linalg.LinAlgError):
@@ -65,13 +75,13 @@ def resolver_problema_autovalores(
             vals = np.real(vals)
             vecs = np.real(vecs)
     else:
-        # Solução esparsa via Shift-and-Invert
-        k_busca = min(num_autovalores + 6, N_int - 2)
+        # Sparse shift-and-invert solver
+        k_search = min(num_eigenvalues + 6, N_int - 2)
         try:
             vals, vecs = eigs(
                 A=K_red, 
                 M=M_red, 
-                k=k_busca, 
+                k=k_search, 
                 sigma=sigma, 
                 which='LM'
             )
@@ -82,47 +92,70 @@ def resolver_problema_autovalores(
             vals = np.real(vals)
             vecs = np.real(vecs)
         
-    # Filtra valores positivos não nulos
-    mascara_positivos = vals > 1e-4
-    vals_validos = vals[mascara_positivos]
-    vecs_validos = vecs[:, mascara_positivos]
+    # Filter non-zero positive eigenvalues
+    positive_mask = vals > 1e-4
+    valid_vals = vals[positive_mask]
+    valid_vecs = vecs[:, positive_mask]
     
-    idx_ordem = np.argsort(vals_validos)
-    vals_ordenados = vals_validos[idx_ordem][:num_autovalores]
-    vecs_ordenados = vecs_validos[:, idx_ordem][:, :num_autovalores]
+    sorted_idx = np.argsort(valid_vals)
+    sorted_vals = valid_vals[sorted_idx][:num_eigenvalues]
+    sorted_vecs = valid_vecs[:, sorted_idx][:, :num_eigenvalues]
     
-    return vals_ordenados, vecs_ordenados
+    return sorted_vals, sorted_vecs
 
 
-def resolver_autovalores_cavidade(
+def solve_cavity_eigenvalues(
     Nx=21, 
     Ny=21, 
     Lx=np.pi, 
     Ly=np.pi, 
     Ncx=None, 
     Ncy=None, 
-    base="P1", 
-    tipo_interior="alternado", 
+    basis="P1", 
+    interior_type="alternating", 
     jitter_frac=0.0, 
-    num_autovalores=10, 
+    num_eigenvalues=10, 
     sigma=0.5,
     s_div=4.0,
-    pontos_por_dir=3,
+    points_per_dir=3,
+    det_tolerance=None,
+    floor_tolerance=None,
+    support_mode="gauss_point",
+    seed=42,
+    # Compatibility aliases
+    base=None,
+    tipo_interior=None,
+    num_autovalores=None,
+    pontos_por_dir=None,
     tolerancia_det=None,
     tol_piso=None,
-    modo_suporte="ponto_gauss",
-    seed=42
+    modo_suporte=None
 ):
     """
-    Pipeline completo do solver de autovalores VNMM 2D para cavidade PEC retangular (Tese Luilly Ortiz).
+    Complete 2D VNMM eigenvalue solver pipeline for rectangular PEC cavities.
     
-    Etapas:
-    1. Geração da malha nodal com direções tangentes nas fronteiras PEC.
-    2. Montagem esparsa das matrizes K (com regularização div-curl) e M via células de fundo.
-    3. Redução do sistema eliminando os nós de fronteira (E_tangente = 0).
-    4. Solução do problema generalizado de autovalores.
-    5. Comparação e cálculo de erros com relação à Tabela 4-1 da tese de Luilly Ortiz.
+    Pipeline Steps:
+    1. Generates nodal distribution with tangential vectors on PEC boundaries.
+    2. Assembles sparse regularized K and M matrices via background integration cells.
+    3. Reduces system by enforcing homogeneous tangential Dirichlet conditions (E_t = 0).
+    4. Solves generalized algebraic eigenvalue problem.
+    5. Computes error metrics compared to analytical reference values.
     """
+    if base is not None:
+        basis = base
+    if tipo_interior is not None:
+        interior_type = tipo_interior
+    if num_autovalores is not None:
+        num_eigenvalues = num_autovalores
+    if pontos_por_dir is not None:
+        points_per_dir = pontos_por_dir
+    if tolerancia_det is not None:
+        det_tolerance = tolerancia_det
+    if tol_piso is not None:
+        floor_tolerance = tol_piso
+    if modo_suporte is not None:
+        support_mode = modo_suporte
+
     if Ncx is None:
         Ncx = max(4, int(np.round(0.6 * Nx)))
     if Ncy is None:
@@ -130,96 +163,128 @@ def resolver_autovalores_cavidade(
         
     h_char = max(Lx / max(Nx - 1, 1), Ly / max(Ny - 1, 1))
     h_ref = np.pi / 20.0
-    if tolerancia_det is None:
-        tol_base = 1e-4 * (h_char / h_ref)**4 if base.upper() in ["P1", "6_P1"] else 1e-4 * (h_char / h_ref)
-        tolerancia_det = max(tol_base, tol_piso) if tol_piso is not None else tol_base
+    if det_tolerance is None:
+        tol_base = 1e-4 * (h_char / h_ref)**4 if basis.upper() in ["P1", "6_P1"] else 1e-4 * (h_char / h_ref)
+        det_tolerance = max(tol_base, floor_tolerance) if floor_tolerance is not None else tol_base
         
-    # 1. Discretização nodal
-    coords, vectors, is_boundary = gerar_malha_cavidade(
+    # 1. Nodal discretization
+    coords, vectors, is_boundary = generate_cavity_mesh(
         Nx=Nx, 
         Ny=Ny, 
         Lx=Lx, 
         Ly=Ly, 
-        tipo_interior=tipo_interior, 
+        interior_type=interior_type, 
         jitter_frac=jitter_frac, 
         seed=seed
     )
     
-    # 2. Montagem das matrizes globais K e M
-    K, M, stats_suporte = montar_matrizes_vnmm_2d(
+    # 2. Assemble global matrices K and M
+    K, M, support_stats = assemble_vnmm_matrices_2d(
         coords=coords, 
         vectors=vectors, 
-        base=base, 
-        tolerancia_det=tolerancia_det,
-        tol_piso=tol_piso,
+        basis=basis, 
+        det_tolerance=det_tolerance,
+        floor_tolerance=floor_tolerance,
         s_div=s_div,
         Ncx=Ncx,
         Ncy=Ncy,
         Lx=Lx,
         Ly=Ly,
-        pontos_por_dir=pontos_por_dir,
-        modo_suporte=modo_suporte,
-        retornar_detalhes_suporte=True
+        points_per_dir=points_per_dir,
+        support_mode=support_mode,
+        return_support_details=True
     )
     
-    # 3. Imposição de Dirichlet homogênea (Paredes PEC)
-    K_red, M_red, idx_internos = aplicar_condicao_pec(K, M, is_boundary)
+    # 3. Enforce homogeneous Dirichlet (PEC walls)
+    K_red, M_red, interior_indices = apply_pec_boundary_conditions(K, M, is_boundary)
     
-    # 4. Solução espectral
-    autovalores_num, autovetores_red = resolver_problema_autovalores(
+    # 4. Spectral solution
+    num_eigenvals, eigenvectors_red = solve_generalized_eigenvalue_problem(
         K_red=K_red, 
         M_red=M_red, 
-        num_autovalores=num_autovalores, 
+        num_eigenvalues=num_eigenvalues, 
         sigma=sigma
     )
     
-    # 5. Comparação com a Tabela 4-1
-    ref_vals = np.array([item[2] for item in MODOS_ANALITICOS_REF[:len(autovalores_num)]])
-    ref_kc = np.array([item[3] for item in MODOS_ANALITICOS_REF[:len(autovalores_num)]])
+    # 5. Comparison against analytical benchmarks
+    ref_vals = np.array([item[2] for item in ANALYTICAL_REFERENCE_MODES[:len(num_eigenvals)]])
+    ref_kc = np.array([item[3] for item in ANALYTICAL_REFERENCE_MODES[:len(num_eigenvals)]])
     
-    kc_num = np.sqrt(autovalores_num)
+    kc_num = np.sqrt(num_eigenvals)
     
-    erros_lambda_pct = np.abs(autovalores_num - ref_vals) / ref_vals * 100.0
-    erros_kc_pct = np.abs(kc_num - ref_kc) / ref_kc * 100.0
+    rel_errors_lambda_pct = np.abs(num_eigenvals - ref_vals) / ref_vals * 100.0
+    rel_errors_kc_pct = np.abs(kc_num - ref_kc) / ref_kc * 100.0
     
-    # Reconstrução dos autovetores globais
-    N_total = len(coords)
-    autovetores_globais = np.zeros((N_total, len(autovalores_num)), dtype=float)
-    autovetores_globais[idx_internos, :] = autovetores_red
+    # Global eigenvector reconstruction
+    total_nodes = len(coords)
+    global_eigenvectors = np.zeros((total_nodes, len(num_eigenvals)), dtype=float)
+    global_eigenvectors[interior_indices, :] = eigenvectors_red
     
     h_max = max(Lx / (Nx - 1), Ly / (Ny - 1))
     
-    return {
+    result = {
         'Nx': Nx,
         'Ny': Ny,
-        'N_total': N_total,
-        'N_internos': len(idx_internos),
-        'N_fronteira': int(np.sum(is_boundary)),
+        'total_nodes': total_nodes,
+        'interior_nodes': len(interior_indices),
+        'boundary_nodes': int(np.sum(is_boundary)),
         'h_max': h_max,
-        'base': base,
+        'basis': basis,
         'coords': coords,
         'vectors': vectors,
         'is_boundary': is_boundary,
-        'autovalores_numericos': autovalores_num,
+        'numerical_eigenvalues': num_eigenvals,
+        'analytical_eigenvalues': ref_vals,
+        'numerical_kc': kc_num,
+        'analytical_kc': ref_kc,
+        'rel_errors_lambda_pct': rel_errors_lambda_pct,
+        'rel_errors_kc_pct': rel_errors_kc_pct,
+        'mean_error_lambda_pct': float(np.mean(rel_errors_lambda_pct)),
+        'max_error_lambda_pct': float(np.max(rel_errors_lambda_pct)),
+        'mean_error_kc_pct': float(np.mean(rel_errors_kc_pct)),
+        'max_error_kc_pct': float(np.max(rel_errors_kc_pct)),
+        'eigenvectors': global_eigenvectors,
+        'K_red': K_red,
+        'M_red': M_red,
+        'mean_k': support_stats['mean_k'],
+        'max_k': support_stats['max_k'],
+        'min_k': support_stats['min_k'],
+        'mean_det': support_stats['mean_det'],
+        'min_det': support_stats['min_det'],
+        'max_det': support_stats['max_det'],
+        'num_integration_points': support_stats['num_integration_points'],
+        'num_support_nodes': support_stats['n_supp'],
+        'support_stats': support_stats,
+        # Portuguese backward compatibility aliases
+        'N_total': total_nodes,
+        'N_internos': len(interior_indices),
+        'N_fronteira': int(np.sum(is_boundary)),
+        'base': basis,
+        'autovalores_numericos': num_eigenvals,
         'autovalores_analiticos': ref_vals,
         'kc_numerico': kc_num,
         'kc_analitico': ref_kc,
-        'erros_lambda_pct': erros_lambda_pct,
-        'erros_kc_pct': erros_kc_pct,
-        'erro_medio_lambda_pct': float(np.mean(erros_lambda_pct)),
-        'erro_max_lambda_pct': float(np.max(erros_lambda_pct)),
-        'erro_medio_kc_pct': float(np.mean(erros_kc_pct)),
-        'erro_max_kc_pct': float(np.max(erros_kc_pct)),
-        'autovetores': autovetores_globais,
-        'K_red': K_red,
-        'M_red': M_red,
-        'k_medio': stats_suporte['k_medio'],
-        'k_max': stats_suporte['k_max'],
-        'k_min': stats_suporte['k_min'],
-        'det_medio': stats_suporte['det_medio'],
-        'det_min': stats_suporte['det_min'],
-        'det_max': stats_suporte['det_max'],
-        'num_pontos_integracao': stats_suporte['num_pontos_integracao'],
-        'n_nos_suporte_selecionados': stats_suporte['n_supp'],
-        'stats_suporte': stats_suporte
+        'erros_lambda_pct': rel_errors_lambda_pct,
+        'erros_kc_pct': rel_errors_kc_pct,
+        'erro_medio_lambda_pct': float(np.mean(rel_errors_lambda_pct)),
+        'erro_max_lambda_pct': float(np.max(rel_errors_lambda_pct)),
+        'erro_medio_kc_pct': float(np.mean(rel_errors_kc_pct)),
+        'erro_max_kc_pct': float(np.max(rel_errors_kc_pct)),
+        'autovetores': global_eigenvectors,
+        'k_medio': support_stats['k_medio'],
+        'k_max': support_stats['k_max'],
+        'k_min': support_stats['k_min'],
+        'det_medio': support_stats['det_medio'],
+        'det_min': support_stats['det_min'],
+        'det_max': support_stats['det_max'],
+        'num_pontos_integracao': support_stats['num_pontos_integracao'],
+        'n_nos_suporte_selecionados': support_stats['n_supp'],
+        'stats_suporte': support_stats
     }
+    return result
+
+
+# Backward compatibility aliases
+aplicar_condicao_pec = apply_pec_boundary_conditions
+resolver_problema_autovalores = solve_generalized_eigenvalue_problem
+resolver_autovalores_cavidade = solve_cavity_eigenvalues

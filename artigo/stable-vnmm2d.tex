@@ -164,7 +164,7 @@
 
     %% Abstract
     \begin{abstract}
-        The Vector Nodal Meshless Method (VNMM) provides a node-based framework for $H(\mathbf{curl})$ vector-field approximation on point clouds. While early formulations relied on structured background subdivisions, extending the method to unconstrained point clouds reveals that the conventional incomplete solenoidal space ($\mathcal{L}^1$) triggers a persistent $\mathcal{O}(1)$ error plateau in curl approximation. This work resolves this limitation through a two-level framework addressing local polynomial consistency and global variational stability. Locally, $\mathcal{L}^1$ is replaced by the complete linear space $\mathcal{P}_1 \times \mathcal{P}_1$, capturing the full field Jacobian, eliminating derivative aliasing, and restoring $\mathcal{O}(h)$ curl convergence. Degenerate stencils are rejected through scale-aware determinant qualification on a dimensionless placement matrix $\widehat{\mathbf{A}}$ coupled with $k$-d tree searches. Globally, we prove that while VNMM exhibits an exact constructive equivalence to lowest-order Whitney edge elements on conforming simplices, dynamic support selection on unconstrained clouds produces a globally non-conforming approximation lacking discrete de Rham sequence exactness. This causes discrete gradient nullspace leakage in curl-curl eigenvalue formulations. We resolve this by incorporating a div-curl regularized Ritz-Galerkin formulation that shifts spurious modes away from the operational spectrum, leaving physical cavity resonances unperturbed. The findings establish that integrating complete vector polynomials, scale-invariant support selection, and variational div-curl regularization provides a robust, stabilized meshless framework for computational electromagnetics across regular and irregular point clouds.
+        The Vector Nodal Meshless Method (VNMM) provides a node-based framework for $H(\mathbf{curl})$ vector-field approximation on point clouds. While early formulations relied on structured background subdivisions, extending the method to unconstrained point clouds reveals that the conventional incomplete solenoidal space ($\mathcal{L}^1$) triggers a persistent $\mathcal{O}(1)$ error plateau in curl approximation. This work resolves this limitation via a two-level framework addressing local polynomial consistency and global variational stability. Locally, $\mathcal{L}^1$ is replaced by the complete linear space $\mathcal{P}_1 \times \mathcal{P}_1$, capturing the full field Jacobian, eliminating derivative aliasing, and restoring observed first-order curl convergence without stagnation. Degenerate stencils are rejected through scale-aware determinant qualification on a dimensionless placement matrix $\widehat{\mathbf{A}}$ coupled with $k$-d tree searches. Globally, although VNMM exhibits exact constructive equivalence to lowest-order Whitney edge elements on conforming simplices, dynamic support stencils on unconstrained clouds destroy global trace conformity and discrete de Rham exactness, causing discrete gradient nullspace leakage in curl-curl eigenvalue formulations. We resolve this by incorporating a div-curl regularized Ritz-Galerkin formulation that shifts spurious modes away from the operational spectrum, leaving physical cavity resonances unperturbed. Numerical benchmarks demonstrate that integrating complete vector polynomials, scale-invariant support selection, and variational div-curl regularization offers an effective stabilized meshless framework exhibiting systematic convergence across the investigated regular and irregular point clouds. At the same time, the formulation currently relies on background cell-based integration (rather than a truly cell-free scheme) and achieves stability empirically for the tested regimes without explicit tangential-jump penalties, defining clear pathways for cell-free and discontinuous Galerkin extensions.
     \end{abstract}
 
     %% Graphical abstract (submitted separately as standalone image file to EABE)
@@ -209,9 +209,23 @@
 
 The numerical simulation of Maxwell's equations is central to modern computational electromagnetics (CEM) \cite{jin2014finite, harrington2001time, monk2003finite}. In CEM, discretizing Maxwell's equations via conventional node-based scalar Finite Element Methods (FEM) is well known to trigger severe pathologies \cite{jin2014finite, bossavit1998computational}: artificial locking of normal discontinuities across material boundaries, inaccurate modeling of edge singularities, and spectral pollution by non-physical spurious modes resulting from the violation of the discrete de Rham complex ($\operatorname{Im}(\nabla) \not\subset \ker(\nabla \times)$) \cite{bossavit1990spurious, boffi1999computational, boffi2013mixed}. Although N\'ed\'elec's edge finite elements (EFEM/Whitney forms) \cite{nedelec1980mixed, monk2003finite} resolve these issues by natively conforming in $H(\mathbf{curl}; \Omega)$, they require high-quality conforming meshes. For complex CAD geometries, moving parts in electrical machinery, and adaptive refinement, mesh generation and distortion repair represent severe computational bottlenecks \cite{idelsohn2006mesh, liu2009mesh, slak2018refined}.
 
-To circumvent mesh constraints, meshless methods construct field approximations directly on unstructured point clouds \cite{liu2009mesh, belytschko1994element}. Early adaptations based on scalar Moving Least Squares (EFG) or local Petrov-Galerkin schemes (MLPG) \cite{viana1999moving, cingoski1998element, atluri2002meshless, fonseca2008imposing, nicomedes2012meshless} approximated Cartesian components ($E_x, E_y$) independently, re-introducing spurious modes and tangential locking unless augmented by costly divergence-free projections or Lagrange multipliers \cite{nicomedes2015mixed, lima2016metodos}. To provide native vector regularity, Lima and Mesquita introduced the Edge Meshless Method (EMM) \cite{lima2017edge}, subsequently equipped by Silva et al. \cite{silva2018new} with N\'ed\'elec-type $\mathcal{L}^1$ vector shape functions. Taking the asymptotic limit as physical edge lengths contract to point-collocated nodes ($L_k \to 0$), Ortiz et al. \cite{ortiz2021creating, ortiz2021nodal, ortiz2023tese} established the Vector Nodal Meshless Method (VNMM), later extended to 3D and periodic problems \cite{goncalves2023vector, goncalves2025tese, goncalves2026periodic}.
+To circumvent mesh constraints, meshless methods construct approximations of the electric field $\vec{E}$ directly on unstructured point clouds \cite{liu2009mesh, belytschko1994element}. Early adaptations based on scalar Moving Least Squares (EFG) or local Petrov-Galerkin schemes (MLPG) \cite{viana1999moving, cingoski1998element, atluri2002meshless, fonseca2008imposing, nicomedes2012meshless} approximated Cartesian components ($E_x, E_y$) independently. Because such approximations artificially enforce $C^0$ continuity on all vector components across material boundaries, they re-introduced spectral pollution and tangential locking unless augmented by costly divergence-free projections or Lagrange multipliers \cite{nicomedes2015mixed, lima2016metodos}.
 
-In the VNMM, the 1D continuous edge is replaced by a vector node $(P_i, \vec{t}_i)$ endowed with a unit director $\vec{t}_i$ \cite{ortiz2021nodal, ortiz2023tese}. Assigning a single directional projection degree of freedom ($e_i = \vec{E}(P_i) \cdot \vec{t}_i$) per node and aligning boundary directors tangent to interfaces enables natural nodal collocation of tangential continuity and PEC conditions ($e_i = 0$), preserving single-DoF scalar efficiency while retaining local vector regularity \cite{ortiz2021nodal, goncalves2025tese}. Table~\ref{tab:meshless_comparison} compares conventional CEM discretizations with the stabilized VNMM developed herein.
+The Point Interpolation Method (PIM) developed by Liu and Gu \cite{liu2001point} established a purely interpolating framework: by inverting a local moment matrix of size matching the polynomial basis dimension, PIM constructs shape functions that satisfy the Kronecker delta property, allowing exact and straightforward imposition of essential boundary conditions. However, PIM was also conceived as an inherently scalar formulation.
+
+To provide native vector regularity in computational electromagnetics while retaining the interpolating capability of PIM, Lima and Mesquita introduced the Edge Meshless Method (EMM) \cite{lima2017edge}, subsequently equipped by Silva et al. \cite{silva2018new} with N\'ed\'elec-type $\mathcal{L}^1$ vector shape functions. Rather than interpolating scalar point values, the EMM adapted the interpolating philosophy of PIM to vector fields by formulating the interpolation over the circuital line integral of the vector field along a finite edge segment:
+\begin{equation}
+    e_k = \int_{L_k} \vec{E} \cdot d\boldsymbol{\ell}.
+    \label{eq:emm_circulation_dof}
+\end{equation}
+By taking the asymptotic limit as physical edge lengths contract to point-collocated nodes ($L_k \to 0$ with $d\boldsymbol{\ell} \to \vec{t}_k dl$), Ortiz et al. \cite{ortiz2021creating, ortiz2021nodal, ortiz2023tese} established the Vector Nodal Meshless Method (VNMM), later extended to 3D and periodic problems \cite{goncalves2023vector, goncalves2025tese, goncalves2026periodic}.
+
+In this continuous-to-nodal limit, the VNMM inherits the interpolating character of PIM: its vector shape functions satisfy the Kronecker delta property with respect to the discrete degrees of freedom, but what is now interpolated is the local directional projection of the vector field along the node's unit vector director:
+\begin{equation}
+    e_i = \vec{E}(P_i) \cdot \vec{t}_i.
+    \label{eq:vnmm_projection_dof}
+\end{equation}
+In the VNMM, the 1D continuous edge is therefore replaced by a vector node $(P_i, \vec{t}_i)$ endowed with a unit director $\vec{t}_i$ \cite{ortiz2021nodal, ortiz2023tese}. Assigning a single directional projection degree of freedom ($e_i$) per node directly overcomes the fundamental limitation of component-wise vector meshless methods: instead of allocating two independent degrees of freedom ($E_x, E_y$) per node and artificially locking normal jumps across interfaces, the VNMM preserves single-DoF scalar efficiency while aligning boundary and interface directors tangentially. This enables direct nodal collocation of tangential continuity and essential PEC boundary conditions ($e_i = 0$), while permitting natural, unconstrained jumps in the normal component across material interfaces without Lagrange multipliers \cite{ortiz2021nodal, goncalves2025tese}. Table~\ref{tab:meshless_comparison} compares conventional CEM discretizations with the stabilized VNMM developed herein.
 
 \begin{table}[!htbp]
     \centering
@@ -229,64 +243,66 @@ In the VNMM, the 1D continuous edge is replaced by a vector node $(P_i, \vec{t}_
         >{\centering\arraybackslash}X
         @{}}
         \toprule
-        \textbf{Method}                                                                  &
-        \textbf{Mesh Req.}                                                               &
-        \textbf{DoF Type}                                                                &
-        \textbf{$H(\mathbf{curl})$ Trace}                                                &
-        \textbf{Spurious Control}                                                        &
-        \textbf{Point-Cloud Curl Rate}                                                     \\
+        \textbf{Method}                                                                      &
+        \textbf{Mesh Req.}                                                                   &
+        \textbf{DoF Type}                                                                    &
+        \textbf{$H(\mathbf{curl})$ Trace}                                                    &
+        \textbf{Spurious Control}                                                            &
+        \textbf{Point-Cloud Curl Rate}                                                         \\
         \midrule
-        \textbf{Edge FEM (EFEM)} \cite{nedelec1980mixed, monk2003finite, boffi2013mixed} &
-        Conformal mesh                                                                   &
-        Edge circulation $\int_{E_k} \vec{E} \cdot d\boldsymbol{\ell}$                   &
-        Natively conforming ($\mathbf{n} \times [\vec{E}] = \mathbf{0}$)                 &
-        Exact discrete de Rham complex                                                   &
-        $\mathcal{O}(h^1)$ (simplex-based)                                                 \\
+        \textbf{Edge FEM (EFEM)} \cite{nedelec1980mixed, monk2003finite, boffi2013mixed}     &
+        Conformal mesh                                                                       &
+        Edge circulation $\int_{E_k} \vec{E} \cdot d\boldsymbol{\ell}$                       &
+        Natively conforming ($\mathbf{n} \times [\vec{E}] = \mathbf{0}$)                     &
+        Exact discrete de Rham complex                                                       &
+        $\mathcal{O}(h^1)$ (simplex-based)                                                     \\
         \addlinespace
-        \textbf{Scalar EFG / MLS} \cite{belytschko1994element, cingoski1998element}      &
-        None (Cloud)                                                                     &
-        Component splitting ($E_x, E_y$)                                                 &
-        Artificial ($C^0$ normal locking / penalty)                                      &
-        Divergence penalty                                                               &
-        $\mathcal{O}(h^p)$ (high-order MLS)                                                \\
+        \textbf{Scalar EFG / MLS} \cite{belytschko1994element, cingoski1998element}          &
+        None (Cloud)                                                                         &
+        Component splitting ($E_x, E_y$)                                                     &
+        Artificial ($C^0$ normal locking / penalty)                                          &
+        Divergence penalty                                                                   &
+        $\mathcal{O}(h^p)$ (high-order MLS)                                                    \\
         \addlinespace
-        \textbf{Vector MLPG} \cite{atluri2002meshless, nicomedes2012meshless}            &
-        None (Local subdomains)                                                          &
-        Component splitting ($E_x, E_y$)                                                 &
-        Lagrange multipliers / penalty                                                   &
-        Divergence-free projection                                                       &
-        $\mathcal{O}(h^p)$ (local MLS integration)                                         \\
+        \textbf{Vector MLPG} \cite{atluri2002meshless, nicomedes2012meshless}                &
+        None (Local subdomains)                                                              &
+        Component splitting ($E_x, E_y$)                                                     &
+        Lagrange multipliers / penalty                                                       &
+        Divergence-free projection                                                           &
+        $\mathcal{O}(h^p)$ (local MLS integration)                                             \\
         \addlinespace
-        \textbf{RBF-FD / RPIM} \cite{liu2005introduction, slak2018refined}               &
-        None (Cloud)                                                                     &
-        Component splitting ($E_x, E_y$)                                                 &
-        Collocation / ghost penalty                                                      &
-        Divergence cleaning / penalty                                                    &
-        $\mathcal{O}(h^p)$ (radial basis differentiation)                                  \\
+        \textbf{Scalar PIM / RPIM} \cite{liu2001point, liu2005introduction, slak2018refined} &
+        None (Cloud)                                                                         &
+        Component splitting ($E_x, E_y$)                                                     &
+        Collocation / ghost penalty                                                          &
+        Divergence cleaning / penalty                                                        &
+        $\mathcal{O}(h^p)$ (polynomial/radial interpolation)                                   \\
         \addlinespace
-        \textbf{Original VNMM ($\mathcal{L}^1$)} \cite{ortiz2021nodal, ortiz2023tese}    &
-        Planar / Delaunay subdivision                                                    &
-        Projection $e_k = \vec{E}(P_k) \cdot \vec{t}_k$                                  &
-        Natural tangential alignment                                                     &
-        Conditional (structured supports)                                                &
-        $\mathcal{O}(h^1)$ on meshes; $\mathcal{O}(1)$ plateau on clouds                   \\
+        \textbf{Original VNMM ($\mathcal{L}^1$)} \cite{ortiz2021nodal, ortiz2023tese}        &
+        Planar / Delaunay subdivision                                                        &
+        Projection $e_k = \vec{E}(P_k) \cdot \vec{t}_k$                                      &
+        Natural tangential alignment                                                         &
+        Conditional (structured supports)                                                    &
+        $\mathcal{O}(h^1)$ on meshes; $\mathcal{O}(1)$ plateau on clouds                       \\
         \addlinespace
-        \textbf{Proposed VNMM ($\mathcal{P}^1$)}                                         &
-        None (Arbitrary point clouds)                                                    &
-        Projection $e_k = \vec{E}(P_k) \cdot \vec{t}_k$                                  &
-        Natural tangential alignment                                                     &
-        Divergence penalty                                                               &
-        Consistent $\mathcal{O}(h^1)$ via full Jacobian space                              \\
+        \textbf{Proposed VNMM ($\mathcal{P}^1$)}                                             &
+        None (Arbitrary point clouds)                                                        &
+        Projection $e_k = \vec{E}(P_k) \cdot \vec{t}_k$                                      &
+        Natural tangential alignment                                                         &
+        Divergence penalty                                                                   &
+        $\mathcal{O}(h^1)$ expected \newline (obs. $p \in [0.75, 0.97]$)                      \\
         \bottomrule
     \end{tabularx}
 \end{table}
 
-\subsection{The Curl Stagnation Bottleneck in Arbitrary Supports}
+\subsection{Local and Global Bottlenecks on Unconstrained Point Clouds: Curl Stagnation, Stencil Degeneracy, and Spectral Pollution}
 \label{subsec:curl_stagnation_bottleneck}
 
 Despite the mathematical elegance of the original VNMM \cite{ortiz2021nodal, ortiz2023tese}, early formulations achieved convergence by relying on structured support selections (e.g., macro-element subdivisions or Delaunay triangulations), where closed-contour circulation cancellation prevented curl error stagnation. However, reliance on underlying meshes undermines the core meshless premise of unconstrained point-cloud discretization \cite{liu2009mesh, goncalves2025tese}.
 
-Under automated stencil selection ($k$-d tree queries) on unconstrained point clouds, the incomplete solenoidal basis $\mathcal{L}^1$ breaks down: \textbf{the numerical curl $(\nabla \times \vec{E}^h)_z$ fails to converge, exhibiting an $\mathcal{O}(1)$ error plateau under spatial refinement} (Section~\ref{subsec:L1_aliasing_analysis}). Unlike conforming edge elements where Stokes' theorem guarantees boundary circulation cancellation \cite{nedelec1980mixed, monk2003finite}, point collocation lacks closed-contour integration. In $\mathcal{L}^1$, omitting dilatational gradients ($\partial E_x/\partial x$, $\partial E_y/\partial y$) prevents shape functions from capturing the complete first-order variation; on arbitrary clouds, unrepresented modes contaminate the rotational degree of freedom through $\mathbf{A}^{-1}$, producing persistent modal aliasing.
+Under automated stencil selection ($k$-d tree queries) on unconstrained point clouds, the incomplete solenoidal basis $\mathcal{L}^1$ breaks down: \textbf{the numerical curl $(\nabla \times \vec{E}^h)_z$ fails to converge, exhibiting an $\mathcal{O}(1)$ error plateau under spatial refinement} (Section~\ref{subsec:L1_aliasing_analysis}). Unlike conforming edge elements where Stokes' theorem guarantees boundary circulation cancellation \cite{nedelec1980mixed, monk2003finite}, point collocation lacks closed-contour integration. In $\mathcal{L}^1$, omitting dilatational gradients ($\partial E_x/\partial x$, $\partial E_y/\partial y$) prevents shape functions from capturing the complete first-order variation; on arbitrary clouds, unrepresented modes contaminate the rotational degree of freedom, producing persistent modal aliasing.
+
+Additionally, because the VNMM inherits the interpolating framework of PIM, shape functions are constructed by inverting a square placement matrix $\mathbf{A}$ matching the basis dimension ($3 \times 3$ for $\mathcal{L}^1$, $6 \times 6$ for $\mathcal{P}^1$). Consequently, like the moment matrices in classic scalar PIM \cite{liu2001point}, arbitrary clouds and directors can generate geometrically degenerate stencils where $\det(\mathbf{A}) \to 0$, corrupting matrix conditioning.
 
 Furthermore, dynamic support stencils render the global meshless space non-conforming ($V_h \not\subset H(\mathbf{curl}; \Omega)$), breaking discrete de Rham exactness and leaking gradient nullspaces into the non-zero spectrum as spurious modes. Stabilizing the VNMM on unconstrained clouds therefore requires a two-level approach: completing the local polynomial basis ($\mathcal{L}^1 \to \mathcal{P}^1$) to resolve the local Jacobian, and employing a div-curl regularized Ritz-Galerkin weak formulation to restore global spectral purity (Section~\ref{sec:variational_formulation}).
 
@@ -343,7 +359,7 @@ for all nodes $k$ belonging to the local support domain. Property~\eqref{eq:vect
 \subsubsection{Enforcement of PEC Boundary Conditions and Remarks on Material Interfaces}
 The vector Kronecker delta property~\eqref{eq:vector_kronecker_delta} enables a direct, unconstrained nodal collocation of essential Dirichlet boundary conditions and tangential field continuity without requiring background auxiliary meshes, penalty parameters, or Lagrange multipliers \cite{goncalves2023vector, ortiz2021nodal}.
 
-For nodes lying on Perfect Electric Conductor (PEC) boundaries $\Gamma_{\text{PEC}}$, where the physical boundary condition requires $\hat{n} \times \vec{E} = \mathbf{0}$ ($\hat{n}$ being the outward unit normal to $\partial\Omega$), the associated vector director $\vec{t}_k$ is aligned strictly tangent to the boundary contour:
+For nodes lying on Perfect Electric Conductor (PEC) boundaries $\Gamma_{\text{PEC}}$, where the physical boundary condition requires $\hat{n} \times \vec{E} = \mathbf{0}$ ($\hat{n}$ being the outward unit normal to $\partial\Omega$), the associated vector director $\vec{t}_k$ is aligned tangent to the boundary contour:
 \begin{equation}
     \vec{t}_k \parallel \partial\Omega \implies \hat{n}(\mathbf{x}_k) \cdot \vec{t}_k = 0.
 \end{equation}
@@ -365,7 +381,7 @@ From a functional analysis viewpoint, the pointwise nodal collocation condition~
     \hat{n} \times \vec{E}^h = \mathbf{0} \quad \text{everywhere on } \Gamma_{\text{PEC}}.
     \label{eq:pec_continuous_trace}
 \end{equation}
-On conforming simplicial triangulations (Section~\ref{subsubsec:formal_proof_dual_whitney}), internal DoFs have identically vanishing tangential traces along boundary edges, so the nodal constraint~\eqref{eq:pec_nodal_collocation} guarantees that Eq.~\eqref{eq:pec_continuous_trace} holds everywhere along $\Gamma_{\text{PEC}}$. On unconstrained point clouds, however, the global approximation is non-conforming ($V_h \not\subset H(\mathbf{curl}; \Omega)$). For points $\mathbf{x} \in \Gamma_{\text{PEC}}$ between nodes, dynamic stencils $\mathcal{S}(\mathbf{x})$ include interior nodes with $e_i \neq 0$ whose shape functions do not vanish tangentially along $\partial\Omega$. Setting $e_k = 0$ enforces the PEC condition strictly at boundary nodes $\mathbf{x}_k$, while continuous trace satisfaction is variational. Similarly, on curved boundaries with tangent directors $\vec{t}_k = \hat{\tau}(\mathbf{x}_k)$, the condition is collocated directly without polygonization, while the trace between nodes converges under spatial refinement.
+On conforming simplicial triangulations (Section~\ref{subsubsec:formal_proof_dual_whitney}), internal DoFs have identically vanishing tangential traces along boundary edges, so the nodal constraint~\eqref{eq:pec_nodal_collocation} guarantees that Eq.~\eqref{eq:pec_continuous_trace} holds everywhere along $\Gamma_{\text{PEC}}$. On unconstrained point clouds, however, the global approximation is non-conforming ($V_h \not\subset H(\mathbf{curl}; \Omega)$). For points $\mathbf{x} \in \Gamma_{\text{PEC}}$ between nodes, dynamic stencils $\mathcal{S}(\mathbf{x})$ include interior nodes with $e_i \neq 0$ whose shape functions do not vanish tangentially along $\partial\Omega$. Setting $e_k = 0$ enforces the PEC condition at boundary nodes $\mathbf{x}_k$, while continuous trace satisfaction is variational. Similarly, on curved boundaries with tangent directors $\vec{t}_k = \hat{\tau}(\mathbf{x}_k)$, the condition is collocated directly without polygonization, while the trace between nodes converges under spatial refinement.
 
 \paragraph{Material Interfaces and Homogeneous Scope}
 Assigning unit directors tangent to material interfaces $\Gamma_{\text{int}}$ ($\vec{t}_i = \hat{\tau}(\mathbf{x}_i)$) enables direct collocation of tangential continuity ($\vec{E}^h_1 \cdot \vec{t}_i = \vec{E}^h_2 \cdot \vec{t}_i = e_i$) while permitting the normal field to undergo a physical step discontinuity ($E_{n1} \neq E_{n2}$), avoiding the normal locking of scalar $C^0$ meshless schemes. Normal flux continuity ($D_{n1} = D_{n2} \iff \epsilon_{r1} E_{n1} = \epsilon_{r2} E_{n2}$) is enforced variationally by the weak form and divergence penalty. Rigorous handling of heterogeneous media requires partitioned support stencils (e.g., multi-tree $k$-d trees \cite{parreira2006efficient}) to prevent unphysical gradient smoothing across subdomains; because this work focuses on homogeneous benchmarks ($\epsilon_r = 1, \mu_r = 1$), systematic treatment of heterogeneous interfaces is deferred to future work (Section~\ref{subsec:future_works}).
@@ -459,7 +475,7 @@ Let $T \subset \mathbb{R}^2$ be an arbitrary non-degenerate triangular simplex w
 \end{theorem}
 
 \begin{proof}[Outline of Proof]
-    The constructive equivalence follows from two geometric and algebraic properties: (i) both the Whitney 1-form space $\mathcal{W}(T)$ and the VNMM $\mathcal{L}^1$ basis span identical 3-dimensional vector polynomial spaces; and (ii) the tangential projection $\vec{u}(\mathbf{x}) \cdot \vec{t}_k$ of any affine field $\vec{u} \in \mathcal{L}^1$ is strictly invariant along each edge $e_k$. Consequently, boundary circulation integrals reduce to midpoint evaluations scaled by the edge length, $\oint_{e_k} \vec{u} \cdot d\boldsymbol{\ell} = L_k (\vec{u}(M_k) \cdot \vec{t}_k)$, establishing an exact unisolvent isomorphism between Whitney circulations and VNMM point-collocated directional projections ($\vec{N}_k \equiv L_k \vec{w}_k$). The complete five-step constructive proof is provided in \ref{app:dual_whitney_proof}.
+    The constructive equivalence follows from two geometric and algebraic properties: (i) both the Whitney 1-form space $\mathcal{W}(T)$ and the VNMM $\mathcal{L}^1$ basis span identical 3-dimensional vector polynomial spaces; and (ii) the tangential projection $\vec{u}(\mathbf{x}) \cdot \vec{t}_k$ of any affine field $\vec{u} \in \mathcal{L}^1$ is invariant along each edge $e_k$. Consequently, boundary circulation integrals reduce to midpoint evaluations scaled by the edge length, $\oint_{e_k} \vec{u} \cdot d\boldsymbol{\ell} = L_k (\vec{u}(M_k) \cdot \vec{t}_k)$, establishing an exact unisolvent isomorphism between Whitney circulations and VNMM point-collocated directional projections ($\vec{N}_k \equiv L_k \vec{w}_k$). The complete five-step constructive proof is provided in \ref{app:dual_whitney_proof}.
 \end{proof}
 
 As graphically illustrated in Fig.~\ref{fig:whitney_vnmm_dual_equivalence}d and~\ref{fig:whitney_vnmm_dual_equivalence}e (and verified numerically in Section~\ref{subsec:conforming_dual_equivalence}), the normalized VNMM $\mathcal{L}^1$ shape functions $\frac{1}{L_k}\vec{N}_k$ and canonical Whitney 1-forms $\vec{w}_k$ match identically across the simplex $T$ down to floating-point machine precision ($\approx 10^{-16}$).
@@ -608,7 +624,7 @@ Unlike the incomplete $\mathcal{L}^1$ space, which artificially forces longitudi
 \section{Algebraic Conditioning and Support Selection}
 \label{sec:conditioning}
 
-The construction of vector nodal shape functions $\vec{N}_i$ in the Vector Nodal Meshless Method (VNMM) relies on solving the local linear placement system $\mathbf{A} \boldsymbol{\beta}_i = \mathbf{L}_i$ (Eq.~\eqref{eq:linear_system_P1}). A fundamental prerequisite for the existence, uniqueness, and numerical stability of these vector shape functions is that the local moment placement matrix $\mathbf{A}$ remains strictly non-singular ($|\det(\mathbf{A})| > 0$).
+The construction of vector nodal shape functions $\vec{N}_i$ in the Vector Nodal Meshless Method (VNMM) relies on solving the local linear placement system $\mathbf{A} \boldsymbol{\beta}_i = \mathbf{L}_i$ (Eq.~\eqref{eq:linear_system_P1}). A necessary condition for the existence, uniqueness, and numerical stability of these vector shape functions is that the local moment placement matrix $\mathbf{A}$ remains non-singular ($|\det(\mathbf{A})| > 0$).
 
 Unlike scalar meshless formulations where matrix singularity is dictated purely by spatial nodal distributions (e.g., node co-location or spatial co-linearity), the conditioning of $\mathbf{A}$ in the VNMM is intrinsically coupled to both the spatial coordinates $\mathbf{x}_k = (x_k, y_k)$ and the orientation of the unit vector directors $\vec{t}_k = [t_{kx}, t_{ky}]^T$ assigned to each support node. In the following subsections, the geometric singularity modes of the 3-node basis $\mathcal{L}^1$ are reviewed (Section~\ref{subsec:singularities_L1}), while Section~\ref{subsec:singularities_P1} establishes the Null-Space Orthogonality Principle governing the complete 6-node basis $\mathcal{P}^1$, providing the mathematical foundation for the automated support selection strategy developed in Section~\ref{subsec:scale_invariant_criterion}.
 
@@ -669,7 +685,7 @@ In the 24-dimensional configuration space of support node coordinates and direct
 \subsection{Automated Support Selection Algorithm via Scale-Invariant Dimensionless Matrix}
 \label{sec:support_selection_algorithm}
 
-As established in Section~\ref{subsec:singularities_P1}, matrix singularity in the VNMM local placement system ($\mathbf{A} \boldsymbol{\beta}_i = \mathbf{L}_i$) is governed by the Null-Space Orthogonality Principle, forming an algebraic hypersurface in configuration space. Because singular and near-singular configurations arise whenever nodal directors approach pointwise orthogonality to an affine field in $\mathcal{P}^1$---regardless of whether the point distribution appears geometrically well-spread---heuristic geometric selection schemes relying on conditional decision trees are fundamentally incomplete and fragile.
+As established in Section~\ref{subsec:singularities_P1}, matrix singularity in the VNMM local placement system ($\mathbf{A} \boldsymbol{\beta}_i = \mathbf{L}_i$) is governed by the Null-Space Orthogonality Principle, forming an algebraic hypersurface in configuration space. Because singular and near-singular configurations arise whenever nodal directors approach pointwise orthogonality to an affine field in $\mathcal{P}^1$---regardless of whether the point distribution appears geometrically well-spread---heuristic geometric selection schemes relying on conditional decision trees are incomplete and unreliable.
 
 In contrast, evaluating the magnitude of the determinant $|\det(\mathbf{A}_{6\times6})|$ of the local placement matrix serves as a unified algebraic filter against exact and near-singular configurations. Because $\mathbf{A}_{6\times6}$ incorporates both spatial coordinates and vector director projections within a single operator, enforcing $|\det(\mathbf{A}_{6\times6})| \ge \mathrm{Tol}$ simultaneously screens out all configurations on the null-space orthogonality hypersurface as well as candidate sextets in their ill-conditioned near-singular vicinity.
 
@@ -825,10 +841,10 @@ The classical, unregularized variational problem seeks eigenpairs $(\lambda, \ve
     \int_{\Omega} \frac{1}{\mu_r} (\nabla \times \vec{W})_z (\nabla \times \vec{E})_z \, d\Omega = \lambda \int_{\Omega} \epsilon_r \vec{W} \cdot \vec{E} \, d\Omega, \quad \forall \vec{W} \in \mathcal{S}.
     \label{eq:unregularized_weak_form}
 \end{equation}
-While Eq.~\eqref{eq:unregularized_weak_form} is spectrally well-behaved when discretized using globally conforming N\'ed\'elec edge elements (where exact de Rham sequence preservation confines the infinite-dimensional static gradient nullspace strictly to $\lambda = 0$), implementing this standard formulation directly within a meshless framework triggers severe spectral contamination: non-physical, highly oscillatory spurious modes infiltrate the low-frequency physical spectrum.
+While Eq.~\eqref{eq:unregularized_weak_form} is spectrally well-behaved when discretized using globally conforming N\'ed\'elec edge elements (where exact de Rham sequence preservation confines the infinite-dimensional static gradient nullspace to $\lambda = 0$), implementing this standard formulation directly within a meshless framework triggers severe spectral contamination: non-physical, highly oscillatory spurious modes infiltrate the low-frequency physical spectrum.
 
 
-\subsubsection{Theoretical Origin: From Global Non-Conformity to Gradient Leakage}
+\subsubsection{Non-Conforming Variational Structure and Gradient Leakage}
 \label{subsubsec:theoretical_origin_leakage}
 In standard Edge Finite Element Formulations (EFEM), the discrete space is globally $H(\mathbf{curl})$-conforming ($V_h \subset \mathcal{S}$) because shared tangential degrees of freedom across conforming element facets guarantee exact tangential trace continuity ($\hat{n} \times [\vec{E}^h] = \mathbf{0}$) \cite{monk2003finite, bossavit1998computational}. Under this global conformity, the discrete de Rham complex property $\operatorname{Im}(\nabla) \subset \ker(\nabla \times)$ holds exactly: irrotational gradient fields ($\vec{E} = \nabla \phi$) yield an identically zero curl ($\nabla \times (\nabla \phi) \equiv \mathbf{0}$) and map directly into the zero eigenvalue subspace ($\lambda = 0$), preventing spectrum contamination without auxiliary constraints \cite{monk2003finite, boffi1999computational, boffi2013mixed}.
 
@@ -837,31 +853,37 @@ In contrast, on unconstrained point clouds, the assembled meshless VNMM vector a
     V_h \not\subset \mathcal{S} \subset H(\mathbf{curl}; \Omega).
     \label{eq:nonconforming_space}
 \end{equation}
-Although each local vector shape function $\vec{N}_i(\mathbf{x})$ possesses local $H(\mathbf{curl})$ regularity within its local support stencil (Section~\ref{subsec:complete_P1_basis}), active support stencils are selected dynamically across the domain via $k$-d tree spatial queries. Consequently:
+Although each local shape function $\vec{N}_i(\mathbf{x})$ possesses local $H(\mathbf{curl})$ regularity within its local support stencil (Section~\ref{subsec:complete_P1_basis}), active support stencils are determined dynamically across the domain via $k$-d tree spatial queries. Consequently, discrete fields exhibit small tangential trace discontinuities across the internal boundaries where support configurations change.
+
+In the present formulation, the curl and divergence of the discrete field are evaluated using the classical derivatives of the local VNMM interpolants directly at the background integration points. Bilinear forms are then assembled from these pointwise differential quantities over the background cells. In the absence of explicit interface jump terms or Lagrange multipliers across stencil transitions, this procedure constitutes an elementwise (pointwise) evaluation of the differential operators, rather than an evaluation of the full distributional derivatives associated with a globally conforming $H(\mathbf{curl})$ space.
+
+Accordingly, the discrete scheme represents a non-conforming variational approximation of the continuous Maxwell problem. Its numerical consistency, spectral correctness, and stability cannot be inferred solely from continuous variational theorems or local polynomial completeness; they must be assessed in conjunction with support transitions, boundary constraint enforcement, numerical quadrature, and volumetric regularization. Within the electromagnetic eigenvalue problem, this global non-conformity triggers two interrelated spectral mechanisms:
 \begin{enumerate}
-    \item \textbf{Non-Inheritance of Discrete de Rham Exactness:} Because tangential traces suffer minor non-polynomial jumps across shifting support boundaries, the discrete approximation does not inherit the exactness of the discrete de Rham sequence. Specifically, discrete gradient fields fail to preserve the irrotational property during quadrature-based evaluation:
+    \item \textbf{Non-Inheritance of Discrete de Rham Exactness:} Because tangential traces suffer inter-stencil jumps across shifting support boundaries, the discrete approximation does not inherit the exactness of the continuous de Rham complex. Specifically, discrete gradient fields fail to maintain an identically vanishing numerical curl at integration points:
           \begin{equation}
               \nabla_h \times \nabla_h \phi_h \neq \mathbf{0}.
               \label{eq:grad_curl_nonvanishing}
           \end{equation}
-    \item \textbf{Discrete Gradient Nullspace Leakage:} Because $\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$ at background quadrature points, non-zero numerical curl residues leak the infinite-dimensional static gradient nullspace into the non-zero discrete spectrum, causing non-physical, highly oscillatory spurious modes to infiltrate the physical resonance band.
-    \item \textbf{The Methodological Chain:} This establishes the cohesive architectural chain of the proposed framework:
-          \begin{equation}
-              \boxed{
-                  \begin{aligned}
-                      \mathcal{L}^1 \text{ (derivative defect)}        & \longrightarrow \mathcal{P}^1 \text{ (local completeness)}                \\
-                                                                       & \;\Downarrow                                                              \\
-                      \text{dynamic supports}                          & \longrightarrow V_h \not\subset H(\mathbf{curl}) \text{ (non-conformity)} \\
-                                                                       & \;\Downarrow                                                              \\
-                      \text{loss of de Rham exactness}                 & \longrightarrow \text{gradient leakage (spurious modes)}                  \\
-                                                                       & \;\Downarrow                                                              \\
-                      \mathbf{K}_{\mathrm{div}} \text{ regularization} & \longrightarrow \text{spectral shifting of spurious modes}
-                  \end{aligned}
-              }
-              \label{eq:conceptual_chain}
-          \end{equation}
-          This causal chain demonstrates that while local polynomial completeness ($\mathcal{P}^1$) is indispensable to resolve the local Jacobian and eliminate derivative aliasing, clearing the operational spectrum from non-conforming gradient leakage on unconstrained point clouds fundamentally requires shifting spurious modes through the divergence penalty operator developed next.
+    \item \textbf{Discrete Gradient Nullspace Leakage:} Because $\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$ at background quadrature points, non-zero numerical curl residues leak the infinite-dimensional static gradient nullspace into the non-zero discrete spectrum, causing non-physical, highly oscillatory spurious modes to corrupt the physical resonance band.
 \end{enumerate}
+
+\paragraph{The Methodological Chain}
+To counteract these non-conforming mechanisms while preserving the flexibility of a point cloud without topological meshes, the proposed framework establishes a cohesive architectural chain:
+\begin{equation}
+    \boxed{
+        \begin{aligned}
+            \mathcal{L}^1 \text{ (derivative defect)}        & \longrightarrow \mathcal{P}^1 \text{ (local completeness)}                \\
+                                                             & \;\Downarrow                                                              \\
+            \text{dynamic supports}                          & \longrightarrow V_h \not\subset H(\mathbf{curl}) \text{ (non-conformity)} \\
+                                                             & \;\Downarrow                                                              \\
+            \text{loss of de Rham exactness}                 & \longrightarrow \text{gradient leakage (spurious modes)}                  \\
+                                                             & \;\Downarrow                                                              \\
+            \mathbf{K}_{\mathrm{div}} \text{ regularization} & \longrightarrow \text{spectral shifting of spurious modes}
+        \end{aligned}
+    }
+    \label{eq:conceptual_chain}
+\end{equation}
+This causal progression demonstrates that while local polynomial completeness ($\mathcal{P}^1$) is indispensable to resolve the local Jacobian and eliminate derivative aliasing, clearing the operational spectrum from non-conforming gradient leakage on unconstrained point clouds requires shifting spurious modes through the divergence penalty operator developed next.
 
 \subsubsection{Div-Curl Regularized Weak Formulation}
 \label{subsubsec:div_curl_weak_form}
@@ -890,7 +912,16 @@ with individual entries of the primary curl-curl stiffness matrix defined by:
     \label{eq:K_curl_definition}
 \end{equation}
 
-The interaction between divergence penalization, nullspace control, and physical field fidelity is structured into four complementary mechanisms \cite{monk2003finite, bossavit1998computational, boffi2013mixed}:
+\paragraph{Consistency, Stability, and Scope of the Discrete Scheme}
+To clearly distinguish the mathematical properties of the discrete scheme, three conceptual levels must be differentiated:
+\begin{enumerate}
+    \item \textbf{Local Polynomial Consistency:} The complete $\mathcal{P}^1$ basis provides local polynomial completeness and enables the exact reproduction of affine vector fields within the corresponding interpolation stencils. This property supports the consistency of the local field approximation and its first-order spatial derivatives.
+    \item \textbf{Algebraic Spectral Regularization:} The div-curl penalty adds a symmetric positive-semidefinite contribution $s_{\mathrm{div}} \mathbf{K}_{\mathrm{div}}$ associated with the discrete divergence, designed to penalize irrotational gradient states that exhibit non-vanishing numerical curl residues due to discrete non-conformity.
+    \item \textbf{Non-Conforming Boundaries and Scope:} These properties do not establish global $H(\mathbf{curl})$ conformity or, by themselves, a uniform stability estimate for the assembled non-conforming method; a dedicated analysis of tangential jumps and stability limitations is formalized in Section~\ref{subsubsec:tangential_jump_limitations}.
+\end{enumerate}
+
+\paragraph{Operational Mechanisms of Divergence Penalization}
+With these theoretical boundaries established, the operational interaction between divergence penalization, nullspace control, and physical field fidelity is structured into four complementary mechanisms \cite{monk2003finite, bossavit1998computational, boffi2013mixed}:
 \begin{enumerate}
     \item \textbf{Volumetric Regularization and Domain Topology:} The penalty term $s_{\mathrm{div}} \int_\Omega (\nabla \cdot \vec{W})(\nabla \cdot \vec{E}) \, d\Omega$ provides elliptic regularization in $H(\mathbf{curl}) \cap H(\mathrm{div})$ \cite{monk2003finite, boffi2013mixed}. In simply connected domains with homogeneous PEC walls, the static curl nullspace $\ker(\nabla \times) = \nabla H_0^1(\Omega)$ contains no non-trivial harmonic fields ($\Delta \phi = 0 \implies \phi \equiv 0$), ensuring that all static gradient fields have non-zero divergence ($\Delta \phi \neq 0$) and are penalizable (multiply connected domains or re-entrant corners would require cuts or weighted regularization \cite{bossavit1998computational, gross2004electromagnetic, costabel1991coercive, costabel2002weighted}).
     \item \textbf{Selective Spectral Shifting via Divergence Energy:} Upon activating $s_{\mathrm{div}} \mathbf{K}_{\mathrm{div}}$, the discrete Rayleigh quotient expands as:
@@ -899,14 +930,28 @@ The interaction between divergence penalization, nullspace control, and physical
               \label{eq:rayleigh_penalty_expansion}
           \end{equation}
           Because non-physical gradient states have $\nabla \cdot (\nabla \phi) = \Delta \phi \neq 0$, their divergence energy shifts their eigenvalues upward proportional to $s_{\mathrm{div}}$, clearing the low-frequency operational bandwidth (Sections~\ref{subsubsec:modewise_validation} and~\ref{subsubsec:s_div_sensitivity}).
-    \item \textbf{Metric for Solenoidal Field Integrity ($R_{\mathrm{div}}$):} We define the discrete divergence-to-curl energy quotient:
+    \item \textbf{Metric for Solenoidal Field Integrity and Mode Classification ($R_{\mathrm{div}}$):} We define the discrete divergence-to-curl energy quotient:
           \begin{equation}
-              R_{\mathrm{div}} \triangleq \frac{\mathbf{e}^T \mathbf{K}_{\mathrm{div}} \mathbf{e}}{\mathbf{e}^T \mathbf{K}_{\mathrm{curl}} \mathbf{e}}.
+              R_{\mathrm{div}}(\mathbf{e}) \triangleq \frac{\mathbf{e}^T \mathbf{K}_{\mathrm{div}} \mathbf{e}}{\mathbf{e}^T \mathbf{K}_{\mathrm{curl}} \mathbf{e}}.
               \label{eq:R_div_ratio_def}
           \end{equation}
-          Physical solenoidal cavity modes satisfy $R_{\mathrm{div}} \ll 1$, confirming solenoidal field fidelity, whereas non-physical irrotational gradient modes exhibit $R_{\mathrm{div}} \gg 1$, providing an unambiguous discriminator for mode identification.
+          This metric establishes an explicit quantitative criterion for spectral mode classification:
+          \begin{itemize}
+              \item \textbf{Physical Modes:} True electromagnetic resonances correspond to solenoidal states ($\nabla \cdot \vec{E} = 0, \nabla \times \vec{E} \neq \mathbf{0}$) converging to analytical Maxwell cavity modes, characterized by $R_{\mathrm{div}}(\mathbf{e}) \ll 1$ (empirically $R_{\mathrm{div}} \le 1.65\%$ in our simulations).
+              \item \textbf{Spurious (Gradient) Modes:} Non-physical states originating from discrete gradient nullspace leakage ($\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$) are irrotational fields with high volumetric divergence ($\Delta \phi \neq 0$), yielding $R_{\mathrm{div}}(\mathbf{e}) \gg 1$ (typically $R_{\mathrm{div}} \sim 10^3\%\text{--}10^6\%$). In this formulation, every observed spurious mode is an irrotational gradient state.
+          \end{itemize}
+          Throughout this work, the \textbf{operational bandwidth} (or operational spectrum) is defined as the low-frequency interval of physical interest $\Lambda_{\mathrm{op}} \triangleq (0, \lambda_{\max}^{\mathrm{op}}]$ (set to $\lambda_{\max}^{\mathrm{op}} = 10.0$ to encompass the first ten physical cavity modes). The operational spectrum is considered fully purified when all spurious gradient modes satisfy $\lambda_{\mathrm{spur}} > \lambda_{\max}^{\mathrm{op}}$.
     \item \textbf{Spectral Shifting vs. Volumetric Locking:} At the continuous level, solenoidal modes satisfy $\nabla \cdot \vec{E} \equiv 0$, so the penalty vanishes identically. On discrete meshless stencils, pointwise divergence is satisfied only to discretization order ($\nabla \cdot \vec{E}^h \sim \mathcal{O}(h) \neq 0$). Consequently, excessive penalization introduces volumetric stiffening (locking), slightly perturbing physical eigenvalues and elevating matrix conditioning. A calibrated operating window ($s_{\mathrm{div}} \in [6.0, 10.0]$) achieves spectral clearance without locking (Section~\ref{subsubsec:s_div_sensitivity}).
 \end{enumerate}
+
+\subsubsection{Tangential-Jump Control and Limitations of the Present Formulation}
+\label{subsubsec:tangential_jump_limitations}
+
+The lack of global tangential continuity is a distinct source of non-conformity that is not directly controlled by the divergence penalty. In particular, a small discrete divergence does not necessarily imply a small tangential jump across a support-transition interface. Therefore, the div-curl regularization should be interpreted as a mechanism for mitigating the observed gradient-related spectral contamination, rather than as a general enforcement of $H(\mathbf{curl})$ conformity.
+
+In the present implementation, no explicit penalty term is introduced for tangential jumps across support-transition interfaces. The influence of these transitions is instead assessed indirectly through the manufactured-solution convergence tests and the spectral experiments reported in Section~\ref{sec:numerical_results}. Accordingly, the numerical results demonstrate the effectiveness of the proposed regularization for the configurations considered, but do not establish a uniform bound on tangential jumps or a general stability guarantee for arbitrary point clouds.
+
+An explicit tangential-jump stabilization (e.g., drawing on Interior Penalty Discontinuous Galerkin techniques \cite{houston2004mixed, hesthaven2004high}), or a rigorous estimate showing that the corresponding non-conformity error remains controlled under refinement, is an important direction for further work.
 
 
 
@@ -922,7 +967,7 @@ To obtain a mesh-connectivity-free field approximation, we employ a point-based 
     \item \textbf{Pointwise Shape Function Evaluation (Section~\ref{subsec:scale_invariant_criterion}):} Anchoring coordinates directly at $P_g$ ($\Delta x = 0, \Delta y = 0$), vector shape functions $\vec{N}_i(P_g)$ and spatial derivatives $(\nabla \times \vec{N}_i, \nabla \cdot \vec{N}_i)$ are evaluated via Eqs.~\eqref{eq:shape_func_hat_eval}--\eqref{eq:div_hat_eval}, with $1/h_{\mathrm{local}}$ factored out analytically.
 \end{enumerate}
 
-Following classical meshfree classification \cite{belytschko1994element, atluri2002meshless, liu2009mesh}, the VNMM field approximation and shape functions are strictly meshless and connectivity-free; background cells serve solely as geometric integration scaffolding without constraining the interpolation topology.
+Following classical meshfree classification \cite{belytschko1994element, atluri2002meshless, liu2009mesh}, the VNMM field approximation and shape functions are meshless and connectivity-free; background cells serve solely as geometric integration scaffolding without constraining the interpolation topology.
 
 \subsection{Algebraic Discretization and Generalized Eigenvalue System}
 \label{subsec:algebraic_system}
@@ -940,7 +985,7 @@ Homogeneous PEC boundary conditions are collocated directly at boundary nodes by
 \end{equation}
 of size $M_{\mathrm{red}} \times M_{\mathrm{red}}$ (equivalently designated as $N_{\mathrm{DoF}} \equiv M_{\mathrm{red}}$ in subsequent convergence comparisons).
 
-While the unregularized Maxwell stiffness operator is symmetric positive-semidefinite due to the static gradient nullspace, the inclusion of the divergence penalty ($s_{\mathrm{div}} > 0$) combined with essential PEC boundary constraints renders $\mathbf{K}_{\mathrm{red}}$ strictly positive-definite on the discrete physical subspace, while the mass matrix $\mathbf{M}_{\mathrm{red}}$ is natively positive-definite. This ensures that the discrete generalized eigenvalue problem involves well-behaved, sparse symmetric positive-definite (SPD) reduced matrices, allowing efficient and stable computation of the physical spectrum using Krylov-subspace shift-and-invert Lanczos methods \cite{saad2011numerical, lehoucq1998arpack}, as implemented via the ARPACK solver (\texttt{eigsh}) in SciPy \cite{virtanen2020scipy}.
+While the unregularized Maxwell stiffness operator is symmetric positive-semidefinite due to the static gradient nullspace, the inclusion of the divergence penalty ($s_{\mathrm{div}} > 0$) combined with essential PEC boundary constraints renders $\mathbf{K}_{\mathrm{red}}$ positive-definite on the discrete physical subspace, while the mass matrix $\mathbf{M}_{\mathrm{red}}$ is natively positive-definite. This ensures that the discrete generalized eigenvalue problem involves well-behaved, sparse symmetric positive-definite (SPD) reduced matrices, allowing efficient and stable computation of the physical spectrum using Krylov-subspace shift-and-invert Lanczos methods \cite{saad2011numerical, lehoucq1998arpack}, as implemented via the ARPACK solver (\texttt{eigsh}) in SciPy \cite{virtanen2020scipy}.
 
 % =========================================================
 % SECTION 5: NUMERICAL RESULTS AND DISCUSSION
@@ -966,39 +1011,39 @@ To ensure methodological consistency and eliminate repetitive descriptions, Tabl
         >{\raggedright\arraybackslash}p{0.26\linewidth}
         @{}}
         \toprule
-        \textbf{Convention / Parameter} & 
-        \textbf{Mathematical Specification / Operational Formulation} & 
-        \textbf{Applicable Benchmarks} \\
+        \textbf{Convention / Parameter}                                                                                                                                                                                                                                                                     &
+        \textbf{Mathematical Specification / Operational Formulation}                                                                                                                                                                                                                                       &
+        \textbf{Applicable Benchmarks}                                                                                                                                                                                                                                                                        \\
         \midrule
-        \textbf{Domain \& Interior Grid} & 
+        \textbf{Domain \& Interior Grid}                                                                                                                                                                                                                                                                    &
         $\Omega = [0, \pi]^2$, reference grid with $N_x \times N_y$ nodes ($N_x = N_y$), nominal spacing $h_{\mathrm{nom}} = \pi / (N_x - 1)$. \newline
-        Cartesian interior coordinates: $\mathbf{x}_{i,j} = (i\,h_{\mathrm{nom}}, \; j\,h_{\mathrm{nom}})$ for $i, j = 1, \dots, N_x - 2$. & 
-        All benchmarks without exception (Secs.~\ref{subsec:conforming_dual_equivalence}--\ref{subsec:spectral_irregular_clouds}) \\
-        \textbf{Staggered Boundary Nodes} & 
+        Cartesian interior coordinates: $\mathbf{x}_{i,j} = (i\,h_{\mathrm{nom}}, \; j\,h_{\mathrm{nom}})$ for $i, j = 1, \dots, N_x - 2$.                                                                                                                                                                  &
+        All benchmarks without exception (Secs.~\ref{subsec:conforming_dual_equivalence}--\ref{subsec:spectral_irregular_clouds})                                                                                                                                                                             \\
+        \textbf{Staggered Boundary Nodes}                                                                                                                                                                                                                                                                   &
         Midpoints along $\partial\Omega$ edges ($N_{\mathrm{bnd}} = 4(N_x - 1)$ nodes): \newline
         $y \in \{0, \pi\}: \mathbf{x}_k = ((k + \frac{1}{2})h_{\mathrm{nom}}, y), \, \vec{t}_k = [1, 0]^T$; \quad $x \in \{0, \pi\}: \mathbf{x}_k = (x, (k + \frac{1}{2})h_{\mathrm{nom}}), \, \vec{t}_k = [0, 1]^T$. \newline
-        Distance $\ge h_{\mathrm{nom}}/2$ from corners. Homogeneous PEC: $e_k = 0$. & 
-        Cavity Dirichlet and PEC benchmarks (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:spectral_irregular_clouds}) \\
-        \textbf{Internal Directors (Structured)} & 
+        Distance $\ge h_{\mathrm{nom}}/2$ from corners. Homogeneous PEC: $e_k = 0$.                                                                                                                                                                                                                         &
+        Cavity Dirichlet and PEC benchmarks (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:spectral_irregular_clouds})                                                                                                                                                                                  \\
+        \textbf{Internal Directors (Structured)}                                                                                                                                                                                                                                                            &
         Checkerboard alternating orthogonal unit orientations: \newline
         $\vec{t}_{i,j} = [\frac{\sqrt{2}}{2}, \; \frac{\sqrt{2}}{2}]^T$ if $(i+j)$ is even; \quad
         $\vec{t}_{i,j} = [-\frac{\sqrt{2}}{2}, \; \frac{\sqrt{2}}{2}]^T$ if $(i+j)$ is odd. \newline
-        Guarantees local orthogonal diversity ($\vec{t}_{45^\circ} \cdot \vec{t}_{135^\circ} = 0$). & 
-        Regular lattice benchmarks (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:convergence_comparison}) \\
-        \textbf{Stochastic Clouds (Disordered)} & 
+        Guarantees local orthogonal diversity ($\vec{t}_{45^\circ} \cdot \vec{t}_{135^\circ} = 0$).                                                                                                                                                                                                         &
+        Regular lattice benchmarks (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:convergence_comparison})                                                                                                                                                                                              \\
+        \textbf{Stochastic Clouds (Disordered)}                                                                                                                                                                                                                                                             &
         Interior nodes perturbed with $25\%$ spatial jitter and uniform random director orientations: \newline
         $\mathbf{x}_k = \mathbf{x}_k^{(0)} + (\delta x_k, \delta y_k), \quad \delta x_k, \delta y_k \sim \mathcal{U}(-0.25\,h_{\mathrm{nom}}, \; 0.25\,h_{\mathrm{nom}})$ \newline
-        $\vec{t}_k = [\cos\theta_k, \; \sin\theta_k]^T, \quad \theta_k \sim \mathcal{U}(0, 2\pi)$. Conforming unit tangents on $\partial\Omega$. & 
-        Disordered cloud benchmarks (Secs.~\ref{subsec:arbitrary_meshless_interpolation}, \ref{subsec:stochastic_perturbations}, \ref{subsec:patch_test_galerkin}, \ref{subsec:spectral_irregular_clouds}) \\
-        \textbf{Support Qualification \& Scaling} & 
-        Scale normalization $h_{\mathrm{local}} = h_{\mathrm{nom}}$ (or metric~\eqref{eq:h_local_canonical}). Qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ with query pool $K_{\mathrm{initial}} = 12$ nearest neighbors ($|\det(\widehat{\mathbf{A}}_{6\times6})| \ge \widehat{\mathrm{Tol}}$). & 
-        All $\mathcal{P}^1$ benchmarks (Secs.~\ref{subsec:arbitrary_meshless_interpolation}--\ref{subsec:spectral_irregular_clouds}); swept in Sec.~\ref{subsec:stochastic_perturbations} \\
-        \textbf{Div-Curl Regularization} & 
-        Penalty coefficient $s_{\mathrm{div}} = 6.0$ in regularized weak form~\eqref{eq:regularized_weak_form}, shifting gradient nullspace modes out of the operational cavity spectrum while preserving physical accuracy. & 
-        All variational formulations (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:spectral_irregular_clouds}); swept in Sec.~\ref{subsubsec:s_div_sensitivity} \\
-        \textbf{Background Quadrature} & 
-        Topologically independent Cartesian grid of $(N_x - 1) \times (N_y - 1)$ cells ($dx = dy = h_{\mathrm{nom}}$) with $3 \times 3$ Gauss-Legendre quadrature ($9$ points/cell, $N_g / N_{\mathrm{DoF}} \approx 10$). & 
-        All variational formulations (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:spectral_irregular_clouds}); swept in Sec.~\ref{subsubsec:quadrature_sensitivity} \\
+        $\vec{t}_k = [\cos\theta_k, \; \sin\theta_k]^T, \quad \theta_k \sim \mathcal{U}(0, 2\pi)$. Conforming unit tangents on $\partial\Omega$.                                                                                                                                                            &
+        Disordered cloud benchmarks (Secs.~\ref{subsec:arbitrary_meshless_interpolation}, \ref{subsec:stochastic_perturbations}, \ref{subsec:patch_test_galerkin}, \ref{subsec:spectral_irregular_clouds})                                                                                                    \\
+        \textbf{Support Qualification \& Scaling}                                                                                                                                                                                                                                                           &
+        Scale normalization $h_{\mathrm{local}} = h_{\mathrm{nom}}$ (or metric~\eqref{eq:h_local_canonical}). Qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ with query pool $K_{\mathrm{initial}} = 12$ nearest neighbors ($|\det(\widehat{\mathbf{A}}_{6\times6})| \ge \widehat{\mathrm{Tol}}$). &
+        All $\mathcal{P}^1$ benchmarks (Secs.~\ref{subsec:arbitrary_meshless_interpolation}--\ref{subsec:spectral_irregular_clouds}); swept in Sec.~\ref{subsec:stochastic_perturbations}                                                                                                                     \\
+        \textbf{Div-Curl Regularization}                                                                                                                                                                                                                                                                    &
+        Penalty coefficient $s_{\mathrm{div}} = 6.0$ in regularized weak form~\eqref{eq:regularized_weak_form}, shifting gradient nullspace modes out of the operational cavity spectrum while preserving physical accuracy.                                                                                &
+        All variational formulations (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:spectral_irregular_clouds}); swept in Sec.~\ref{subsubsec:s_div_sensitivity}                                                                                                                                        \\
+        \textbf{Background Quadrature}                                                                                                                                                                                                                                                                      &
+        Topologically independent Cartesian grid of $(N_x - 1) \times (N_y - 1)$ cells ($dx = dy = h_{\mathrm{nom}}$) with $3 \times 3$ Gauss-Legendre quadrature ($9$ points/cell, $N_g / N_{\mathrm{DoF}} \approx 10$).                                                                                   &
+        All variational formulations (Secs.~\ref{subsec:patch_test_galerkin}--\ref{subsec:spectral_irregular_clouds}); swept in Sec.~\ref{subsubsec:quadrature_sensitivity}                                                                                                                                   \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -1035,7 +1080,7 @@ As demonstrated in Fig.~\ref{fig:convergencia_efem_vs_vnmm_L1}a, the electric fi
     \|\vec{E} - \vec{E}^h\|_{\mathrm{RMS}} = \sqrt{\frac{1}{M}\sum_{p=1}^M \|\vec{E}(\mathbf{x}_p) - \vec{E}^h(\mathbf{x}_p)\|_2^2},
     \label{eq:rms_error_def}
 \end{equation}
-displays an identical first-order asymptotic decay rate of $\mathcal{O}(h^{1.00})$ for both formulations. The point-by-point field difference between the two methods remains strictly bounded by double-precision floating-point machine precision, satisfying $\|\vec{E}^{\mathrm{VNMM}} - \vec{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \le 1.6 \times 10^{-16}$.
+displays an identical first-order asymptotic decay rate of $\mathcal{O}(h^{1.00})$ for both formulations. The point-by-point field difference between the two methods remains bounded by double-precision floating-point machine precision, satisfying $\|\vec{E}^{\mathrm{VNMM}} - \vec{E}^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \le 1.6 \times 10^{-16}$.
 
 Similarly, Fig.~\ref{fig:convergencia_efem_vs_vnmm_L1}b illustrates the curl operator RMS error $\|(\nabla \times \vec{E})_z - (\nabla \times \vec{E}^h)_z\|_{\mathrm{RMS}}$, which exhibits an identical fitted convergence rate of $\mathcal{O}(h^{0.96})$ for both formulations. The mutual curl field difference is likewise bounded by machine precision, satisfying $\|(\nabla \times \vec{E})^{\mathrm{VNMM}} - (\nabla \times \vec{E})^{\mathrm{EFEM}}\|_{\mathrm{RMS}} \le 2.5 \times 10^{-15}$. These log-log convergence curves empirically confirm the theoretical equivalence established by Theorem~\ref{thm:dual_equivalence} (Section~\ref{subsubsec:formal_proof_dual_whitney} and \ref{app:dual_whitney_proof}), establishing that under conforming midpoint/tangent placement on triangular cells, the VNMM 2D $\mathcal{L}^1$ formulation and Whitney edge finite elements reproduce identical discrete approximations down to double-precision floating-point roundoff.
 
@@ -1048,7 +1093,7 @@ Similarly, Fig.~\ref{fig:convergencia_efem_vs_vnmm_L1}b illustrates the curl ope
     \label{fig:convergencia_efem_vs_vnmm_L1}
 \end{figure}
 
-It should be emphasized that this machine-precision equivalence holds strictly under conforming cell topologies where support triads match element midpoints with edge-tangent directors. On arbitrary point clouds, the VNMM ceases to be equivalent to a Whitney element, as arbitrary node coordinates, non-tangential director orientations, and dynamically shifting support stencils destroy simplex conformity, leading to the derivative stagnation examined next.
+It should be noted that this machine-precision equivalence holds under conforming cell topologies where support triads match element midpoints with edge-tangent directors. On arbitrary point clouds, the VNMM ceases to be equivalent to a Whitney element, as arbitrary node coordinates, non-tangential director orientations, and dynamically shifting support stencils destroy simplex conformity, leading to the derivative stagnation examined next.
 
 
 \subsection{Vector Field Interpolation and Derivative Convergence in Arbitrary Meshless Clouds}
@@ -1242,9 +1287,9 @@ To probe sensitivity to spatial irregularity, the patch test is solved on two co
 Following standard patch-test conventions in meshless methods \cite{belytschko1994element,liu2009mesh}, Table~\ref{tab:galerkin_patch_test} compiles the discrete maximum nodal degree-of-freedom error ($\|\mathbf{e}_{\mathrm{int}} - \mathbf{e}_{\mathrm{int}}^*\|_\infty / \|\mathbf{e}_{\mathrm{int}}^*\|_\infty$) to verify that no individual interior node violates exact linear completeness. Inspection of the numerical results reveals two fundamental conclusions:
 \begin{enumerate}
     \item \textbf{Linear Completeness and Patch-Test Satisfaction of $\mathcal{P}^1$:} For all seven affine modes on both regular and irregular point clouds, the complete linear vector basis $\mathcal{P}^1$ reproduces the exact interior degrees of freedom to double-precision machine precision ($\|\mathbf{e}_{\mathrm{int}} - \mathbf{e}_{\mathrm{int}}^*\|_\infty / \|\mathbf{e}_{\mathrm{int}}^*\|_\infty \le 7.38 \times 10^{-14}$). Furthermore, to verify continuous domain-wide fidelity beyond discrete nodes, evaluating the reconstructed solution across the background integration domain under $25\%$ spatial jitter and random directors confirms exact field and derivative reproduction in the continuous $L^2$ norm: the relative field error satisfies $\|\vec{E}^h - \vec{E}^*\|_{L^2} / \|\vec{E}^*\|_{L^2} \le 5.93 \times 10^{-14}$, the curl error satisfies $\|(\nabla \times \vec{E}^h)_z - C_{\mathrm{curl}}\|_{L^2} \le 1.92 \times 10^{-13}$, and the divergence error satisfies $\|\nabla \cdot \vec{E}^h - C_{\mathrm{div}}\|_{L^2} \le 8.37 \times 10^{-14}$. These results provide numerical verification that the complete basis $\mathcal{P}^1$, in conjunction with scale-invariant stencil qualification and regularized Ritz-Galerkin assembly, satisfies the Galerkin patch test to machine precision across all tested affine states.
-    \item \textbf{Catastrophic Variational Breakdown of the Incomplete $\mathcal{L}^1$ Basis:} In contrast, the incomplete 3-node basis $\mathcal{L}^1$ passes the patch test only for rigid-body motions (Translations 1--2 and Rotation 5), which reside within its restricted solenoidal subspace. Notably, even for solenoidal and irrotational affine fields ($C_{\mathrm{curl}} = 0, C_{\mathrm{div}} = 0$), such as normal strain (Mode~3) and shear strain (Mode~4), $\mathcal{L}^1$ fails catastrophically, exhibiting substantial relative errors of $15.1\%\text{--}21.4\%$ on regular lattices and $32.7\%\text{--}46.9\%$ under spatial jitter. For the general affine field (Mode~7), $\mathcal{L}^1$ incurs an interior DoF error of $37.8\%$.
+    \item \textbf{Variational Breakdown of the Incomplete $\mathcal{L}^1$ Basis:} In contrast, the incomplete 3-node basis $\mathcal{L}^1$ passes the patch test only for rigid-body motions (Translations 1--2 and Rotation 5), which reside within its restricted solenoidal subspace. Notably, even for solenoidal and irrotational affine fields ($C_{\mathrm{curl}} = 0, C_{\mathrm{div}} = 0$), such as normal strain (Mode~3) and shear strain (Mode~4), $\mathcal{L}^1$ fails to reproduce the exact solution, exhibiting relative errors of $15.1\%\text{--}21.4\%$ on regular lattices and $32.7\%\text{--}46.9\%$ under spatial jitter. For the general affine field (Mode~7), $\mathcal{L}^1$ incurs an interior DoF error of $37.8\%$.
 \end{enumerate}
-This failure directly corroborates the theoretical analysis of Heuristic~\ref{heur:L1_aliasing}: on unconstrained point clouds lacking conforming closed-contour cancellation, the inability of $\mathcal{L}^1$ to represent normal and shear Jacobian gradients corrupts not only localized interpolation, but fundamentally contaminates the assembled Galerkin stiffness operator $\mathbf{K}_{\mathrm{curl}}$. Furthermore, because the $\mathcal{L}^1$ basis is strictly solenoidal ($\nabla \cdot \vec{N}_i \equiv 0$), the divergence penalty operator vanishes identically ($\mathbf{K}_{\mathrm{div}} \equiv \mathbf{0}$), precluding any variational div-curl regularization on this incomplete space.
+This failure directly corroborates the theoretical analysis of Heuristic~\ref{heur:L1_aliasing}: on unconstrained point clouds lacking conforming closed-contour cancellation, the inability of $\mathcal{L}^1$ to represent normal and shear Jacobian gradients corrupts localized interpolation and contaminates the assembled Galerkin stiffness operator $\mathbf{K}_{\mathrm{curl}}$. Furthermore, because the $\mathcal{L}^1$ basis is solenoidal ($\nabla \cdot \vec{N}_i \equiv 0$), the divergence penalty operator vanishes identically ($\mathbf{K}_{\mathrm{div}} \equiv \mathbf{0}$), precluding variational div-curl regularization on this incomplete space.
 
 \subsubsection{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}
 \label{subsubsec:mms_driven_problem}
@@ -1287,18 +1332,18 @@ where $\mathbf{M}$ is the consistent vector mass matrix (Eq.~\eqref{eq:mass_matr
     \resizebox{\columnwidth}{!}{%
         \begin{tabular}{@{} c c c cccc c @{}}
             \toprule
-            \textbf{Mesh Grid}                                                             & \textbf{DoFs}        & $h_{\mathrm{nom}}$ [m] & \multicolumn{4}{c}{\textbf{Complete Basis $\mathcal{P}^1$}} & \textbf{Incomplete $\mathcal{L}^1$}                                                                                                       \\
+            \textbf{Mesh Grid}                                                                            & \textbf{DoFs}        & $h_{\mathrm{nom}}$ [m] & \multicolumn{4}{c}{\textbf{Complete Basis $\mathcal{P}^1$}} & \textbf{Incomplete $\mathcal{L}^1$}                                                                                                       \\
             \cmidrule(lr){4-7} \cmidrule(lr){8-8}
-            $N \times N$                                                                   & $N_{\mathrm{total}}$ &                     & $\varepsilon_{L^2}(\vec{E})$                                & $\varepsilon_{\mathrm{curl}}(\vec{E})$ & $\varepsilon_{\mathrm{DoF}}$ & $\|\nabla \cdot \vec{E}^h\|_{L^2}$ & $\varepsilon_{L^2}(\vec{E})$ \\
+            $N \times N$                                                                                  & $N_{\mathrm{total}}$ &                        & $\varepsilon_{L^2}(\vec{E})$                                & $\varepsilon_{\mathrm{curl}}(\vec{E})$ & $\varepsilon_{\mathrm{DoF}}$ & $\|\nabla \cdot \vec{E}^h\|_{L^2}$ & $\varepsilon_{L^2}(\vec{E})$ \\
             \midrule
-            $9 \times 9$                                                                   & 81                   & 0.3927              & $12.32\%$                                                   & $29.05\%$                              & $23.74\%$                    & $4.24 \times 10^{-1}$              & $24.80\%$                    \\
-            $13 \times 13$                                                                 & 169                  & 0.2618              & $3.78\%$                                                    & $21.23\%$                              & $9.03\%$                     & $2.07 \times 10^{-1}$              & $24.15\%$                    \\
-            $17 \times 17$                                                                 & 289                  & 0.1963              & $1.85\%$                                                    & $14.75\%$                              & $5.70\%$                     & $1.29 \times 10^{-1}$              & $22.81\%$                    \\
-            $21 \times 21$                                                                 & 441                  & 0.1571              & $1.35\%$                                                    & $12.50\%$                              & $3.94\%$                     & $1.23 \times 10^{-1}$              & $25.91\%$                    \\
-            $25 \times 25$                                                                 & 625                  & 0.1309              & $1.34\%$                                                    & $17.47\%$                              & $4.75\%$                     & $1.11 \times 10^{-1}$              & $23.60\%$                    \\
-            $29 \times 29$                                                                 & 841                  & 0.1122              & $0.77\%$                                                    & $9.39\%$                               & $2.61\%$                     & $7.58 \times 10^{-2}$              & $23.87\%$                    \\
+            $9 \times 9$                                                                                  & 81                   & 0.3927                 & $12.32\%$                                                   & $29.05\%$                              & $23.74\%$                    & $4.24 \times 10^{-1}$              & $24.80\%$                    \\
+            $13 \times 13$                                                                                & 169                  & 0.2618                 & $3.78\%$                                                    & $21.23\%$                              & $9.03\%$                     & $2.07 \times 10^{-1}$              & $24.15\%$                    \\
+            $17 \times 17$                                                                                & 289                  & 0.1963                 & $1.85\%$                                                    & $14.75\%$                              & $5.70\%$                     & $1.29 \times 10^{-1}$              & $22.81\%$                    \\
+            $21 \times 21$                                                                                & 441                  & 0.1571                 & $1.35\%$                                                    & $12.50\%$                              & $3.94\%$                     & $1.23 \times 10^{-1}$              & $25.91\%$                    \\
+            $25 \times 25$                                                                                & 625                  & 0.1309                 & $1.34\%$                                                    & $17.47\%$                              & $4.75\%$                     & $1.11 \times 10^{-1}$              & $23.60\%$                    \\
+            $29 \times 29$                                                                                & 841                  & 0.1122                 & $0.77\%$                                                    & $9.39\%$                               & $2.61\%$                     & $7.58 \times 10^{-2}$              & $23.87\%$                    \\
             \midrule
-            \multicolumn{3}{@{}l}{\textbf{Empirical Convergence Rate $\mathcal{O}(h_{\mathrm{nom}}^p)$:}} & $\mathbf{p = 2.08}$  & $\mathbf{p = 0.75}$ & $\mathbf{p = 1.60}$                                         &                                        & $\mathbf{p = 0.02}$                                                                              \\
+            \multicolumn{3}{@{}l}{\textbf{Empirical Convergence Rate $\mathcal{O}(h_{\mathrm{nom}}^p)$:}} & $\mathbf{p = 2.08}$  & $\mathbf{p = 0.75}$    & $\mathbf{p = 1.60}$                                         &                                        & $\mathbf{p = 0.02}$                                                                              \\
             \bottomrule
         \end{tabular}%
     }
@@ -1306,10 +1351,10 @@ where $\mathbf{M}$ is the consistent vector mass matrix (Eq.~\eqref{eq:mass_matr
 
 We test a progressive refinement sequence of six regular lattices with $N \in \{9, 13, 17, 21, 25, 29\}$, spanning nominal nodal spacings from $h_{\mathrm{nom}} = 0.3927$~m down to $0.1122$~m ($81$ to $841$ degrees of freedom, with scale normalization $h_{\mathrm{local}} = h_{\mathrm{nom}}$). The numerical results are summarized in Table~\ref{tab:mms_convergence}. Two decisive phenomena emerge from this MMS convergence study:
 \begin{enumerate}
-    \item \textbf{Systematic Asymptotic Convergence for $\mathcal{P}^1$:} As the nodal spacing is refined, the complete $\mathcal{P}^1$ basis exhibits strict monotonic convergence in the $L^2$ field norm, reducing the relative error from $12.32\%$ on the coarsest mesh down to $0.77\%$ on $N = 29 \times 29$. A least-squares logarithmic regression yields an empirical convergence rate of $p = 2.08$ in the $L^2$ field norm, in close agreement with the asymptotic $\mathcal{O}(h_{\mathrm{nom}}^2)$ rate characteristic of linear approximations in $L^2$. Simultaneously, the $H(\mathbf{curl})$ semi-norm error converges at an empirical rate of $p = 0.75$, dropping from $29.05\%$ to $9.39\%$, while the discrete degree-of-freedom error decays as $\mathcal{O}(h_{\mathrm{nom}}^{1.60})$. The sub-unitary slope in $H(\mathbf{curl})$ reflects pre-asymptotic interaction between dynamic support transitions and the divergence penalty operator. The divergence residual also contracts by nearly an order of magnitude, confirming that the divergence penalty successfully restrains divergence errors.
+    \item \textbf{Systematic Numerical Convergence for $\mathcal{P}^1$:} As the nodal spacing is refined, the complete $\mathcal{P}^1$ basis exhibits strict monotonic convergence in the $L^2$ field norm, reducing the relative error from $12.32\%$ on the coarsest mesh down to $0.77\%$ on $N = 29 \times 29$. A least-squares logarithmic regression yields an observed empirical convergence rate of $p = 2.08$ in the $L^2$ field norm, in close agreement with the theoretically expected $\mathcal{O}(h_{\mathrm{nom}}^2)$ rate for linear complete elements. Simultaneously, while standard approximation theory predicts an $\mathcal{O}(h^1)$ rate in $H(\mathbf{curl})$ for conforming spaces, the observed empirical slope in the present non-conforming meshless setting is $p = 0.75$ (dropping from $29.05\%$ to $9.39\%$). This sub-unitary slope reflects pre-asymptotic interaction between non-conforming support transitions and the divergence penalty operator. Although a mathematical proof of uniform convergence on arbitrary clouds remains an open question, these observed rates demonstrate that $\mathcal{P}^1$ overcomes the complete stagnation ($p = 0.02$) of the incomplete basis, while the discrete degree-of-freedom error decays as $\mathcal{O}(h_{\mathrm{nom}}^{1.60})$ and the divergence residual contracts by nearly an order of magnitude.
     \item \textbf{Convergence Stagnation of the Incomplete $\mathcal{L}^1$ Basis:} In stark contrast, the incomplete $\mathcal{L}^1$ basis fails to converge under refinement, exhibiting an asymptotic rate of $p = 0.02$. The relative $L^2$ field error remains trapped between $22.8\%$ and $25.9\%$, while the curl error hovers near $55\%\text{--}61\%$. Because the 3-node stencil $\mathcal{L}^1$ cannot represent normal derivative gradients on arbitrary node distributions, the discrete Galerkin stiffness operator cannot capture smooth vector field variations, leading to systematic stagnation regardless of grid refinement.
 \end{enumerate}
-Together with the patch test, these MMS results provide systematic numerical evidence that adopting the complete linear polynomial vector space $\mathcal{P}^1$ resolves the variational breakdown and convergence stagnation of the incomplete $\mathcal{L}^1$ basis, restoring systematic asymptotic convergence in Galerkin meshless discretizations.
+Together with the patch test, these MMS results provide systematic numerical evidence that adopting the complete linear polynomial vector space $\mathcal{P}^1$ resolves the variational breakdown and convergence stagnation of the incomplete $\mathcal{L}^1$ basis, restoring systematic numerical convergence in Galerkin meshless discretizations, with observed rates aligning with expected polynomial behavior.
 
 
 % ---------------------------------------------------------
@@ -1323,12 +1368,20 @@ Numerical evaluations are conducted on the base-case discretization with $N_x = 
 
 Under the baseline qualification threshold ($\widehat{\mathrm{Tol}} = 0.80$), the geometric symmetry and orthogonal angular diversity of immediate neighbors generate well-conditioned placement matrices across all $3{,}600$ quadrature points (mean $|\det(\widehat{\mathbf{A}})| \approx 3.29$), yielding compact nearest-neighbor stencils ($K_{\mathrm{avg}} \approx 6.54$) that remain identically invariant for any $\widehat{\mathrm{Tol}} \le 1.00$. Homogeneous tangential PEC boundary conditions ($\vec{E}^h(\mathbf{x}_k) \cdot \vec{t}_k = 0$) are enforced via nodal elimination ($e_k = 0$).
 
+\paragraph{Spectral Classification Protocol and Operational Bandwidth}
+To ensure rigorous and consistent terminology across all spectral analyses, discrete eigenpairs $(\lambda_j, \mathbf{e}_j)$ are categorized according to the criteria defined in Section~\ref{subsec:weak_form_regularization}:
+\begin{enumerate}
+    \item \textbf{Operational Bandwidth ($\Lambda_{\mathrm{op}}$):} The frequency range of engineering interest is designated as $\Lambda_{\mathrm{op}} \triangleq (0, 10.0]$, which encompasses the first ten analytical physical resonances ($TE_{10}$ through $TE_{03}$, with exact eigenvalues $\lambda \in [1.0, 9.0]$).
+    \item \textbf{Physical Modes:} Computed states in $\Lambda_{\mathrm{op}}$ that correlate with analytical $TE_{mn}$ field patterns and satisfy the solenoidal criterion $R_{\mathrm{div}}(\mathbf{e}_j) \ll 1$ (empirically $R_{\mathrm{div}} \le 1.65\%$, Table~\ref{tab:cavity_eigenvalues_base_case}).
+    \item \textbf{Spurious (Gradient) Modes:} Non-physical states leaking from the discrete gradient nullspace ($\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$), identified by dominant irrotational energy ($R_{\mathrm{div}}(\mathbf{e}_j) \gg 1$, typically $> 10^3\%$). The spectrum is defined as purified within the operational bandwidth when the lowest spurious eigenvalue satisfies $\lambda_{\mathrm{spur}} > 10.0$.
+\end{enumerate}
+
 \subsubsection{Spectral Contamination in the Unregularized Curl-Curl Formulation (\texorpdfstring{$s_{\mathrm{div}} = 0.0$}{s(div) = 0.0})}
 \label{subsubsec:unregularized_formulation}
 
-As established in Section~\ref{subsec:weak_form_regularization}, meshless vector discretizations inherently lack discrete de Rham complex exactness due to global non-conformity ($V_h \not\subset H(\mathbf{curl})$), allowing discrete gradient fields to produce non-vanishing numerical curl residues ($\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$) at Gauss quadrature points. When solving the unregularized curl-curl formulation ($s_{\mathrm{div}} = 0.0$) on the base-case cavity ($N_x = N_y = 21$), this absence of an exact sequence triggers catastrophic spectral contamination.
+As established in Section~\ref{subsec:weak_form_regularization}, meshless vector discretizations inherently lack discrete de Rham complex exactness due to global non-conformity ($V_h \not\subset H(\mathbf{curl})$), allowing discrete gradient fields to produce non-vanishing numerical curl residues ($\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$) at Gauss quadrature points. When solving the unregularized curl-curl formulation ($s_{\mathrm{div}} = 0.0$) on the base-case cavity ($N_x = N_y = 21$), this absence of an exact sequence triggers severe spectral contamination.
 
-One might suspect that such spurious modes stem merely from numerical under-integration. However, evaluating the discrete operator $\mathbf{K}_{\mathrm{curl}}$ under the dense baseline quadrature ($20 \times 20$ cells, $3 \times 3$ Gauss points, $N_g / N_{\mathrm{DoF}} \approx 10.0$) rules out this hypothesis: the operator exhibits an empty discrete nullspace ($\dim\ker(\mathbf{K}_{\mathrm{curl}}) = 0$), proving that the Gauss points fully sample the discrete gradient field. Yet, because their numerical curl residues do not vanish, these unconstrained discrete gradient states leak directly into the positive spectrum, generating a dense ladder of non-physical spurious eigenvalues $\lambda \in (0.001, 0.90)$ strictly below the fundamental physical resonance ($TE_{10}, \lambda = 1.0$).
+One might suspect that such spurious modes stem merely from numerical under-integration. However, evaluating the discrete operator $\mathbf{K}_{\mathrm{curl}}$ under the dense baseline quadrature ($20 \times 20$ cells, $3 \times 3$ Gauss points, $N_g / N_{\mathrm{DoF}} \approx 10.0$) rules out this hypothesis: the operator exhibits an empty discrete nullspace ($\dim\ker(\mathbf{K}_{\mathrm{curl}}) = 0$), proving that the Gauss points fully sample the discrete gradient field. Yet, because their numerical curl residues do not vanish, these unconstrained discrete gradient states leak directly into the positive spectrum, generating a dense ladder of non-physical spurious eigenvalues $\lambda \in (0.001, 0.90)$ below the fundamental physical resonance ($TE_{10}, \lambda = 1.0$).
 
 The empirical impact of this nullspace leakage is illustrated in Fig.~\ref{fig:espectro_cavidade_regularizacao}a. Without volumetric divergence regularization ($s_{\mathrm{div}} = 0.0$), over $130$ non-physical gradient modes densely infiltrate the sub-resonance and operational spectrum ($\lambda \le 10$), completely corrupting analytical modal ordering and yielding massive cutoff wavenumber errors in the lowest discrete modes ($96.57\%$ in Table~\ref{tab:s_div_sensitivity}).
 
@@ -1430,7 +1483,7 @@ where $\mu$ denotes the eigenvalues of the scalar Dirichlet Laplacian ($-\nabla^
     \lambda_{\mathrm{spur}} \approx \mu_1 \cdot s_{\mathrm{div}} = 2.0 \cdot s_{\mathrm{div}}.
     \label{eq:spurious_eigenvalue_estimate}
 \end{equation}
-Under the present converged baseline quadrature ($20 \times 20$ cells, $3 \times 3$ Gauss points), numerical evaluation confirms this scaling law down to $1.3\%$ error ($\lambda_{\mathrm{spur}}/s_{\mathrm{div}} \approx 1.97\text{--}1.99$).
+Under the resolution-matched baseline quadrature ($20 \times 20$ cells, $3 \times 3$ Gauss points), numerical evaluation confirms this scaling law down to $1.3\%$ error ($\lambda_{\mathrm{spur}}/s_{\mathrm{div}} \approx 1.97\text{--}1.99$).
 
 Equation~\eqref{eq:spurious_eigenvalue_estimate} provides a predictive \emph{a priori} calibration rule: ensuring complete spectral clearance up to a target physical eigenvalue $\lambda_{\max}$ (here $\lambda_{\max} \approx 10.4$ for the first 10 cavity modes) requires:
 \begin{equation}
@@ -1471,7 +1524,7 @@ To assess quadrature dependency, Table~\ref{tab:quadrature_sensitivity} reports 
     }
 \end{table}
 
-The results in Table~\ref{tab:quadrature_sensitivity} clarify the interaction between background quadrature and spatial discretization error. On coarse under-integrated grids ($10 \times 10, 2 \times 2$, $N_g / N_{\mathrm{DoF}} \approx 1.11$), numerical softening across intra-cell stencil transitions shifts eigenvalues downward, partially cancelling positive spatial discretization stiffening ($\lambda > \lambda_{\mathrm{exact}}$) and creating an apparent error of $1.09\%$ that conceals a $140$-dimensional numerical kernel in $\mathbf{K}_{\mathrm{curl}}$. Refining quadrature eliminates this artificial softening and kernel defect ($\dim\ker(\mathbf{K}_{\mathrm{curl}}) = 0$), revealing the true, uncorrupted spatial discretization error floor of $2.94\%\text{--}4.01\%$ for cutoff wavenumbers. Consequently, the resolution-matched convention ($N_{cx} = N_{cy} = N_v - 1, 3 \times 3$ Gauss points, $N_g / N_{\mathrm{DoF}} \approx 10$, with cell spacing $h_{\mathrm{cell}} = h_{\mathrm{nom}}$) is adopted throughout all multi-level refinement and irregular cloud campaigns (Sections~\ref{subsec:convergence_comparison} and \ref{subsec:spectral_irregular_clouds}), ensuring that observed rates reflect the vector basis approximation rather than quadrature artifacts.
+The results in Table~\ref{tab:quadrature_sensitivity} clarify the interaction between background quadrature and spatial discretization error, providing a cautionary pedagogical case study for non-conforming meshless methods. On coarse under-integrated grids ($10 \times 10, 2 \times 2$, $N_g / N_{\mathrm{DoF}} \approx 1.11$), numerical softening across intra-cell stencil transitions shifts discrete eigenvalues downward. This softening partially cancels the positive spatial discretization stiffening ($\lambda > \lambda_{\mathrm{exact}}$), producing an artificially low, deceptive error of $1.09\%$ that masks a severe $140$-dimensional numerical kernel defect in $\mathbf{K}_{\mathrm{curl}}$. Refining the background integration eliminates this artificial softening and restores full numerical rank ($\dim\ker(\mathbf{K}_{\mathrm{curl}}) = 0$), yielding a consistent baseline spatial discretization error of $4.01\%$ for cutoff wavenumbers ($0.41\%\text{--}7.33\%$ across the first 10 physical modes, Table~\ref{tab:cavity_eigenvalues_base_case}), which serves as the benchmark configuration reported throughout this paper. Consequently, the resolution-matched convention ($N_{cx} = N_{cy} = N_v - 1, 3 \times 3$ Gauss points, $N_g / N_{\mathrm{DoF}} \approx 10$, with cell spacing $h_{\mathrm{cell}} = h_{\mathrm{nom}}$) is adopted throughout all multi-level refinement and irregular cloud campaigns (Sections~\ref{subsec:convergence_comparison} and \ref{subsec:spectral_irregular_clouds}), ensuring that observed convergence rates reflect genuine vector basis approximation rather than quadrature artifacts.
 
 % ---------------------------------------------------------
 % SUBSECTION 5.5: COMPARATIVE CONVERGENCE: PURE VNMM 2D VS. EDGE FEM
@@ -1479,7 +1532,7 @@ The results in Table~\ref{tab:quadrature_sensitivity} clarify the interaction be
 \subsection{Comparative Convergence: Pure VNMM 2D vs. Edge FEM}
 \label{subsec:convergence_comparison}
 
-To validate the asymptotic convergence of the proposed Vector Nodal Meshless Method against the canonical standard in computational electromagnetics, this section evaluates the resonant frequencies of the Transverse Electric ($TE_z$) cavity across six successive discretization levels over $\Omega = [0, \pi]^2$:
+To evaluate the numerical convergence behavior of the proposed Vector Nodal Meshless Method against the canonical standard in computational electromagnetics, this section evaluates the resonant frequencies of the Transverse Electric ($TE_z$) cavity across six successive discretization levels over $\Omega = [0, \pi]^2$:
 \begin{enumerate}
     \item \textbf{Pure Edge FEM (Whitney 1-Forms):} Canonical conforming finite element solver on structured triangular meshes \cite{monk2003finite}, associating one circuital degree of freedom with each interior edge ($N_{\mathrm{DoF}} = N_{\mathrm{edges, int}}$).
     \item \textbf{Pure VNMM 2D ($\mathcal{P}^1$ Complete Basis):} Meshless solver over $\Omega$ configured under the baseline operational conventions established in Table~\ref{tab:baseline_computational_setup}: nominal spacing $h_{\mathrm{nom}} = \pi / (N_v - 1)$, staggered boundary nodes, alternating directors, $s_{\mathrm{div}} = 6.0$, $\widehat{\mathrm{Tol}} = 0.80$, and baseline $3 \times 3$ Gauss quadrature ($N_g / N_{\mathrm{DoF}} \approx 10$, $K_{\mathrm{avg}} \approx 6.5$).
@@ -1539,8 +1592,8 @@ Table~\ref{tab:convergence_6_meshes} and Fig.~\ref{fig:convergence_vnmm_fem} rep
 
 Key numerical observations include:
 \begin{itemize}
-    \item \textbf{Strict Monotonicity and Locality:} The scale-invariant criterion $|\det(\widehat{\mathbf{A}})| \ge 0.80$ preserves compact nearest-neighbor stencils ($K_{\mathrm{avg}} \approx 6.5$) across all grid levels without parameter tuning, preventing support dilation as $h \to 0$. In tandem with converged baseline quadrature ($3 \times 3$ Gauss points), both Edge FEM and VNMM converge strictly monotonically toward the continuum limit.
-    \item \textbf{Error Hierarchy and Rates:} Edge FEM delivers lower absolute errors ($0.81\%\text{--}0.07\%$, rate $\mathcal{O}(h_{\mathrm{DoF}}^{1.93})$) due to exact circulation cancellation. VNMM displays an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$ across all levels ($9.48\%\text{--}0.29\%$), steepening to $\mathcal{O}(h_{\mathrm{DoF}}^{2.97})$ on fine grids while operating entirely without topological mesh connectivity.
+    \item \textbf{Monotonicity and Stencil Locality:} Enforcing $|\det(\widehat{\mathbf{A}})| \ge 0.80$ preserves compact nearest-neighbor stencils ($K_{\mathrm{avg}} \approx 6.5$) across all grid levels without parameter tuning, preventing support dilation as $h \to 0$. In tandem with the resolution-matched baseline quadrature ($3 \times 3$ Gauss points), both Edge FEM and VNMM converge monotonically toward the continuum limit.
+    \item \textbf{Error Hierarchy and Rates:} Edge FEM delivers lower absolute errors ($0.81\%\text{--}0.07\%$, observed fitted rate $\mathcal{O}(h_{\mathrm{DoF}}^{1.93})$, matching the expected $\mathcal{O}(h^2)$ eigenvalue rate for linear simplicial elements) due to exact circulation cancellation. VNMM displays an observed fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$ across all levels ($9.48\%\text{--}0.29\%$), steepening to $\mathcal{O}(h_{\mathrm{DoF}}^{2.97})$ on fine grids while operating entirely without topological mesh connectivity. As analyzed below, this super-linear slope is an observed pre-asymptotic effect rather than a claim of higher-order asymptotic accuracy.
 \end{itemize}
 
 \paragraph{Pre-Asymptotic Penalty Relief and Rayleigh Decomposition}
@@ -1564,7 +1617,7 @@ Table~\ref{tab:convergence_6_meshes} (final column) and Fig.~\ref{fig:convergenc
 
 Critical findings from the irregular cloud campaign include:
 \begin{enumerate}
-    \item \textbf{Monotonic Convergence under Disorder:} The regularized VNMM converges strictly monotonically with a fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.20})$, confirming that spatial jitter and random directors do not cause spectral stagnation or locking, consistent with the completeness of $\mathcal{P}^1$.
+    \item \textbf{Monotonic Convergence under Disorder:} The regularized VNMM converges monotonically with a fitted slope of $\mathcal{O}(h_{\mathrm{DoF}}^{2.20})$, confirming that spatial jitter and random directors do not cause spectral stagnation or locking, consistent with the completeness of $\mathcal{P}^1$.
     \item \textbf{Error Hierarchy and Spectral Purity:} Coarse-mesh errors are elevated compared to regular grids ($24.67\%$ vs. $9.48\%$ at $N=9$) due to loss of Cartesian residual cancellation, but decay smoothly to $1.64\%$ at $N=29$. All 10 lowest computed eigenvalues match analytical physical modes in exact 1-to-1 order, with zero spurious modes detected below $\lambda \le 10$ (Table~\ref{tab:espectro_cavidade_aleatoria_fina}).
     \item \textbf{Support Locality:} Enforcing $|\det(\widehat{\mathbf{A}})| \ge 0.80$ maintains compact candidate queries ($K_{\mathrm{avg}} \in [7.7, 8.2]$, $K_{\max} \le 12$) across all levels, preventing stencil dilation despite severe spatial-directional disorder.
 \end{enumerate}
@@ -1602,9 +1655,11 @@ Critical findings from the irregular cloud campaign include:
 \subsection{Limitations and Scope of Applicability}
 \label{subsec:limitations_scope}
 
-The numerical benchmarks confirm the stability and spectral accuracy of the stabilized VNMM 2D within the investigated canonical configurations. For broader CEM applications, four principal operational boundaries should be considered:
+The numerical benchmarks confirm the stability and spectral accuracy of the stabilized VNMM 2D within the investigated canonical configurations. For broader CEM applications, five principal operational boundaries should be considered:
 \begin{enumerate}
     \item \textbf{Background Quadrature Scaffolding:} Evaluating the weak form currently relies on background Cartesian integration cells with $3 \times 3$ Gauss quadrature to accommodate intra-cell stencil transitions (Section~\ref{subsubsec:quadrature_sensitivity}). While the Galerkin patch test demonstrated linear completeness for affine vector fields under this integration framework (Section~\ref{subsec:patch_test_galerkin}), incorporating truly cell-free schemes (such as SCNI \cite{chen2001stabilized} or MLPG \cite{atluri2002meshless}) represents an essential step to eliminate background grids in complex domains.
+
+    \item \textbf{Absence of Explicit Tangential-Jump Control:} As analyzed in Section~\ref{subsubsec:tangential_jump_limitations}, the volumetric div-curl penalty acts on discrete divergence and does not directly control tangential trace jumps across shifting support boundaries. While the patch tests, manufactured-solution studies, and cavity benchmarks demonstrate systematic convergence and spectral purity for all tested regular and irregular clouds, stability is established empirically for these regimes rather than as a uniform theoretical guarantee across arbitrary point distributions.
 
     \item \textbf{Boundary Stencil Starvation and Curvature:} On acute convex corners or curved boundaries, geometric truncation restricts the accessible angular half-space, which may require querying wider candidate neighborhoods ($K > 12$) to satisfy $|\det(\widehat{\mathbf{A}})| \ge \widehat{\mathrm{Tol}}$. Continuous boundary curvature also introduces tangential trace mismatch along curved facets unless boundary directors are adaptively aligned.
 
@@ -1626,7 +1681,7 @@ This work established a stabilized Vector Nodal Meshless Method (VNMM 2D) for el
 
 \begin{enumerate}
     \item \textbf{Resolution of Local Incompleteness via $\mathcal{P}^1$:}
-          Completing the local approximation space ($\mathcal{L}^1 \to \mathcal{P}^1 = \mathcal{P}_1 \times \mathcal{P}_1$) resolves all components of the first-order Jacobian $\nabla \vec{E}^h$, overcoming the $\mathcal{O}(1)$ curl noise floor in pointwise collocation. Furthermore, $\mathcal{P}^1$ unconditionally passes the Galerkin patch test to machine precision ($\le 7.38 \times 10^{-14}$) for all seven affine modes---confirming linear completeness of the discrete Galerkin operator---and achieves systematic asymptotic convergence ($\mathcal{O}(h^{2.08})$ in $L^2$ and $\mathcal{O}(h^{0.75})$ in $H(\mathbf{curl})$) in the Galerkin Method of Manufactured Solutions (MMS), whereas the incomplete $\mathcal{L}^1$ basis exhibits catastrophic variational breakdown ($15\%\text{--}47\%$ error) and complete convergence stagnation.
+          Completing the local approximation space ($\mathcal{L}^1 \to \mathcal{P}^1 = \mathcal{P}_1 \times \mathcal{P}_1$) resolves all components of the first-order Jacobian $\nabla \vec{E}^h$, overcoming the $\mathcal{O}(1)$ curl noise floor in pointwise collocation. Furthermore, $\mathcal{P}^1$ unconditionally passes the Galerkin patch test to machine precision ($\le 7.38 \times 10^{-14}$) for all seven affine modes---confirming linear completeness of the discrete Galerkin operator---and achieves systematic numerical convergence (with fitted rates of $\mathcal{O}(h^{2.08})$ in $L^2$ and $\mathcal{O}(h^{0.75})$ in $H(\mathbf{curl})$ across the tested refinement sequences) in the Galerkin Method of Manufactured Solutions (MMS), whereas the incomplete $\mathcal{L}^1$ basis exhibits variational breakdown ($15\%\text{--}47\%$ error) and convergence stagnation.
 
     \item \textbf{Scale-Invariant Support Selection ($\widehat{\mathbf{A}} + \text{$k$-d tree}$):}
           Formulating support qualification via the dimensionless placement matrix $\widehat{\mathbf{A}}$ removes the quartic scaling $\mathcal{O}(h^4)$, decoupling stencil geometry from absolute grid refinement. Enforcing $|\det(\widehat{\mathbf{A}})| \ge \widehat{\mathrm{Tol}}$ together with early-stopping $k$-d tree search preserves compact stencils ($K_{\mathrm{avg}} \approx 6.5\text{--}11$) down to fine resolutions and bounds local conditioning ($\kappa_2(\widehat{\mathbf{A}}) \le 5.9$) under $25\%$ spatial disorder.
@@ -1634,8 +1689,14 @@ This work established a stabilized Vector Nodal Meshless Method (VNMM 2D) for el
     \item \textbf{Delineation of Topological Conformity vs. Mesh-Free Non-Conformity:}
           The formal proof of the Local Dual Equivalence Theorem (\ref{app:dual_whitney_proof}) establishes that VNMM reproduces lowest-order Whitney edge elements on conforming simplices down to machine precision ($\approx 10^{-16}$). On arbitrary clouds, moving support stencils destroy global trace continuity ($V_h \not\subset H(\mathbf{curl}; \Omega)$) and discrete de Rham sequence exactness, causing gradient nullspace leakage in unregularized curl-curl formulations.
 
-    \item \textbf{Variational Div-Curl Regularization ($\mathbf{K}_{\mathrm{curl}} + s_{\mathrm{div}} \mathbf{K}_{\mathrm{div}}$):}
-          Volumetric div-curl regularization provides effective spurious mode shifting without expanding system dimensions. In the calibrated window ($s_{\mathrm{div}} \in [6.0, 10.0]$), spurious gradient modes are shifted past the operational spectrum ($\lambda_{\mathrm{spur}} = 11.84 > 10.37$) while physical resonances remain unperturbed ($R_{\mathrm{div}} \le 1.65\%$). Multi-level benchmarks show empirical refinement slopes of $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$ on regular lattices and $\mathcal{O}(h_{\mathrm{DoF}}^{2.20})$ under stochastic perturbations.
+    \item \textbf{Variational Div-Curl Regularization and Baseline Spectral Accuracy:}
+          Volumetric div-curl regularization provides effective spurious mode shifting without expanding system dimensions or introducing auxiliary multipliers. On the 361-DoF base resonant cavity under the resolution-matched baseline quadrature ($20 \times 20$ cells, $3 \times 3$ Gauss points), the stabilized formulation achieves a global mean cutoff wavenumber error of $4.01\%$ (spanning $0.41\%\text{--}7.33\%$ across the first ten physical resonances). In the calibrated penalty window ($s_{\mathrm{div}} \in [6.0, 10.0]$), spurious gradient modes are shifted completely beyond the operational spectrum ($\lambda_{\mathrm{spur}} = 11.84 > 10.37$) while physical resonances incur minimal penalty distortion ($R_{\mathrm{div}} \le 1.65\%$). Multi-level refinement studies yield observed fitted convergence rates of $\mathcal{O}(h_{\mathrm{DoF}}^{2.73})$ on regular lattices and $\mathcal{O}(h_{\mathrm{DoF}}^{2.20})$ under stochastic perturbations across the investigated discretization levels.
+
+    \item \textbf{Quadrature Transparency: Resolution-Matched Integration vs. Under-Integration Deception:}
+          Systematic sensitivity analysis across background cell densities and Gauss rules (Table~\ref{tab:quadrature_sensitivity}) serves as a cautionary pedagogical case study for non-conforming meshless methods. It reveals that the apparent low error of $1.09\%$ obtained under coarse under-integration ($10 \times 10$ cells with $2 \times 2$ Gauss points) is a deceptive numerical artifact arising from error cancellation between discrete curl softening across intra-cell stencil boundaries and penalty stiffening, while concealing a $140$-dimensional spurious rank deficiency in $\mathbf{K}_{\mathrm{curl}}$. Eliminating this artificial softening through dense, resolution-matched quadrature ($N_g / N_{\mathrm{DoF}} \approx 10$, $\dim\ker(\mathbf{K}_{\mathrm{curl}}) = 0$) restores full numerical rank and establishes a consistent baseline spatial discretization error of $4.01\%$, ensuring that observed convergence rates reflect genuine vector polynomial approximation rather than under-integration artifacts.
+
+    \item \textbf{Operational Scope and Methodological Caveats:}
+          While the stabilized VNMM demonstrates spectral purity and systematic convergence across all tested configurations, its operational scope entails three principal caveats established in Section~\ref{subsec:limitations_scope}: (i) evaluation of weak forms currently relies on a background Cartesian integration grid---requiring a dense ratio ($N_g / N_{\mathrm{DoF}} \approx 10$) to sufficiently integrate intra-cell stencil transitions---highlighting the importance of developing truly cell-free schemes (e.g., SCNI or MLPG); (ii) the volumetric div-curl penalty acts on discrete divergence rather than directly penalizing tangential trace jumps $[\hat{n} \times \vec{E}^h]$ across shifting support boundaries, meaning that stability is verified empirically for the tested regimes rather than guaranteed uniformly via a priori error bounds; and (iii) the present scope is restricted to 2D piecewise homogeneous domains at low-to-moderate electrical size, with material interfaces, curved-boundary director alignment, and 3D extensions ($\mathcal{P}_1^3$) forming natural targets for future investigation.
 \end{enumerate}
 
 \subsection{Promising Directions for Future Research}
@@ -1644,6 +1705,7 @@ This work established a stabilized Vector Nodal Meshless Method (VNMM 2D) for el
 Building upon this 2D stabilized vector formulation, key avenues for future investigation include:
 \begin{enumerate}
     \item \textbf{3D Vector Formulations:} Extending the complete basis to 3D ($\mathcal{P}_1^3$, $M_{\mathrm{supp}} = 12$) for 3D resonant cavities, waveguiding structures, and radiation problems \cite{goncalves2023vector}.
+    \item \textbf{Explicit Tangential-Jump Stabilization and Rigorous Error Bounds:} Developing explicit interface jump penalty terms---drawing on Interior Penalty (IP) and Discontinuous Galerkin (DG) formulations for Maxwell operators \cite{houston2004mixed, hesthaven2004high, nguyen2011hybridizable}---to penalize tangential discontinuities $[\hat{n} \times \vec{E}^h]$ across shifting support transitions, paving the way for a priori error estimates and provable uniform stability on arbitrary point clouds.
     \item \textbf{Cell-Free Quadrature and Complex Boundaries:} Replacing background integration cells with cell-free schemes (SCNI \cite{chen2001stabilized} or MLPG \cite{atluri2002meshless}) to eliminate quadrature scaffolding and accommodate moving or curved boundaries.
     \item \textbf{Multi-Seed Statistical Characterization:} Conducting Monte Carlo campaigns across multiple random cloud realizations to evaluate statistical error distributions and qualification success rates.
     \item \textbf{Material Interfaces:} Developing multi-tree spatial data structures \cite{parreira2006efficient} to restrict stencils to homogeneous subdomains, preserving constitutive jumps ($\epsilon_{r1} \neq \epsilon_{r2}$) and enforcing normal flux continuity across discontinuities.
@@ -1669,7 +1731,7 @@ This appendix provides the complete constructive proof of Theorem~\ref{thm:dual_
     \begin{equation}
         \vec{u}(\mathbf{x}) \cdot \vec{t}_k = \frac{1}{L_k} \left[ a_1 \Delta x_k + a_2 \Delta y_k + \alpha (y \Delta x_k - x \Delta y_k) \right].
     \end{equation}
-    Since any point $\mathbf{x} = (x,y)$ on edge $e_k$ satisfies $(x - x_k)\Delta y_k - (y - y_k)\Delta x_k = 0$, the rotational term $y \Delta x_k - x \Delta y_k = y_k \Delta x_k - x_k \Delta y_k$ is strictly constant along the entire edge length. Therefore, the tangential projection is invariant along $e_k$:
+    Since any point $\mathbf{x} = (x,y)$ on edge $e_k$ satisfies $(x - x_k)\Delta y_k - (y - y_k)\Delta x_k = 0$, the rotational term $y \Delta x_k - x \Delta y_k = y_k \Delta x_k - x_k \Delta y_k$ is constant along the entire edge length. Therefore, the tangential projection is invariant along $e_k$:
     \begin{equation}
         \vec{u}(\mathbf{x}) \cdot \vec{t}_k = \vec{u}(M_k) \cdot \vec{t}_k, \quad \forall \mathbf{x} \in e_k.
         \label{eq:edge_constancy_app}
@@ -1730,7 +1792,7 @@ This appendix details the order-of-magnitude scaling derivation supporting Heuri
 
     Now consider a general smooth physical field $\vec{E} \in [C^2(\Omega)]^2$. Its Taylor expansion centered at evaluation point $P$ is $\vec{E}(\mathbf{x}) = \vec{E}(P) + \mathbf{J}(P) \Delta\mathbf{x} + \mathcal{O}(h^2)$, where $\mathbf{J}(P)$ has non-zero diagonal entries ($\partial E_x/\partial x \neq 0$ or $\partial E_y/\partial y \neq 0$). Collocating $\vec{E}^h$ at support nodes $\mathbf{x}_k$ ($k=1,2,3$) along unit directors $\vec{t}_k$ defines the linear placement system $\mathbf{A} [a, b, c]^T = \mathbf{e}$, where $e_k = \vec{E}(\mathbf{x}_k) \cdot \vec{t}_k$.
 
-    Subtracting the projection of the unrepresented linear components $(\mathbf{J}(P) - \mathbf{J}^h) \Delta\mathbf{x}_k \cdot \vec{t}_k$ yields a nodal projection residual $\mathbf{r} \in \mathbb{R}^3$ with asymptotic magnitude $\|\mathbf{r}\| \sim \mathcal{O}(h)$. In the $3 \times 3$ moment placement matrix $\mathbf{A}$ (Eq.~\eqref{eq:matrix_A_L1}), translation columns 1--2 scale as $\mathcal{O}(1)$, while the rotational moment column 3 scales as $(\Delta y_k t_{kx} - \Delta x_k t_{ky}) \sim \mathcal{O}(h)$. Consequently, by Cramer's rule or Neumann inversion, the third row of $\mathbf{A}^{-1}$ (which maps nodal data to the rotational DoF $c = -\frac{1}{2}(\nabla \times \vec{E}^h)_z$) scales strictly as $\|\operatorname{Row}_3(\mathbf{A}^{-1})\| \sim \mathcal{O}(h^{-1})$.
+    Subtracting the projection of the unrepresented linear components $(\mathbf{J}(P) - \mathbf{J}^h) \Delta\mathbf{x}_k \cdot \vec{t}_k$ yields a nodal projection residual $\mathbf{r} \in \mathbb{R}^3$ with asymptotic magnitude $\|\mathbf{r}\| \sim \mathcal{O}(h)$. In the $3 \times 3$ moment placement matrix $\mathbf{A}$ (Eq.~\eqref{eq:matrix_A_L1}), translation columns 1--2 scale as $\mathcal{O}(1)$, while the rotational moment column 3 scales as $(\Delta y_k t_{kx} - \Delta x_k t_{ky}) \sim \mathcal{O}(h)$. Consequently, by Cramer's rule or Neumann inversion, the third row of $\mathbf{A}^{-1}$ (which maps nodal data to the rotational DoF $c = -\frac{1}{2}(\nabla \times \vec{E}^h)_z$) scales as $\|\operatorname{Row}_3(\mathbf{A}^{-1})\| \sim \mathcal{O}(h^{-1})$.
 
     The numerical error in the reconstructed curl at evaluation point $P$ is therefore governed by the propagation of the projection remainder:
     \begin{equation}

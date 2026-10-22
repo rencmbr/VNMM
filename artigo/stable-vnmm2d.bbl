@@ -117,6 +117,14 @@ N.~Z. Lima, M{\'e}todos sem malha aplicados ao eletromagnetismo: Formas fracas
   de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade
   Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil (2016).
 
+\bibitem{liu2001point}
+G.~R. Liu, Y.~T. Gu, A point interpolation method for two-dimensional solids,
+  International Journal for Numerical Methods in Engineering 50~(4) (2001)
+  937--951.
+\newblock \href
+  {https://doi.org/10.1002/1097-0207(20010210)50:4<937::AID-NME62>3.0.CO;2-X}
+  {\path{doi:10.1002/1097-0207(20010210)50:4<937::AID-NME62>3.0.CO;2-X}}.
+
 \bibitem{lima2017edge}
 N.~Z. Lima, R.~C. Mesquita, Edge meshless method applied to vector
   electromagnetic problems, IEEE Transactions on Magnetics 53~(6) (2017) 1--4.
@@ -238,6 +246,21 @@ M.~Costabel, M.~Dauge, Weighted regularization of {Maxwell} equations in
 \newblock \href {https://doi.org/10.1007/s002110100388}
   {\path{doi:10.1007/s002110100388}}.
 
+\bibitem{houston2004mixed}
+P.~Houston, I.~Perugia, D.~Sch{\"o}tzau, Mixed discontinuous {G}alerkin
+  approximation of the {M}axwell operator, SIAM Journal on Numerical Analysis
+  42~(1) (2004) 434--459.
+\newblock \href {https://doi.org/10.1137/S003614290241790X}
+  {\path{doi:10.1137/S003614290241790X}}.
+
+\bibitem{hesthaven2004high}
+J.~S. Hesthaven, T.~Warburton, High-order nodal discontinuous {G}alerkin
+  methods for the {M}axwell eigenvalue problem, Philosophical Transactions of
+  the Royal Society of London. Series A: Mathematical, Physical and Engineering
+  Sciences 362~(1816) (2004) 493--524.
+\newblock \href {https://doi.org/10.1098/rsta.2003.1332}
+  {\path{doi:10.1098/rsta.2003.1332}}.
+
 \bibitem{saad2011numerical}
 Y.~Saad, Numerical Methods for Large Eigenvalue Problems, revised Edition,
   SIAM, Philadelphia, PA, 2011.
@@ -272,6 +295,13 @@ J.-S. Chen, C.-T. Wu, S.~Yoon, Y.~You, A stabilized conforming nodal
 \newblock \href
   {https://doi.org/10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}
   {\path{doi:10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}}.
+
+\bibitem{nguyen2011hybridizable}
+N.~C. Nguyen, J.~Peraire, B.~Cockburn, Hybridizable discontinuous {G}alerkin
+  methods for the time-harmonic {M}axwell's equations, Journal of Computational
+  Physics 230~(18) (2011) 7151--7175.
+\newblock \href {https://doi.org/10.1016/j.jcp.2011.05.018}
+  {\path{doi:10.1016/j.jcp.2011.05.018}}.
 
 \bibitem{coppoli2012induction}
 E.~H.~R. Coppoli, R.~C. Mesquita, R.~S. Silva, Induction machines modeling with

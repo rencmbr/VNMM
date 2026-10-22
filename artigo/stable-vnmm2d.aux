@@ -27,300 +27,312 @@
 \citation{liu2009mesh,belytschko1994element}
 \citation{viana1999moving,cingoski1998element,atluri2002meshless,fonseca2008imposing,nicomedes2012meshless}
 \citation{nicomedes2015mixed,lima2016metodos}
-\citation{lima2017edge}
-\citation{silva2018new}
-\citation{ortiz2021creating,ortiz2021nodal,ortiz2023tese}
-\citation{goncalves2023vector,goncalves2025tese,goncalves2026periodic}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.5}\protected@file@percent }
 \newlabel{sec:intro}{{1}{2}{Introduction}{section.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Context and Motivation}{2}{subsection.6}\protected@file@percent }
 \newlabel{subsec:context_motivation}{{1.1}{2}{Context and Motivation}{subsection.6}{}}
+\citation{liu2001point}
+\citation{lima2017edge}
+\citation{silva2018new}
+\citation{ortiz2021creating,ortiz2021nodal,ortiz2023tese}
+\citation{goncalves2023vector,goncalves2025tese,goncalves2026periodic}
 \citation{ortiz2021nodal,ortiz2023tese}
 \citation{ortiz2021nodal,goncalves2025tese}
+\newlabel{eq:emm_circulation_dof}{{1}{3}{Context and Motivation}{equation.7}{}}
+\newlabel{eq:vnmm_projection_dof}{{2}{3}{Context and Motivation}{equation.8}{}}
 \citation{nedelec1980mixed,monk2003finite,boffi2013mixed}
 \citation{belytschko1994element,cingoski1998element}
 \citation{atluri2002meshless,nicomedes2012meshless}
-\citation{liu2005introduction,slak2018refined}
+\citation{liu2001point,liu2005introduction,slak2018refined}
 \citation{ortiz2021nodal,ortiz2023tese}
 \citation{ortiz2021nodal,ortiz2023tese}
 \citation{liu2009mesh,goncalves2025tese}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Conceptual comparison of spatial discretization paradigms in computational electromagnetics.}}{3}{table.7}\protected@file@percent }
-\newlabel{tab:meshless_comparison}{{1}{3}{Conceptual comparison of spatial discretization paradigms in computational electromagnetics}{table.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Conceptual comparison of spatial discretization paradigms in computational electromagnetics.}}{4}{table.9}\protected@file@percent }
+\newlabel{tab:meshless_comparison}{{1}{4}{Conceptual comparison of spatial discretization paradigms in computational electromagnetics}{table.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Local and Global Bottlenecks on Unconstrained Point Clouds: Curl Stagnation, Stencil Degeneracy, and Spectral Pollution}{4}{subsection.10}\protected@file@percent }
+\newlabel{subsec:curl_stagnation_bottleneck}{{1.2}{4}{Local and Global Bottlenecks on Unconstrained Point Clouds: Curl Stagnation, Stencil Degeneracy, and Spectral Pollution}{subsection.10}{}}
 \citation{nedelec1980mixed,monk2003finite}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}The Curl Stagnation Bottleneck in Arbitrary Supports}{4}{subsection.8}\protected@file@percent }
-\newlabel{subsec:curl_stagnation_bottleneck}{{1.2}{4}{The Curl Stagnation Bottleneck in Arbitrary Supports}{subsection.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Scope and Main Contributions of the Paper}{4}{subsection.9}\protected@file@percent }
-\newlabel{subsec:scope_contributions}{{1.3}{4}{Scope and Main Contributions of the Paper}{subsection.9}{}}
+\citation{liu2001point}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Scope and Main Contributions of the Paper}{5}{subsection.11}\protected@file@percent }
+\newlabel{subsec:scope_contributions}{{1.3}{5}{Scope and Main Contributions of the Paper}{subsection.11}{}}
 \citation{ortiz2021nodal,ortiz2023tese}
 \citation{lima2017edge,ortiz2021nodal}
 \citation{goncalves2023vector,ortiz2021nodal}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Mathematical Formulations of the 2D VNMM}{6}{section.14}\protected@file@percent }
-\newlabel{sec:formulations}{{2}{6}{Mathematical Formulations of the 2D VNMM}{section.14}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Nodal Projection and Tangential Continuity}{6}{subsection.15}\protected@file@percent }
-\newlabel{subsec:nodal_projection}{{2.1}{6}{Nodal Projection and Tangential Continuity}{subsection.15}{}}
-\newlabel{eq:field_approx_vnmm}{{1}{6}{Nodal Projection and Tangential Continuity}{equation.16}{}}
-\newlabel{eq:dof_projection_definition}{{2}{6}{Nodal Projection and Tangential Continuity}{equation.17}{}}
-\newlabel{eq:vector_kronecker_delta}{{3}{6}{Nodal Projection and Tangential Continuity}{equation.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Mathematical Formulations of the 2D VNMM}{7}{section.16}\protected@file@percent }
+\newlabel{sec:formulations}{{2}{7}{Mathematical Formulations of the 2D VNMM}{section.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Nodal Projection and Tangential Continuity}{7}{subsection.17}\protected@file@percent }
+\newlabel{subsec:nodal_projection}{{2.1}{7}{Nodal Projection and Tangential Continuity}{subsection.17}{}}
+\newlabel{eq:field_approx_vnmm}{{3}{7}{Nodal Projection and Tangential Continuity}{equation.18}{}}
+\newlabel{eq:dof_projection_definition}{{4}{7}{Nodal Projection and Tangential Continuity}{equation.19}{}}
+\newlabel{eq:vector_kronecker_delta}{{5}{7}{Nodal Projection and Tangential Continuity}{equation.20}{}}
 \citation{parreira2006efficient}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Enforcement of PEC Boundary Conditions and Remarks on Material Interfaces}{7}{subsubsection.19}\protected@file@percent }
-\newlabel{eq:pec_dirichlet_homog}{{5}{7}{Enforcement of PEC Boundary Conditions and Remarks on Material Interfaces}{equation.21}{}}
-\newlabel{eq:pec_nodal_collocation}{{6}{7}{Enforcement of PEC Boundary Conditions and Remarks on Material Interfaces}{equation.22}{}}
-\@writefile{toc}{\contentsline {paragraph}{Nodal Collocation versus Continuous Boundary Trace}{7}{section*.23}\protected@file@percent }
-\newlabel{eq:pec_continuous_trace}{{7}{7}{Nodal Collocation versus Continuous Boundary Trace}{equation.24}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Enforcement of PEC Boundary Conditions and Remarks on Material Interfaces}{8}{subsubsection.21}\protected@file@percent }
+\newlabel{eq:pec_dirichlet_homog}{{7}{8}{Enforcement of PEC Boundary Conditions and Remarks on Material Interfaces}{equation.23}{}}
+\newlabel{eq:pec_nodal_collocation}{{8}{8}{Enforcement of PEC Boundary Conditions and Remarks on Material Interfaces}{equation.24}{}}
+\@writefile{toc}{\contentsline {paragraph}{Nodal Collocation versus Continuous Boundary Trace}{8}{section*.25}\protected@file@percent }
+\newlabel{eq:pec_continuous_trace}{{9}{8}{Nodal Collocation versus Continuous Boundary Trace}{equation.26}{}}
 \citation{lima2017edge,silva2018new}
 \citation{nedelec1980mixed}
 \citation{silva2018new}
 \citation{ortiz2021nodal,ortiz2023tese}
-\@writefile{toc}{\contentsline {paragraph}{Material Interfaces and Homogeneous Scope}{8}{section*.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}The Incomplete $\mathcal  {L}^1$ Basis (3 Support Nodes)}{8}{subsection.26}\protected@file@percent }
-\newlabel{subsec:incomplete_l1_basis}{{2.2}{8}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{subsection.26}{}}
-\newlabel{eq:N_i_L1}{{9}{8}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{equation.28}{}}
-\newlabel{eq:linear_placement_system}{{10}{8}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{equation.29}{}}
+\@writefile{toc}{\contentsline {paragraph}{Material Interfaces and Homogeneous Scope}{9}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}The Incomplete $\mathcal  {L}^1$ Basis (3 Support Nodes)}{9}{subsection.28}\protected@file@percent }
+\newlabel{subsec:incomplete_l1_basis}{{2.2}{9}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{subsection.28}{}}
+\newlabel{eq:N_i_L1}{{11}{9}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{equation.30}{}}
+\newlabel{eq:linear_placement_system}{{12}{9}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{equation.31}{}}
 \citation{lima2017edge,ortiz2021nodal}
 \citation{nedelec1980mixed,monk2003finite,boffi2013mixed}
-\newlabel{eq:matrix_A_L1}{{11}{9}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{equation.30}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.1}Mathematical Properties}{9}{subsubsection.32}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.2}Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{10}{subsubsection.36}\protected@file@percent }
-\newlabel{subsubsec:dual_whitney}{{2.2.2}{10}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{subsubsection.36}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.3}The Local Dual Equivalence Theorem}{10}{subsubsection.38}\protected@file@percent }
-\newlabel{subsubsec:formal_proof_dual_whitney}{{2.2.3}{10}{The Local Dual Equivalence Theorem}{subsubsection.38}{}}
-\newlabel{thm:dual_equivalence}{{1}{10}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{theorem.39}{}}
-\newlabel{eq:dual_equivalence_scaling}{{16}{10}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{equation.40}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Local equivalence between Whitney edge elements and the VNMM $\mathcal  {L}^1$ basis. (a) Triangular cell $\Omega _e$ with vertices $V_i$ and oriented edges $e_k$; (b) VNMM support stencil with vector nodes $(P_k, \vec  {t}_k)$ placed at edge midpoints; (c) Asymptotic collapse ($L_k \to 0$) mapping edge circulations to directional projections $e_k$; (d) Whitney 1-form $\vec  {w}_1$ for edge $e_1$; (e) Normalized VNMM basis $\vec  {N}_1/L_1$ for node $(P_1, \vec  {t}_1)$, displaying identical vector fields over $\Omega _e$.}}{11}{figure.37}\protected@file@percent }
-\newlabel{fig:whitney_vnmm_dual_equivalence}{{1}{11}{Local equivalence between Whitney edge elements and the VNMM $\mathcal {L}^1$ basis. (a) Triangular cell $\Omega _e$ with vertices $V_i$ and oriented edges $e_k$; (b) VNMM support stencil with vector nodes $(P_k, \vec {t}_k)$ placed at edge midpoints; (c) Asymptotic collapse ($L_k \to 0$) mapping edge circulations to directional projections $e_k$; (d) Whitney 1-form $\vec {w}_1$ for edge $e_1$; (e) Normalized VNMM basis $\vec {N}_1/L_1$ for node $(P_1, \vec {t}_1)$, displaying identical vector fields over $\Omega _e$}{figure.37}{}}
+\newlabel{eq:matrix_A_L1}{{13}{10}{The Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (3 Support Nodes)}{equation.32}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.1}Mathematical Properties}{10}{subsubsection.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.2}Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{11}{subsubsection.38}\protected@file@percent }
+\newlabel{subsubsec:dual_whitney}{{2.2.2}{11}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{subsubsection.38}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.3}The Local Dual Equivalence Theorem}{11}{subsubsection.40}\protected@file@percent }
+\newlabel{subsubsec:formal_proof_dual_whitney}{{2.2.3}{11}{The Local Dual Equivalence Theorem}{subsubsection.40}{}}
+\newlabel{thm:dual_equivalence}{{1}{11}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{theorem.41}{}}
+\newlabel{eq:dual_equivalence_scaling}{{18}{11}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement}{equation.42}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Local equivalence between Whitney edge elements and the VNMM $\mathcal  {L}^1$ basis. (a) Triangular cell $\Omega _e$ with vertices $V_i$ and oriented edges $e_k$; (b) VNMM support stencil with vector nodes $(P_k, \vec  {t}_k)$ placed at edge midpoints; (c) Asymptotic collapse ($L_k \to 0$) mapping edge circulations to directional projections $e_k$; (d) Whitney 1-form $\vec  {w}_1$ for edge $e_1$; (e) Normalized VNMM basis $\vec  {N}_1/L_1$ for node $(P_1, \vec  {t}_1)$, displaying identical vector fields over $\Omega _e$.}}{12}{figure.39}\protected@file@percent }
+\newlabel{fig:whitney_vnmm_dual_equivalence}{{1}{12}{Local equivalence between Whitney edge elements and the VNMM $\mathcal {L}^1$ basis. (a) Triangular cell $\Omega _e$ with vertices $V_i$ and oriented edges $e_k$; (b) VNMM support stencil with vector nodes $(P_k, \vec {t}_k)$ placed at edge midpoints; (c) Asymptotic collapse ($L_k \to 0$) mapping edge circulations to directional projections $e_k$; (d) Whitney 1-form $\vec {w}_1$ for edge $e_1$; (e) Normalized VNMM basis $\vec {N}_1/L_1$ for node $(P_1, \vec {t}_1)$, displaying identical vector fields over $\Omega _e$}{figure.39}{}}
 \citation{lima2017edge}
 \citation{nedelec1980mixed,monk2003finite}
 \citation{li2007meshfree,liu2009mesh}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.4}Local $H(\mathbf  {curl})$ Regularity versus Global $H(\mathbf  {curl})$ Conformity}{12}{subsubsection.41}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.5}Mathematical Origin of Modal Aliasing and Curl Stagnation}{12}{subsubsection.44}\protected@file@percent }
-\newlabel{subsec:L1_aliasing_analysis}{{2.2.5}{12}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{subsubsection.44}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.4}Local $H(\mathbf  {curl})$ Regularity versus Global $H(\mathbf  {curl})$ Conformity}{13}{subsubsection.43}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.5}Mathematical Origin of Modal Aliasing and Curl Stagnation}{13}{subsubsection.46}\protected@file@percent }
+\newlabel{subsec:L1_aliasing_analysis}{{2.2.5}{13}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{subsubsection.46}{}}
 \citation{liu2009mesh}
-\newlabel{eq:taylor_vector_expansion}{{17}{13}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{equation.45}{}}
-\newlabel{eq:jacobian_tensor_raw}{{18}{13}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{equation.46}{}}
-\newlabel{eq:jacobian_tensor_EM_decomposition}{{19}{13}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{equation.47}{}}
-\newlabel{heur:L1_aliasing}{{1}{13}{Jacobian Incompleteness and Derivative Modal Aliasing Scaling}{heuristic.48}{}}
+\newlabel{eq:taylor_vector_expansion}{{19}{14}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{equation.47}{}}
+\newlabel{eq:jacobian_tensor_raw}{{20}{14}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{equation.48}{}}
+\newlabel{eq:jacobian_tensor_EM_decomposition}{{21}{14}{Mathematical Origin of Modal Aliasing and Curl Stagnation}{equation.49}{}}
+\newlabel{heur:L1_aliasing}{{1}{14}{Jacobian Incompleteness and Derivative Modal Aliasing Scaling}{heuristic.50}{}}
 \citation{nedelec1986new}
-\newlabel{eq:L1_derivative_constraints}{{20}{14}{Jacobian Incompleteness and Derivative Modal Aliasing Scaling}{equation.49}{}}
-\newlabel{eq:aliasing_order_proof}{{21}{14}{Jacobian Incompleteness and Derivative Modal Aliasing Scaling}{equation.50}{}}
-\newlabel{rem:heur1_scope}{{1}{14}{Scope of Heuristic~\ref {heur:L1_aliasing} and the Conforming Case}{remark.51}{}}
+\newlabel{eq:L1_derivative_constraints}{{22}{15}{Jacobian Incompleteness and Derivative Modal Aliasing Scaling}{equation.51}{}}
+\newlabel{eq:aliasing_order_proof}{{23}{15}{Jacobian Incompleteness and Derivative Modal Aliasing Scaling}{equation.52}{}}
+\newlabel{rem:heur1_scope}{{1}{15}{Scope of Heuristic~\ref {heur:L1_aliasing} and the Conforming Case}{remark.53}{}}
 \citation{ortiz2021nodal}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}The Complete $\mathcal  {P}^1$ Vector Polynomial Basis}{15}{subsection.52}\protected@file@percent }
-\newlabel{subsec:complete_P1_basis}{{2.3}{15}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{subsection.52}{}}
-\newlabel{eq:complete_P1_basis_vectors}{{22}{15}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.53}{}}
-\newlabel{eq:P1_shape_function_expansion}{{23}{15}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.54}{}}
-\newlabel{eq:kronecker_projection_P1}{{24}{15}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.55}{}}
-\newlabel{eq:linear_system_P1}{{25}{15}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.56}{}}
-\newlabel{eq:matrix_A_6x6}{{26}{15}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.57}{}}
-\newlabel{eq:beta_and_L_vectors_P1}{{27}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.58}{}}
-\newlabel{eq:field_approximation_P1}{{28}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.59}{}}
-\newlabel{eq:curl_approximation_P1}{{29}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.60}{}}
-\newlabel{eq:full_jacobian_tensor_P1}{{30}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.61}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}The Complete $\mathcal  {P}^1$ Vector Polynomial Basis}{16}{subsection.54}\protected@file@percent }
+\newlabel{subsec:complete_P1_basis}{{2.3}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{subsection.54}{}}
+\newlabel{eq:complete_P1_basis_vectors}{{24}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.55}{}}
+\newlabel{eq:P1_shape_function_expansion}{{25}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.56}{}}
+\newlabel{eq:kronecker_projection_P1}{{26}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.57}{}}
+\newlabel{eq:linear_system_P1}{{27}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.58}{}}
+\newlabel{eq:matrix_A_6x6}{{28}{16}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.59}{}}
+\newlabel{eq:beta_and_L_vectors_P1}{{29}{17}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.60}{}}
+\newlabel{eq:field_approximation_P1}{{30}{17}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.61}{}}
+\newlabel{eq:curl_approximation_P1}{{31}{17}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.62}{}}
+\newlabel{eq:full_jacobian_tensor_P1}{{32}{17}{The Complete \texorpdfstring {$\mathcal {P}^1$}{P1} Vector Polynomial Basis}{equation.63}{}}
 \citation{ortiz2021nodal,ortiz2023tese}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Algebraic Conditioning and Support Selection}{17}{section.62}\protected@file@percent }
-\newlabel{sec:conditioning}{{3}{17}{Algebraic Conditioning and Support Selection}{section.62}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Singularities and Geometric Constraints in the Incomplete $\mathcal  {L}^1$ Basis ($3 \times 3$ Matrix)}{17}{subsection.63}\protected@file@percent }
-\newlabel{subsec:singularities_L1}{{3.1}{17}{Singularities and Geometric Constraints in the Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (\texorpdfstring {$3 \times 3$}{3x3} Matrix)}{subsection.63}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Singularity configurations and support qualification for the VNMM $\mathcal  {L}^1$ placement matrix $\mathbf  {A}$. (a) Global vector parallelism ($\vec  {t}_1 \parallel \vec  {t}_2 \parallel \vec  {t}_3$); (b) Concurrent lines of action intersecting at focal point $P_c$; (c) Collinear nodes sharing a common line of action; (d) Nodal coincidence ($\|P_1 - P_2\| \to 0$); (e) Decoupling of nodal geometry and director alignment: spatially non-collinear nodes with parallel directors yield $\qopname  \relax m{det}(\mathbf  {A}) = 0$ (top), whereas collinear nodes with non-parallel directors fail to span 2D derivatives (bottom); (f) Admissible support: non-collinear distribution ($\operatorname  {Area}(T) > 0$) with non-vanishing circulation around evaluation point $P$.}}{18}{figure.64}\protected@file@percent }
-\newlabel{fig:vnmm_singularities_matrix_A}{{2}{18}{Singularity configurations and support qualification for the VNMM $\mathcal {L}^1$ placement matrix $\mathbf {A}$. (a) Global vector parallelism ($\vec {t}_1 \parallel \vec {t}_2 \parallel \vec {t}_3$); (b) Concurrent lines of action intersecting at focal point $P_c$; (c) Collinear nodes sharing a common line of action; (d) Nodal coincidence ($\|P_1 - P_2\| \to 0$); (e) Decoupling of nodal geometry and director alignment: spatially non-collinear nodes with parallel directors yield $\det (\mathbf {A}) = 0$ (top), whereas collinear nodes with non-parallel directors fail to span 2D derivatives (bottom); (f) Admissible support: non-collinear distribution ($\operatorname {Area}(T) > 0$) with non-vanishing circulation around evaluation point $P$}{figure.64}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Singularity Characterization via the Null-Space Orthogonality Principle}{18}{subsection.69}\protected@file@percent }
-\newlabel{subsec:singularities_P1}{{3.2}{18}{Singularity Characterization via the Null-Space Orthogonality Principle}{subsection.69}{}}
-\newlabel{eq:null_space_orthogonality}{{32}{19}{Singularity Characterization via the Null-Space Orthogonality Principle}{equation.71}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Automated Support Selection Algorithm via Scale-Invariant Dimensionless Matrix}{19}{subsection.72}\protected@file@percent }
-\newlabel{sec:support_selection_algorithm}{{3.3}{19}{Automated Support Selection Algorithm via Scale-Invariant Dimensionless Matrix}{subsection.72}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}Scale-Invariant Support Selection via Dimensionless Matrix}{20}{subsubsection.73}\protected@file@percent }
-\newlabel{subsec:scale_invariant_criterion}{{3.3.1}{20}{Scale-Invariant Support Selection via Dimensionless Matrix}{subsubsection.73}{}}
-\newlabel{eq:det_quartic_scaling}{{33}{20}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.74}{}}
-\newlabel{eq:h_local_canonical}{{34}{20}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.77}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Algebraic Conditioning and Support Selection}{18}{section.64}\protected@file@percent }
+\newlabel{sec:conditioning}{{3}{18}{Algebraic Conditioning and Support Selection}{section.64}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Singularities and Geometric Constraints in the Incomplete $\mathcal  {L}^1$ Basis ($3 \times 3$ Matrix)}{18}{subsection.65}\protected@file@percent }
+\newlabel{subsec:singularities_L1}{{3.1}{18}{Singularities and Geometric Constraints in the Incomplete \texorpdfstring {$\mathcal {L}^1$}{L1} Basis (\texorpdfstring {$3 \times 3$}{3x3} Matrix)}{subsection.65}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Singularity configurations and support qualification for the VNMM $\mathcal  {L}^1$ placement matrix $\mathbf  {A}$. (a) Global vector parallelism ($\vec  {t}_1 \parallel \vec  {t}_2 \parallel \vec  {t}_3$); (b) Concurrent lines of action intersecting at focal point $P_c$; (c) Collinear nodes sharing a common line of action; (d) Nodal coincidence ($\|P_1 - P_2\| \to 0$); (e) Decoupling of nodal geometry and director alignment: spatially non-collinear nodes with parallel directors yield $\qopname  \relax m{det}(\mathbf  {A}) = 0$ (top), whereas collinear nodes with non-parallel directors fail to span 2D derivatives (bottom); (f) Admissible support: non-collinear distribution ($\operatorname  {Area}(T) > 0$) with non-vanishing circulation around evaluation point $P$.}}{19}{figure.66}\protected@file@percent }
+\newlabel{fig:vnmm_singularities_matrix_A}{{2}{19}{Singularity configurations and support qualification for the VNMM $\mathcal {L}^1$ placement matrix $\mathbf {A}$. (a) Global vector parallelism ($\vec {t}_1 \parallel \vec {t}_2 \parallel \vec {t}_3$); (b) Concurrent lines of action intersecting at focal point $P_c$; (c) Collinear nodes sharing a common line of action; (d) Nodal coincidence ($\|P_1 - P_2\| \to 0$); (e) Decoupling of nodal geometry and director alignment: spatially non-collinear nodes with parallel directors yield $\det (\mathbf {A}) = 0$ (top), whereas collinear nodes with non-parallel directors fail to span 2D derivatives (bottom); (f) Admissible support: non-collinear distribution ($\operatorname {Area}(T) > 0$) with non-vanishing circulation around evaluation point $P$}{figure.66}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Singularity Characterization via the Null-Space Orthogonality Principle}{19}{subsection.71}\protected@file@percent }
+\newlabel{subsec:singularities_P1}{{3.2}{19}{Singularity Characterization via the Null-Space Orthogonality Principle}{subsection.71}{}}
+\newlabel{eq:null_space_orthogonality}{{34}{20}{Singularity Characterization via the Null-Space Orthogonality Principle}{equation.73}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Automated Support Selection Algorithm via Scale-Invariant Dimensionless Matrix}{20}{subsection.74}\protected@file@percent }
+\newlabel{sec:support_selection_algorithm}{{3.3}{20}{Automated Support Selection Algorithm via Scale-Invariant Dimensionless Matrix}{subsection.74}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}Scale-Invariant Support Selection via Dimensionless Matrix}{21}{subsubsection.75}\protected@file@percent }
+\newlabel{subsec:scale_invariant_criterion}{{3.3.1}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{subsubsection.75}{}}
+\newlabel{eq:det_quartic_scaling}{{35}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.76}{}}
+\newlabel{eq:h_local_canonical}{{36}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.79}{}}
 \citation{golub2013matrix}
-\newlabel{eq:matrix_A_hat_definition}{{35}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.78}{}}
-\newlabel{eq:matrix_factorization_Dh}{{36}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.79}{}}
-\newlabel{eq:dimensionless_det_relation}{{37}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.80}{}}
-\newlabel{eq:dimensionless_threshold_criterion}{{38}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.81}{}}
-\newlabel{eq:quartic_h_local_scaling}{{39}{21}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.82}{}}
+\newlabel{eq:matrix_A_hat_definition}{{37}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.80}{}}
+\newlabel{eq:matrix_factorization_Dh}{{38}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.81}{}}
+\newlabel{eq:dimensionless_det_relation}{{39}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.82}{}}
+\newlabel{eq:dimensionless_threshold_criterion}{{40}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.83}{}}
+\newlabel{eq:quartic_h_local_scaling}{{41}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.84}{}}
 \citation{bentley1975multidimensional,parreira2006efficient,fasshauer2007meshfree,goncalves2025tese,wu2026high}
-\newlabel{eq:shape_func_hat_eval}{{40}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.83}{}}
-\newlabel{eq:curl_hat_eval}{{41}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.84}{}}
-\newlabel{eq:div_hat_eval}{{42}{22}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.85}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}The 4-Phase Selection Pipeline}{22}{subsubsection.86}\protected@file@percent }
-\newlabel{subsec:4phase_pipeline}{{3.3.2}{22}{The 4-Phase Selection Pipeline}{subsubsection.86}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.3}Computational Complexity and Combinatorial Cost Analysis}{22}{subsubsection.91}\protected@file@percent }
-\newlabel{subsubsec:computational_complexity}{{3.3.3}{22}{Computational Complexity and Combinatorial Cost Analysis}{subsubsection.91}{}}
-\newlabel{eq:binomial_combinations}{{43}{22}{Computational Complexity and Combinatorial Cost Analysis}{equation.92}{}}
+\newlabel{eq:shape_func_hat_eval}{{42}{23}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.85}{}}
+\newlabel{eq:curl_hat_eval}{{43}{23}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.86}{}}
+\newlabel{eq:div_hat_eval}{{44}{23}{Scale-Invariant Support Selection via Dimensionless Matrix}{equation.87}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}The 4-Phase Selection Pipeline}{23}{subsubsection.88}\protected@file@percent }
+\newlabel{subsec:4phase_pipeline}{{3.3.2}{23}{The 4-Phase Selection Pipeline}{subsubsection.88}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.3}Computational Complexity and Combinatorial Cost Analysis}{23}{subsubsection.93}\protected@file@percent }
+\newlabel{subsubsec:computational_complexity}{{3.3.3}{23}{Computational Complexity and Combinatorial Cost Analysis}{subsubsection.93}{}}
+\newlabel{eq:binomial_combinations}{{45}{23}{Computational Complexity and Combinatorial Cost Analysis}{equation.94}{}}
 \citation{harrington2001time}
 \citation{monk2003finite,ortiz2023tese}
-\newlabel{eq:support_total_complexity}{{44}{23}{Computational Complexity and Combinatorial Cost Analysis}{equation.93}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Computational cost of automated support selection across the six cavity discretization levels of Section\nobreakspace  {}\ref  {subsec:convergence_comparison} ($3 \times 3$ Gauss-Legendre quadrature, $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} = 0.80$, $K_{\mathrm  {initial}} = 12$).}}{23}{table.94}\protected@file@percent }
-\newlabel{tab:support_selection_cost}{{2}{23}{Computational cost of automated support selection across the six cavity discretization levels of Section~\ref {subsec:convergence_comparison} ($3 \times 3$ Gauss-Legendre quadrature, $\widehat {\mathrm {Tol}} = 0.80$, $K_{\mathrm {initial}} = 12$)}{table.94}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Variational Formulation of the Resonant Cavity Problem}{23}{section.95}\protected@file@percent }
-\newlabel{sec:variational_formulation}{{4}{23}{Variational Formulation of the Resonant Cavity Problem}{section.95}{}}
+\newlabel{eq:support_total_complexity}{{46}{24}{Computational Complexity and Combinatorial Cost Analysis}{equation.95}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Computational cost of automated support selection across the six cavity discretization levels of Section\nobreakspace  {}\ref  {subsec:convergence_comparison} ($3 \times 3$ Gauss-Legendre quadrature, $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} = 0.80$, $K_{\mathrm  {initial}} = 12$).}}{24}{table.96}\protected@file@percent }
+\newlabel{tab:support_selection_cost}{{2}{24}{Computational cost of automated support selection across the six cavity discretization levels of Section~\ref {subsec:convergence_comparison} ($3 \times 3$ Gauss-Legendre quadrature, $\widehat {\mathrm {Tol}} = 0.80$, $K_{\mathrm {initial}} = 12$)}{table.96}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Variational Formulation of the Resonant Cavity Problem}{24}{section.97}\protected@file@percent }
+\newlabel{sec:variational_formulation}{{4}{24}{Variational Formulation of the Resonant Cavity Problem}{section.97}{}}
 \citation{harrington2001time}
 \citation{monk2003finite,bossavit1998computational,boffi2013mixed}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}The Transverse Electric ($TE_z$) Vector Eigenvalue Problem}{24}{subsection.96}\protected@file@percent }
-\newlabel{subsec:strong_form}{{4.1}{24}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{subsection.96}{}}
-\newlabel{eq:helmholtz_strong}{{45}{24}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{equation.97}{}}
-\newlabel{eq:pec_boundary}{{46}{24}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{equation.98}{}}
-\newlabel{eq:analytical_eigenvalues}{{47}{24}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{equation.99}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Ritz-Galerkin Weak Form with Div-Curl Regularization}{24}{subsection.100}\protected@file@percent }
-\newlabel{subsec:weak_form_regularization}{{4.2}{24}{Ritz-Galerkin Weak Form with Div-Curl Regularization}{subsection.100}{}}
-\newlabel{eq:hilbert_space_S}{{48}{24}{Ritz-Galerkin Weak Form with Div-Curl Regularization}{equation.101}{}}
-\newlabel{eq:unregularized_weak_form}{{49}{24}{Ritz-Galerkin Weak Form with Div-Curl Regularization}{equation.102}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}The Transverse Electric ($TE_z$) Vector Eigenvalue Problem}{25}{subsection.98}\protected@file@percent }
+\newlabel{subsec:strong_form}{{4.1}{25}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{subsection.98}{}}
+\newlabel{eq:helmholtz_strong}{{47}{25}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{equation.99}{}}
+\newlabel{eq:pec_boundary}{{48}{25}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{equation.100}{}}
+\newlabel{eq:analytical_eigenvalues}{{49}{25}{The Transverse Electric (\texorpdfstring {$TE_z$}{TEz}) Vector Eigenvalue Problem}{equation.101}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Ritz-Galerkin Weak Form with Div-Curl Regularization}{25}{subsection.102}\protected@file@percent }
+\newlabel{subsec:weak_form_regularization}{{4.2}{25}{Ritz-Galerkin Weak Form with Div-Curl Regularization}{subsection.102}{}}
+\newlabel{eq:hilbert_space_S}{{50}{25}{Ritz-Galerkin Weak Form with Div-Curl Regularization}{equation.103}{}}
+\newlabel{eq:unregularized_weak_form}{{51}{25}{Ritz-Galerkin Weak Form with Div-Curl Regularization}{equation.104}{}}
 \citation{monk2003finite,bossavit1998computational}
 \citation{monk2003finite,boffi1999computational,boffi2013mixed}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Theoretical Origin: From Global Non-Conformity to Gradient Leakage}{25}{subsubsection.103}\protected@file@percent }
-\newlabel{subsubsec:theoretical_origin_leakage}{{4.2.1}{25}{Theoretical Origin: From Global Non-Conformity to Gradient Leakage}{subsubsection.103}{}}
-\newlabel{eq:nonconforming_space}{{50}{25}{Theoretical Origin: From Global Non-Conformity to Gradient Leakage}{equation.104}{}}
-\newlabel{eq:grad_curl_nonvanishing}{{51}{25}{Theoretical Origin: From Global Non-Conformity to Gradient Leakage}{equation.106}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Non-Conforming Variational Structure and Gradient Leakage}{26}{subsubsection.105}\protected@file@percent }
+\newlabel{subsubsec:theoretical_origin_leakage}{{4.2.1}{26}{Non-Conforming Variational Structure and Gradient Leakage}{subsubsection.105}{}}
+\newlabel{eq:nonconforming_space}{{52}{26}{Non-Conforming Variational Structure and Gradient Leakage}{equation.106}{}}
 \citation{monk2003finite,bossavit1998computational,boffi2013mixed}
+\newlabel{eq:grad_curl_nonvanishing}{{53}{27}{Non-Conforming Variational Structure and Gradient Leakage}{equation.108}{}}
+\@writefile{toc}{\contentsline {paragraph}{The Methodological Chain}{27}{section*.110}\protected@file@percent }
+\newlabel{eq:conceptual_chain}{{54}{27}{The Methodological Chain}{equation.111}{}}
 \citation{monk2003finite}
-\newlabel{eq:conceptual_chain}{{52}{26}{Theoretical Origin: From Global Non-Conformity to Gradient Leakage}{equation.109}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Div-Curl Regularized Weak Formulation}{26}{subsubsection.110}\protected@file@percent }
-\newlabel{subsubsec:div_curl_weak_form}{{4.2.2}{26}{Div-Curl Regularized Weak Formulation}{subsubsection.110}{}}
-\newlabel{eq:regularized_weak_form}{{53}{26}{Div-Curl Regularized Weak Formulation}{equation.111}{}}
-\newlabel{eq:K_div_definition}{{54}{26}{Div-Curl Regularized Weak Formulation}{equation.112}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Div-Curl Regularized Weak Formulation}{28}{subsubsection.112}\protected@file@percent }
+\newlabel{subsubsec:div_curl_weak_form}{{4.2.2}{28}{Div-Curl Regularized Weak Formulation}{subsubsection.112}{}}
+\newlabel{eq:regularized_weak_form}{{55}{28}{Div-Curl Regularized Weak Formulation}{equation.113}{}}
+\newlabel{eq:K_div_definition}{{56}{28}{Div-Curl Regularized Weak Formulation}{equation.114}{}}
+\newlabel{eq:K_global_decomposition}{{57}{28}{Div-Curl Regularized Weak Formulation}{equation.115}{}}
+\newlabel{eq:K_curl_definition}{{58}{28}{Div-Curl Regularized Weak Formulation}{equation.116}{}}
+\@writefile{toc}{\contentsline {paragraph}{Consistency, Stability, and Scope of the Discrete Scheme}{28}{section*.117}\protected@file@percent }
 \citation{monk2003finite,bossavit1998computational,boffi2013mixed}
 \citation{monk2003finite,boffi2013mixed}
 \citation{bossavit1998computational,gross2004electromagnetic,costabel1991coercive,costabel2002weighted}
-\newlabel{eq:K_global_decomposition}{{55}{27}{Div-Curl Regularized Weak Formulation}{equation.113}{}}
-\newlabel{eq:K_curl_definition}{{56}{27}{Div-Curl Regularized Weak Formulation}{equation.114}{}}
-\newlabel{eq:rayleigh_penalty_expansion}{{57}{27}{Div-Curl Regularized Weak Formulation}{equation.117}{}}
-\newlabel{eq:R_div_ratio_def}{{58}{27}{Div-Curl Regularized Weak Formulation}{equation.119}{}}
+\@writefile{toc}{\contentsline {paragraph}{Operational Mechanisms of Divergence Penalization}{29}{section*.121}\protected@file@percent }
+\newlabel{eq:rayleigh_penalty_expansion}{{59}{29}{Operational Mechanisms of Divergence Penalization}{equation.124}{}}
+\newlabel{eq:R_div_ratio_def}{{60}{29}{Operational Mechanisms of Divergence Penalization}{equation.126}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}Tangential-Jump Control and Limitations of the Present Formulation}{30}{subsubsection.128}\protected@file@percent }
+\newlabel{subsubsec:tangential_jump_limitations}{{4.2.3}{30}{Tangential-Jump Control and Limitations of the Present Formulation}{subsubsection.128}{}}
+\citation{houston2004mixed,hesthaven2004high}
 \citation{ortiz2021nodal,ortiz2023tese}
 \citation{belytschko1994element,parreira2006efficient}
 \citation{belytschko1994element,atluri2002meshless,liu2009mesh}
 \citation{ortiz2023tese,goncalves2025tese}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Integration Strategy: Cell-Based vs. Point-Based (EFG-Style)}{28}{subsection.121}\protected@file@percent }
-\newlabel{subsec:integration_strategy}{{4.3}{28}{Integration Strategy: Cell-Based vs. Point-Based (EFG-Style)}{subsection.121}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Algebraic Discretization and Generalized Eigenvalue System}{28}{subsection.125}\protected@file@percent }
-\newlabel{subsec:algebraic_system}{{4.4}{28}{Algebraic Discretization and Generalized Eigenvalue System}{subsection.125}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Integration Strategy: Cell-Based vs. Point-Based (EFG-Style)}{31}{subsection.129}\protected@file@percent }
+\newlabel{subsec:integration_strategy}{{4.3}{31}{Integration Strategy: Cell-Based vs. Point-Based (EFG-Style)}{subsection.129}{}}
 \citation{ortiz2021nodal,goncalves2025tese}
 \citation{saad2011numerical,lehoucq1998arpack}
 \citation{virtanen2020scipy}
-\newlabel{eq:mass_matrix_entry}{{59}{29}{Algebraic Discretization and Generalized Eigenvalue System}{equation.126}{}}
-\newlabel{eq:generalized_eigenvalue_system}{{60}{29}{Algebraic Discretization and Generalized Eigenvalue System}{equation.127}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Numerical Verification and Validation}{29}{section.128}\protected@file@percent }
-\newlabel{sec:numerical_results}{{5}{29}{Numerical Verification and Validation}{section.128}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Algebraic Discretization and Generalized Eigenvalue System}{32}{subsection.133}\protected@file@percent }
+\newlabel{subsec:algebraic_system}{{4.4}{32}{Algebraic Discretization and Generalized Eigenvalue System}{subsection.133}{}}
+\newlabel{eq:mass_matrix_entry}{{61}{32}{Algebraic Discretization and Generalized Eigenvalue System}{equation.134}{}}
+\newlabel{eq:generalized_eigenvalue_system}{{62}{32}{Algebraic Discretization and Generalized Eigenvalue System}{equation.135}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Numerical Verification and Validation}{32}{section.136}\protected@file@percent }
+\newlabel{sec:numerical_results}{{5}{32}{Numerical Verification and Validation}{section.136}{}}
 \citation{nedelec1980mixed,monk2003finite,boffi2013mixed}
 \citation{harrington2001time,jin2014finite}
-\@writefile{toc}{\contentsline {paragraph}{Baseline Computational Setup and Operational Conventions}{30}{section*.129}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Local Constructive Equivalence under Conforming Midpoint/Tangent Placement: VNMM $\mathcal  {L}^1$ vs. Whitney EFEM}{30}{subsection.131}\protected@file@percent }
-\newlabel{subsec:conforming_dual_equivalence}{{5.1}{30}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement: VNMM \texorpdfstring {$\mathcal {L}^1$}{L1} vs. Whitney EFEM}{subsection.131}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.1}Experimental Setup and Dual Topologies}{30}{subsubsection.132}\protected@file@percent }
-\newlabel{eq:analytical_te11_field}{{61}{30}{Experimental Setup and Dual Topologies}{equation.133}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Baseline computational setup, geometric discretizations, and operational solver conventions across Section\nobreakspace  {}\ref  {sec:numerical_results}.}}{31}{table.130}\protected@file@percent }
-\newlabel{tab:baseline_computational_setup}{{3}{31}{Baseline computational setup, geometric discretizations, and operational solver conventions across Section~\ref {sec:numerical_results}}{table.130}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Conforming dual topology for Whitney EFEM and VNMM $\mathcal  {L}^1$ over $\Omega = [0, \pi ]^2$. Underlying triangular mesh overlaid with dual vector nodes placed at edge midpoints $M_k$ with tangent directors $\vec  {t}_k$.}}{32}{figure.134}\protected@file@percent }
-\newlabel{fig:malha_conforme_vnmm_L1}{{3}{32}{Conforming dual topology for Whitney EFEM and VNMM $\mathcal {L}^1$ over $\Omega = [0, \pi ]^2$. Underlying triangular mesh overlaid with dual vector nodes placed at edge midpoints $M_k$ with tangent directors $\vec {t}_k$}{figure.134}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.2}Numerical Identity and Asymptotic Convergence Rates}{32}{subsubsection.135}\protected@file@percent }
-\newlabel{eq:rms_error_def}{{62}{32}{Numerical Identity and Asymptotic Convergence Rates}{equation.136}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Vector Field Interpolation and Derivative Convergence in Arbitrary Meshless Clouds}{33}{subsection.138}\protected@file@percent }
-\newlabel{subsec:arbitrary_meshless_interpolation}{{5.2}{33}{Vector Field Interpolation and Derivative Convergence in Arbitrary Meshless Clouds}{subsection.138}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.1}Experimental Setup on Unconstrained Point Clouds}{33}{subsubsection.139}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Convergence comparison between Whitney EFEM and VNMM $\mathcal  {L}^1$ on conforming triangular meshes. (a) Electric field RMS error $\|\vec  {E} - \vec  {E}^h\|_{\mathrm  {RMS}}$ showing identical $\mathcal  {O}(h^{1.00})$ convergence; (b) Curl operator RMS error displaying identical $\mathcal  {O}(h^{0.96})$ convergence down to machine precision, confirming numerical identity.}}{34}{figure.137}\protected@file@percent }
-\newlabel{fig:convergencia_efem_vs_vnmm_L1}{{4}{34}{Convergence comparison between Whitney EFEM and VNMM $\mathcal {L}^1$ on conforming triangular meshes. (a) Electric field RMS error $\|\vec {E} - \vec {E}^h\|_{\mathrm {RMS}}$ showing identical $\mathcal {O}(h^{1.00})$ convergence; (b) Curl operator RMS error displaying identical $\mathcal {O}(h^{0.96})$ convergence down to machine precision, confirming numerical identity}{figure.137}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.2}Empirical Validation of Curl Stagnation in $\mathcal  {L}^1$}{34}{subsubsection.140}\protected@file@percent }
-\newlabel{subsubsec:curl_stagnation_L1}{{5.2.2}{34}{Empirical Validation of Curl Stagnation in \texorpdfstring {$\mathcal {L}^1$}{L1}}{subsubsection.140}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Convergence of $\mathcal  {L}^1$ and $\mathcal  {P}^1$ bases on unconstrained point clouds for the $TE_{11}$ mode. (a) Electric field RMS error showing $\mathcal  {O}(h^{0.97})$ ($\mathcal  {L}^1$) versus $\mathcal  {O}(h^{2.17})$ ($\mathcal  {P}^1$); (b) Curl operator RMS error highlighting $\mathcal  {O}(1)$ stagnation for $\mathcal  {L}^1$ and restored $\mathcal  {O}(h^{0.97})$ convergence for $\mathcal  {P}^1$.}}{35}{figure.141}\protected@file@percent }
-\newlabel{fig:convergencia_interpolacao_L1_vs_P1}{{5}{35}{Convergence of $\mathcal {L}^1$ and $\mathcal {P}^1$ bases on unconstrained point clouds for the $TE_{11}$ mode. (a) Electric field RMS error showing $\mathcal {O}(h^{0.97})$ ($\mathcal {L}^1$) versus $\mathcal {O}(h^{2.17})$ ($\mathcal {P}^1$); (b) Curl operator RMS error highlighting $\mathcal {O}(1)$ stagnation for $\mathcal {L}^1$ and restored $\mathcal {O}(h^{0.97})$ convergence for $\mathcal {P}^1$}{figure.141}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.3}Restoration of Asymptotic Convergence via Complete $\mathcal  {P}^1$ Basis}{36}{subsubsection.142}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Numerical Robustness in the Tested Stochastic Realization Under Spatial-Directional Perturbations}{36}{subsection.146}\protected@file@percent }
-\newlabel{subsec:stochastic_perturbations}{{5.3}{36}{Numerical Robustness in the Tested Stochastic Realization Under Spatial-Directional Perturbations}{subsection.146}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Comparative interpolation and curl error metrics between $\mathcal  {L}^1$ and $\mathcal  {P}^1$ bases on perturbed point clouds for the $TE_{11}$ mode across six refinement levels.}}{37}{table.145}\protected@file@percent }
-\newlabel{tab:interpolacao_L1_vs_P1}{{4}{37}{Comparative interpolation and curl error metrics between $\mathcal {L}^1$ and $\mathcal {P}^1$ bases on perturbed point clouds for the $TE_{11}$ mode across six refinement levels}{table.145}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.1}Degradation Under Permissive Thresholds vs. Scale-Invariant Stabilization}{37}{subsubsection.148}\protected@file@percent }
-\newlabel{subsubsec:permissive_threshold_degradation}{{5.3.1}{37}{Degradation Under Permissive Thresholds vs. Scale-Invariant Stabilization}{subsubsection.148}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Conditioning and robustness of the VNMM $\mathcal  {P}^1$ basis under spatial-directional perturbations. (a) Electric field and curl RMS errors versus nominal spacing $h_{\mathrm  {nom}}$, comparing a permissive threshold ($\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} = 0.05$) against the calibrated threshold ($\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} = 0.80$); (b) Error metrics and average support size $K_{\mathrm  {avg}}$ versus $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}}$ on the fine cloud ($N_{\mathrm  {total}} = 4{,}192$), identifying the stable window $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} \in [0.80, 1.50]$.}}{38}{figure.147}\protected@file@percent }
-\newlabel{fig:robustez_perturbacao_estocastica}{{6}{38}{Conditioning and robustness of the VNMM $\mathcal {P}^1$ basis under spatial-directional perturbations. (a) Electric field and curl RMS errors versus nominal spacing $h_{\mathrm {nom}}$, comparing a permissive threshold ($\widehat {\mathrm {Tol}} = 0.05$) against the calibrated threshold ($\widehat {\mathrm {Tol}} = 0.80$); (b) Error metrics and average support size $K_{\mathrm {avg}}$ versus $\widehat {\mathrm {Tol}}$ on the fine cloud ($N_{\mathrm {total}} = 4{,}192$), identifying the stable window $\widehat {\mathrm {Tol}} \in [0.80, 1.50]$}{figure.147}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.2}Parametric Trade-off and Stable Operating Window}{38}{subsubsection.149}\protected@file@percent }
-\newlabel{subsubsec:parametric_tradeoff}{{5.3.2}{38}{Parametric Trade-off and Stable Operating Window}{subsubsection.149}{}}
+\@writefile{toc}{\contentsline {paragraph}{Baseline Computational Setup and Operational Conventions}{33}{section*.137}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Local Constructive Equivalence under Conforming Midpoint/Tangent Placement: VNMM $\mathcal  {L}^1$ vs. Whitney EFEM}{33}{subsection.139}\protected@file@percent }
+\newlabel{subsec:conforming_dual_equivalence}{{5.1}{33}{Local Constructive Equivalence under Conforming Midpoint/Tangent Placement: VNMM \texorpdfstring {$\mathcal {L}^1$}{L1} vs. Whitney EFEM}{subsection.139}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.1}Experimental Setup and Dual Topologies}{33}{subsubsection.140}\protected@file@percent }
+\newlabel{eq:analytical_te11_field}{{63}{33}{Experimental Setup and Dual Topologies}{equation.141}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Baseline computational setup, geometric discretizations, and operational solver conventions across Section\nobreakspace  {}\ref  {sec:numerical_results}.}}{34}{table.138}\protected@file@percent }
+\newlabel{tab:baseline_computational_setup}{{3}{34}{Baseline computational setup, geometric discretizations, and operational solver conventions across Section~\ref {sec:numerical_results}}{table.138}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Conforming dual topology for Whitney EFEM and VNMM $\mathcal  {L}^1$ over $\Omega = [0, \pi ]^2$. Underlying triangular mesh overlaid with dual vector nodes placed at edge midpoints $M_k$ with tangent directors $\vec  {t}_k$.}}{35}{figure.142}\protected@file@percent }
+\newlabel{fig:malha_conforme_vnmm_L1}{{3}{35}{Conforming dual topology for Whitney EFEM and VNMM $\mathcal {L}^1$ over $\Omega = [0, \pi ]^2$. Underlying triangular mesh overlaid with dual vector nodes placed at edge midpoints $M_k$ with tangent directors $\vec {t}_k$}{figure.142}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.2}Numerical Identity and Asymptotic Convergence Rates}{35}{subsubsection.143}\protected@file@percent }
+\newlabel{eq:rms_error_def}{{64}{36}{Numerical Identity and Asymptotic Convergence Rates}{equation.144}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Vector Field Interpolation and Derivative Convergence in Arbitrary Meshless Clouds}{36}{subsection.146}\protected@file@percent }
+\newlabel{subsec:arbitrary_meshless_interpolation}{{5.2}{36}{Vector Field Interpolation and Derivative Convergence in Arbitrary Meshless Clouds}{subsection.146}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Convergence comparison between Whitney EFEM and VNMM $\mathcal  {L}^1$ on conforming triangular meshes. (a) Electric field RMS error $\|\vec  {E} - \vec  {E}^h\|_{\mathrm  {RMS}}$ showing identical $\mathcal  {O}(h^{1.00})$ convergence; (b) Curl operator RMS error displaying identical $\mathcal  {O}(h^{0.96})$ convergence down to machine precision, confirming numerical identity.}}{37}{figure.145}\protected@file@percent }
+\newlabel{fig:convergencia_efem_vs_vnmm_L1}{{4}{37}{Convergence comparison between Whitney EFEM and VNMM $\mathcal {L}^1$ on conforming triangular meshes. (a) Electric field RMS error $\|\vec {E} - \vec {E}^h\|_{\mathrm {RMS}}$ showing identical $\mathcal {O}(h^{1.00})$ convergence; (b) Curl operator RMS error displaying identical $\mathcal {O}(h^{0.96})$ convergence down to machine precision, confirming numerical identity}{figure.145}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.1}Experimental Setup on Unconstrained Point Clouds}{37}{subsubsection.147}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.2}Empirical Validation of Curl Stagnation in $\mathcal  {L}^1$}{38}{subsubsection.148}\protected@file@percent }
+\newlabel{subsubsec:curl_stagnation_L1}{{5.2.2}{38}{Empirical Validation of Curl Stagnation in \texorpdfstring {$\mathcal {L}^1$}{L1}}{subsubsection.148}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.2.3}Restoration of Asymptotic Convergence via Complete $\mathcal  {P}^1$ Basis}{38}{subsubsection.150}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Convergence of $\mathcal  {L}^1$ and $\mathcal  {P}^1$ bases on unconstrained point clouds for the $TE_{11}$ mode. (a) Electric field RMS error showing $\mathcal  {O}(h^{0.97})$ ($\mathcal  {L}^1$) versus $\mathcal  {O}(h^{2.17})$ ($\mathcal  {P}^1$); (b) Curl operator RMS error highlighting $\mathcal  {O}(1)$ stagnation for $\mathcal  {L}^1$ and restored $\mathcal  {O}(h^{0.97})$ convergence for $\mathcal  {P}^1$.}}{39}{figure.149}\protected@file@percent }
+\newlabel{fig:convergencia_interpolacao_L1_vs_P1}{{5}{39}{Convergence of $\mathcal {L}^1$ and $\mathcal {P}^1$ bases on unconstrained point clouds for the $TE_{11}$ mode. (a) Electric field RMS error showing $\mathcal {O}(h^{0.97})$ ($\mathcal {L}^1$) versus $\mathcal {O}(h^{2.17})$ ($\mathcal {P}^1$); (b) Curl operator RMS error highlighting $\mathcal {O}(1)$ stagnation for $\mathcal {L}^1$ and restored $\mathcal {O}(h^{0.97})$ convergence for $\mathcal {P}^1$}{figure.149}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Comparative interpolation and curl error metrics between $\mathcal  {L}^1$ and $\mathcal  {P}^1$ bases on perturbed point clouds for the $TE_{11}$ mode across six refinement levels.}}{40}{table.153}\protected@file@percent }
+\newlabel{tab:interpolacao_L1_vs_P1}{{4}{40}{Comparative interpolation and curl error metrics between $\mathcal {L}^1$ and $\mathcal {P}^1$ bases on perturbed point clouds for the $TE_{11}$ mode across six refinement levels}{table.153}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Numerical Robustness in the Tested Stochastic Realization Under Spatial-Directional Perturbations}{40}{subsection.154}\protected@file@percent }
+\newlabel{subsec:stochastic_perturbations}{{5.3}{40}{Numerical Robustness in the Tested Stochastic Realization Under Spatial-Directional Perturbations}{subsection.154}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.1}Degradation Under Permissive Thresholds vs. Scale-Invariant Stabilization}{40}{subsubsection.156}\protected@file@percent }
+\newlabel{subsubsec:permissive_threshold_degradation}{{5.3.1}{40}{Degradation Under Permissive Thresholds vs. Scale-Invariant Stabilization}{subsubsection.156}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Conditioning and robustness of the VNMM $\mathcal  {P}^1$ basis under spatial-directional perturbations. (a) Electric field and curl RMS errors versus nominal spacing $h_{\mathrm  {nom}}$, comparing a permissive threshold ($\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} = 0.05$) against the calibrated threshold ($\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} = 0.80$); (b) Error metrics and average support size $K_{\mathrm  {avg}}$ versus $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}}$ on the fine cloud ($N_{\mathrm  {total}} = 4{,}192$), identifying the stable window $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}} \in [0.80, 1.50]$.}}{41}{figure.155}\protected@file@percent }
+\newlabel{fig:robustez_perturbacao_estocastica}{{6}{41}{Conditioning and robustness of the VNMM $\mathcal {P}^1$ basis under spatial-directional perturbations. (a) Electric field and curl RMS errors versus nominal spacing $h_{\mathrm {nom}}$, comparing a permissive threshold ($\widehat {\mathrm {Tol}} = 0.05$) against the calibrated threshold ($\widehat {\mathrm {Tol}} = 0.80$); (b) Error metrics and average support size $K_{\mathrm {avg}}$ versus $\widehat {\mathrm {Tol}}$ on the fine cloud ($N_{\mathrm {total}} = 4{,}192$), identifying the stable window $\widehat {\mathrm {Tol}} \in [0.80, 1.50]$}{figure.155}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.2}Parametric Trade-off and Stable Operating Window}{41}{subsubsection.157}\protected@file@percent }
+\newlabel{subsubsec:parametric_tradeoff}{{5.3.2}{41}{Parametric Trade-off and Stable Operating Window}{subsubsection.157}{}}
 \citation{belytschko1994element,liu2009mesh}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Sensitivity of error metrics, support neighborhood $K_{\mathrm  {avg}}$, and conditioning to the dimensionless threshold $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}}$ on the fine point cloud ($N_{\mathrm  {total}} = 4{,}192$).}}{39}{table.150}\protected@file@percent }
-\newlabel{tab:stochastic_sensitivity_ultradense}{{5}{39}{Sensitivity of error metrics, support neighborhood $K_{\mathrm {avg}}$, and conditioning to the dimensionless threshold $\widehat {\mathrm {Tol}}$ on the fine point cloud ($N_{\mathrm {total}} = 4{,}192$)}{table.150}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Variational Verification: Galerkin Patch Test and Method of Manufactured Solutions}{39}{subsection.151}\protected@file@percent }
-\newlabel{subsec:patch_test_galerkin}{{5.4}{39}{Variational Verification: Galerkin Patch Test and Method of Manufactured Solutions}{subsection.151}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.4.1}Part A: Galerkin Patch Test for Affine Vector Fields}{40}{subsubsection.154}\protected@file@percent }
-\newlabel{subsubsec:patch_test_affine}{{5.4.1}{40}{Part A: Galerkin Patch Test for Affine Vector Fields}{subsubsection.154}{}}
-\newlabel{eq:affine_target_field}{{63}{40}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.155}{}}
-\newlabel{eq:patch_test_constants}{{64}{40}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.156}{}}
-\newlabel{eq:patch_test_rhs}{{65}{40}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.157}{}}
-\newlabel{eq:dirichlet_patch_imposition}{{66}{40}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.158}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Sensitivity of error metrics, support neighborhood $K_{\mathrm  {avg}}$, and conditioning to the dimensionless threshold $\setbox \z@ \hbox {\mathsurround \z@ $\textstyle \mathrm  {Tol}$}\mathaccent "0362{\mathrm  {Tol}}$ on the fine point cloud ($N_{\mathrm  {total}} = 4{,}192$).}}{42}{table.158}\protected@file@percent }
+\newlabel{tab:stochastic_sensitivity_ultradense}{{5}{42}{Sensitivity of error metrics, support neighborhood $K_{\mathrm {avg}}$, and conditioning to the dimensionless threshold $\widehat {\mathrm {Tol}}$ on the fine point cloud ($N_{\mathrm {total}} = 4{,}192$)}{table.158}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Variational Verification: Galerkin Patch Test and Method of Manufactured Solutions}{42}{subsection.159}\protected@file@percent }
+\newlabel{subsec:patch_test_galerkin}{{5.4}{42}{Variational Verification: Galerkin Patch Test and Method of Manufactured Solutions}{subsection.159}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.4.1}Part A: Galerkin Patch Test for Affine Vector Fields}{43}{subsubsection.162}\protected@file@percent }
+\newlabel{subsubsec:patch_test_affine}{{5.4.1}{43}{Part A: Galerkin Patch Test for Affine Vector Fields}{subsubsection.162}{}}
+\newlabel{eq:affine_target_field}{{65}{43}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.163}{}}
+\newlabel{eq:patch_test_constants}{{66}{43}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.164}{}}
+\newlabel{eq:patch_test_rhs}{{67}{43}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.165}{}}
 \citation{belytschko1994element,liu2009mesh}
-\newlabel{eq:patch_test_partitioned_system}{{67}{41}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.159}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Galerkin patch test results: relative error in free interior degrees of freedom ($\|\mathbf  {e}_{\mathrm  {int}} - \mathbf  {e}_{\mathrm  {int}}^*\|_\infty / \|\mathbf  {e}_{\mathrm  {int}}^*\|_\infty $) comparing the complete $\mathcal  {P}^1$ and incomplete $\mathcal  {L}^1$ bases on structured and irregular point clouds ($121$ nodes, $81$ free interior DoFs, $s_{\mathrm  {div}} = 6.0$).}}{41}{table.160}\protected@file@percent }
-\newlabel{tab:galerkin_patch_test}{{6}{41}{Galerkin patch test results: relative error in free interior degrees of freedom ($\|\mathbf {e}_{\mathrm {int}} - \mathbf {e}_{\mathrm {int}}^*\|_\infty / \|\mathbf {e}_{\mathrm {int}}^*\|_\infty $) comparing the complete $\mathcal {P}^1$ and incomplete $\mathcal {L}^1$ bases on structured and irregular point clouds ($121$ nodes, $81$ free interior DoFs, $s_{\mathrm {div}} = 6.0$)}{table.160}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.4.2}Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{42}{subsubsection.163}\protected@file@percent }
-\newlabel{subsubsec:mms_driven_problem}{{5.4.2}{42}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{subsubsection.163}{}}
-\newlabel{eq:mms_pde}{{68}{42}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.164}{}}
-\newlabel{eq:mms_target_field}{{69}{43}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.165}{}}
-\newlabel{eq:mms_source_term}{{72}{43}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.168}{}}
-\newlabel{eq:mms_discrete_system}{{73}{43}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.169}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Convergence of the Galerkin Method of Manufactured Solutions (MMS) under spatial refinement: relative $L^2$ field error, relative $H(\mathbf  {curl})$ semi-norm error, maximum DoF error, and divergence residual comparing the complete $\mathcal  {P}^1$ and incomplete $\mathcal  {L}^1$ bases ($s_{\mathrm  {div}} = 6.0$, $\kappa = 1.0$, $3 \times 3$ Gauss points per cell).}}{44}{table.170}\protected@file@percent }
-\newlabel{tab:mms_convergence}{{7}{44}{Convergence of the Galerkin Method of Manufactured Solutions (MMS) under spatial refinement: relative $L^2$ field error, relative $H(\mathbf {curl})$ semi-norm error, maximum DoF error, and divergence residual comparing the complete $\mathcal {P}^1$ and incomplete $\mathcal {L}^1$ bases ($s_{\mathrm {div}} = 6.0$, $\kappa = 1.0$, $3 \times 3$ Gauss points per cell)}{table.170}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Spectral Validation: Resonant Cavity Analysis and Div-Curl Regularization}{45}{subsection.173}\protected@file@percent }
-\newlabel{subsec:cavity_eigenvalues}{{5.5}{45}{Spectral Validation: Resonant Cavity Analysis and Div-Curl Regularization}{subsection.173}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.1}Spectral Contamination in the Unregularized Curl-Curl Formulation ($s_{\mathrm  {div}} = 0.0$)}{45}{subsubsection.174}\protected@file@percent }
-\newlabel{subsubsec:unregularized_formulation}{{5.5.1}{45}{Spectral Contamination in the Unregularized Curl-Curl Formulation (\texorpdfstring {$s_{\mathrm {div}} = 0.0$}{s(div) = 0.0})}{subsubsection.174}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.2}Spectral Purification via Div-Curl Penalty Regularization ($s_{\mathrm  {div}} = 6.0$)}{46}{subsubsection.176}\protected@file@percent }
-\newlabel{subsubsec:regularized_formulation}{{5.5.2}{46}{Spectral Purification via Div-Curl Penalty Regularization (\texorpdfstring {$s_{\mathrm {div}} = 6.0$}{s(div) = 6.0})}{subsubsection.176}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Discrete eigenvalue spectrum $\lambda = k_c^2$ for the $TE_z$ square PEC cavity. (a) Unregularized curl-curl formulation ($s_{\mathrm  {div}} = 0.0$), showing spectral contamination from spurious gradient modes; (b) Div-curl regularized formulation ($s_{\mathrm  {div}} = 6.0$), displaying a purified spectrum matching analytical modes within the operational bandwidth ($\lambda \le 10$).}}{47}{figure.175}\protected@file@percent }
-\newlabel{fig:espectro_cavidade_regularizacao}{{7}{47}{Discrete eigenvalue spectrum $\lambda = k_c^2$ for the $TE_z$ square PEC cavity. (a) Unregularized curl-curl formulation ($s_{\mathrm {div}} = 0.0$), showing spectral contamination from spurious gradient modes; (b) Div-curl regularized formulation ($s_{\mathrm {div}} = 6.0$), displaying a purified spectrum matching analytical modes within the operational bandwidth ($\lambda \le 10$)}{figure.175}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.3}Modewise Validation and Cutoff Wavenumber Precision}{47}{subsubsection.177}\protected@file@percent }
-\newlabel{subsubsec:modewise_validation}{{5.5.3}{47}{Modewise Validation and Cutoff Wavenumber Precision}{subsubsection.177}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Comparison of the first 10 physical $TE_{nm}$ resonant modes in the square PEC cavity against analytical references ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points).}}{48}{table.178}\protected@file@percent }
-\newlabel{tab:cavity_eigenvalues_base_case}{{8}{48}{Comparison of the first 10 physical $TE_{nm}$ resonant modes in the square PEC cavity against analytical references ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points)}{table.178}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.4}Parametric Sensitivity to the Div-Curl Penalty Parameter ($s_{\mathrm  {div}}$)}{48}{subsubsection.179}\protected@file@percent }
-\newlabel{subsubsec:s_div_sensitivity}{{5.5.4}{48}{Parametric Sensitivity to the Div-Curl Penalty Parameter (\texorpdfstring {$s_{\mathrm {div}}$}{s(div)})}{subsubsection.179}{}}
-\@writefile{toc}{\contentsline {paragraph}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm  {div}}$}{48}{section*.184}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Parametric sensitivity of cavity spectral purity, cutoff wavenumber error, and stiffness matrix conditioning to the div-curl penalty parameter $s_{\mathrm  {div}}$ ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points).}}{49}{table.183}\protected@file@percent }
-\newlabel{tab:s_div_sensitivity}{{9}{49}{Parametric sensitivity of cavity spectral purity, cutoff wavenumber error, and stiffness matrix conditioning to the div-curl penalty parameter $s_{\mathrm {div}}$ ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points)}{table.183}{}}
-\newlabel{eq:analytical_spurious_scaling}{{74}{49}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm {div}}$}{equation.185}{}}
-\newlabel{eq:spurious_eigenvalue_estimate}{{75}{49}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm {div}}$}{equation.186}{}}
-\newlabel{eq:a_priori_s_div_rule}{{76}{49}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm {div}}$}{equation.187}{}}
+\newlabel{eq:dirichlet_patch_imposition}{{68}{44}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.166}{}}
+\newlabel{eq:patch_test_partitioned_system}{{69}{44}{Part A: Galerkin Patch Test for Affine Vector Fields}{equation.167}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Galerkin patch test results: relative error in free interior degrees of freedom ($\|\mathbf  {e}_{\mathrm  {int}} - \mathbf  {e}_{\mathrm  {int}}^*\|_\infty / \|\mathbf  {e}_{\mathrm  {int}}^*\|_\infty $) comparing the complete $\mathcal  {P}^1$ and incomplete $\mathcal  {L}^1$ bases on structured and irregular point clouds ($121$ nodes, $81$ free interior DoFs, $s_{\mathrm  {div}} = 6.0$).}}{44}{table.168}\protected@file@percent }
+\newlabel{tab:galerkin_patch_test}{{6}{44}{Galerkin patch test results: relative error in free interior degrees of freedom ($\|\mathbf {e}_{\mathrm {int}} - \mathbf {e}_{\mathrm {int}}^*\|_\infty / \|\mathbf {e}_{\mathrm {int}}^*\|_\infty $) comparing the complete $\mathcal {P}^1$ and incomplete $\mathcal {L}^1$ bases on structured and irregular point clouds ($121$ nodes, $81$ free interior DoFs, $s_{\mathrm {div}} = 6.0$)}{table.168}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.4.2}Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{45}{subsubsection.171}\protected@file@percent }
+\newlabel{subsubsec:mms_driven_problem}{{5.4.2}{45}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{subsubsection.171}{}}
+\newlabel{eq:mms_pde}{{70}{46}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.172}{}}
+\newlabel{eq:mms_target_field}{{71}{46}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.173}{}}
+\newlabel{eq:mms_source_term}{{74}{46}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.176}{}}
+\newlabel{eq:mms_discrete_system}{{75}{46}{Part B: Driven Source Problem and Method of Manufactured Solutions (MMS)}{equation.177}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Convergence of the Galerkin Method of Manufactured Solutions (MMS) under spatial refinement: relative $L^2$ field error, relative $H(\mathbf  {curl})$ semi-norm error, maximum DoF error, and divergence residual comparing the complete $\mathcal  {P}^1$ and incomplete $\mathcal  {L}^1$ bases ($s_{\mathrm  {div}} = 6.0$, $\kappa = 1.0$, $3 \times 3$ Gauss points per cell).}}{47}{table.178}\protected@file@percent }
+\newlabel{tab:mms_convergence}{{7}{47}{Convergence of the Galerkin Method of Manufactured Solutions (MMS) under spatial refinement: relative $L^2$ field error, relative $H(\mathbf {curl})$ semi-norm error, maximum DoF error, and divergence residual comparing the complete $\mathcal {P}^1$ and incomplete $\mathcal {L}^1$ bases ($s_{\mathrm {div}} = 6.0$, $\kappa = 1.0$, $3 \times 3$ Gauss points per cell)}{table.178}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Spectral Validation: Resonant Cavity Analysis and Div-Curl Regularization}{48}{subsection.181}\protected@file@percent }
+\newlabel{subsec:cavity_eigenvalues}{{5.5}{48}{Spectral Validation: Resonant Cavity Analysis and Div-Curl Regularization}{subsection.181}{}}
+\@writefile{toc}{\contentsline {paragraph}{Spectral Classification Protocol and Operational Bandwidth}{49}{section*.182}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.1}Spectral Contamination in the Unregularized Curl-Curl Formulation ($s_{\mathrm  {div}} = 0.0$)}{49}{subsubsection.186}\protected@file@percent }
+\newlabel{subsubsec:unregularized_formulation}{{5.5.1}{49}{Spectral Contamination in the Unregularized Curl-Curl Formulation (\texorpdfstring {$s_{\mathrm {div}} = 0.0$}{s(div) = 0.0})}{subsubsection.186}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Discrete eigenvalue spectrum $\lambda = k_c^2$ for the $TE_z$ square PEC cavity. (a) Unregularized curl-curl formulation ($s_{\mathrm  {div}} = 0.0$), showing spectral contamination from spurious gradient modes; (b) Div-curl regularized formulation ($s_{\mathrm  {div}} = 6.0$), displaying a purified spectrum matching analytical modes within the operational bandwidth ($\lambda \le 10$).}}{50}{figure.187}\protected@file@percent }
+\newlabel{fig:espectro_cavidade_regularizacao}{{7}{50}{Discrete eigenvalue spectrum $\lambda = k_c^2$ for the $TE_z$ square PEC cavity. (a) Unregularized curl-curl formulation ($s_{\mathrm {div}} = 0.0$), showing spectral contamination from spurious gradient modes; (b) Div-curl regularized formulation ($s_{\mathrm {div}} = 6.0$), displaying a purified spectrum matching analytical modes within the operational bandwidth ($\lambda \le 10$)}{figure.187}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.2}Spectral Purification via Div-Curl Penalty Regularization ($s_{\mathrm  {div}} = 6.0$)}{50}{subsubsection.188}\protected@file@percent }
+\newlabel{subsubsec:regularized_formulation}{{5.5.2}{50}{Spectral Purification via Div-Curl Penalty Regularization (\texorpdfstring {$s_{\mathrm {div}} = 6.0$}{s(div) = 6.0})}{subsubsection.188}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.3}Modewise Validation and Cutoff Wavenumber Precision}{51}{subsubsection.189}\protected@file@percent }
+\newlabel{subsubsec:modewise_validation}{{5.5.3}{51}{Modewise Validation and Cutoff Wavenumber Precision}{subsubsection.189}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Comparison of the first 10 physical $TE_{nm}$ resonant modes in the square PEC cavity against analytical references ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points).}}{51}{table.190}\protected@file@percent }
+\newlabel{tab:cavity_eigenvalues_base_case}{{8}{51}{Comparison of the first 10 physical $TE_{nm}$ resonant modes in the square PEC cavity against analytical references ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points)}{table.190}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.4}Parametric Sensitivity to the Div-Curl Penalty Parameter ($s_{\mathrm  {div}}$)}{52}{subsubsection.191}\protected@file@percent }
+\newlabel{subsubsec:s_div_sensitivity}{{5.5.4}{52}{Parametric Sensitivity to the Div-Curl Penalty Parameter (\texorpdfstring {$s_{\mathrm {div}}$}{s(div)})}{subsubsection.191}{}}
+\@writefile{toc}{\contentsline {paragraph}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm  {div}}$}{52}{section*.196}\protected@file@percent }
+\newlabel{eq:analytical_spurious_scaling}{{76}{52}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm {div}}$}{equation.197}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Parametric sensitivity of cavity spectral purity, cutoff wavenumber error, and stiffness matrix conditioning to the div-curl penalty parameter $s_{\mathrm  {div}}$ ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points).}}{53}{table.195}\protected@file@percent }
+\newlabel{tab:s_div_sensitivity}{{9}{53}{Parametric sensitivity of cavity spectral purity, cutoff wavenumber error, and stiffness matrix conditioning to the div-curl penalty parameter $s_{\mathrm {div}}$ ($361$ active DoFs, $20 \times 20$ cells, $3 \times 3$ Gauss points)}{table.195}{}}
+\newlabel{eq:spurious_eigenvalue_estimate}{{77}{53}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm {div}}$}{equation.198}{}}
+\newlabel{eq:a_priori_s_div_rule}{{78}{53}{Theoretical Scaling and A Priori Calibration Criterion for $s_{\mathrm {div}}$}{equation.199}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.5}Sensitivity to Background Cell Density and Gauss Quadrature Order}{53}{subsubsection.200}\protected@file@percent }
+\newlabel{subsubsec:quadrature_sensitivity}{{5.5.5}{53}{Sensitivity to Background Cell Density and Gauss Quadrature Order}{subsubsection.200}{}}
 \citation{monk2003finite}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.5}Sensitivity to Background Cell Density and Gauss Quadrature Order}{50}{subsubsection.188}\protected@file@percent }
-\newlabel{subsubsec:quadrature_sensitivity}{{5.5.5}{50}{Sensitivity to Background Cell Density and Gauss Quadrature Order}{subsubsection.188}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Sensitivity of cavity spectral accuracy, discrete matrix operators, and assembly time to background cell density and Gauss quadrature order ($361$ active DoFs).}}{50}{table.189}\protected@file@percent }
-\newlabel{tab:quadrature_sensitivity}{{10}{50}{Sensitivity of cavity spectral accuracy, discrete matrix operators, and assembly time to background cell density and Gauss quadrature order ($361$ active DoFs)}{table.189}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Comparative Convergence: Pure VNMM 2D vs. Edge FEM}{50}{subsection.190}\protected@file@percent }
-\newlabel{subsec:convergence_comparison}{{5.6}{50}{Comparative Convergence: Pure VNMM 2D vs. Edge FEM}{subsection.190}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Sensitivity of cavity spectral accuracy, discrete matrix operators, and assembly time to background cell density and Gauss quadrature order ($361$ active DoFs).}}{54}{table.201}\protected@file@percent }
+\newlabel{tab:quadrature_sensitivity}{{10}{54}{Sensitivity of cavity spectral accuracy, discrete matrix operators, and assembly time to background cell density and Gauss quadrature order ($361$ active DoFs)}{table.201}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Comparative Convergence: Pure VNMM 2D vs. Edge FEM}{54}{subsection.202}\protected@file@percent }
+\newlabel{subsec:convergence_comparison}{{5.6}{54}{Comparative Convergence: Pure VNMM 2D vs. Edge FEM}{subsection.202}{}}
 \citation{deberg2008computational}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.6.1}Resolution Metric and Degree-of-Freedom Equivalence}{51}{subsubsection.193}\protected@file@percent }
-\newlabel{eq:euler_edge_vertex}{{77}{51}{Resolution Metric and Degree-of-Freedom Equivalence}{equation.194}{}}
-\newlabel{eq:edge_equivalent_nv}{{78}{51}{Resolution Metric and Degree-of-Freedom Equivalence}{equation.195}{}}
-\newlabel{eq:h_dof_definition}{{79}{51}{Resolution Metric and Degree-of-Freedom Equivalence}{equation.196}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.6.2}Convergence and Accuracy Comparison}{51}{subsubsection.198}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Spectral convergence comparison between Edge FEM and VNMM $\mathcal  {P}^1$ for cavity $TE_z$ modes. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm  {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm  {DoF}}$, showing fitted rates of $\mathcal  {O}(h_{\mathrm  {DoF}}^{1.93})$ (Edge FEM) and $\mathcal  {O}(h_{\mathrm  {DoF}}^{2.73})$ (VNMM).}}{52}{figure.197}\protected@file@percent }
-\newlabel{fig:convergence_vnmm_fem}{{8}{52}{Spectral convergence comparison between Edge FEM and VNMM $\mathcal {P}^1$ for cavity $TE_z$ modes. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm {DoF}}$, showing fitted rates of $\mathcal {O}(h_{\mathrm {DoF}}^{1.93})$ (Edge FEM) and $\mathcal {O}(h_{\mathrm {DoF}}^{2.73})$ (VNMM)}{figure.197}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Comparative spectral convergence of resonant wavenumber $k_c$ and error decomposition for cavity $TE_z$ modes across six refinement levels ($s_{\mathrm  {div}} = 6.0$, $3 \times 3$ Gauss quadrature): Edge FEM, VNMM $\mathcal  {P}^1$ on regular grids (with Rayleigh curl and penalty biases), and VNMM $\mathcal  {P}^1$ on irregular clouds ($25\%$ jitter, random directors).}}{52}{table.199}\protected@file@percent }
-\newlabel{tab:convergence_6_meshes}{{11}{52}{Comparative spectral convergence of resonant wavenumber $k_c$ and error decomposition for cavity $TE_z$ modes across six refinement levels ($s_{\mathrm {div}} = 6.0$, $3 \times 3$ Gauss quadrature): Edge FEM, VNMM $\mathcal {P}^1$ on regular grids (with Rayleigh curl and penalty biases), and VNMM $\mathcal {P}^1$ on irregular clouds ($25\%$ jitter, random directors)}{table.199}{}}
-\@writefile{toc}{\contentsline {paragraph}{Pre-Asymptotic Penalty Relief and Rayleigh Decomposition}{53}{section*.200}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.7}Spectral Validation on Irregular Point Clouds with Arbitrary Vector Directors}{53}{subsection.201}\protected@file@percent }
-\newlabel{subsec:spectral_irregular_clouds}{{5.7}{53}{Spectral Validation on Irregular Point Clouds with Arbitrary Vector Directors}{subsection.201}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.6.1}Resolution Metric and Degree-of-Freedom Equivalence}{55}{subsubsection.205}\protected@file@percent }
+\newlabel{eq:euler_edge_vertex}{{79}{55}{Resolution Metric and Degree-of-Freedom Equivalence}{equation.206}{}}
+\newlabel{eq:edge_equivalent_nv}{{80}{55}{Resolution Metric and Degree-of-Freedom Equivalence}{equation.207}{}}
+\newlabel{eq:h_dof_definition}{{81}{55}{Resolution Metric and Degree-of-Freedom Equivalence}{equation.208}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.6.2}Convergence and Accuracy Comparison}{55}{subsubsection.210}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Comparative spectral convergence of resonant wavenumber $k_c$ and error decomposition for cavity $TE_z$ modes across six refinement levels ($s_{\mathrm  {div}} = 6.0$, $3 \times 3$ Gauss quadrature): Edge FEM, VNMM $\mathcal  {P}^1$ on regular grids (with Rayleigh curl and penalty biases), and VNMM $\mathcal  {P}^1$ on irregular clouds ($25\%$ jitter, random directors).}}{55}{table.211}\protected@file@percent }
+\newlabel{tab:convergence_6_meshes}{{11}{55}{Comparative spectral convergence of resonant wavenumber $k_c$ and error decomposition for cavity $TE_z$ modes across six refinement levels ($s_{\mathrm {div}} = 6.0$, $3 \times 3$ Gauss quadrature): Edge FEM, VNMM $\mathcal {P}^1$ on regular grids (with Rayleigh curl and penalty biases), and VNMM $\mathcal {P}^1$ on irregular clouds ($25\%$ jitter, random directors)}{table.211}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Spectral convergence comparison between Edge FEM and VNMM $\mathcal  {P}^1$ for cavity $TE_z$ modes. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm  {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm  {DoF}}$, showing fitted rates of $\mathcal  {O}(h_{\mathrm  {DoF}}^{1.93})$ (Edge FEM) and $\mathcal  {O}(h_{\mathrm  {DoF}}^{2.73})$ (VNMM).}}{56}{figure.209}\protected@file@percent }
+\newlabel{fig:convergence_vnmm_fem}{{8}{56}{Spectral convergence comparison between Edge FEM and VNMM $\mathcal {P}^1$ for cavity $TE_z$ modes. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm {DoF}}$, showing fitted rates of $\mathcal {O}(h_{\mathrm {DoF}}^{1.93})$ (Edge FEM) and $\mathcal {O}(h_{\mathrm {DoF}}^{2.73})$ (VNMM)}{figure.209}{}}
+\@writefile{toc}{\contentsline {paragraph}{Pre-Asymptotic Penalty Relief and Rayleigh Decomposition}{57}{section*.212}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.7}Spectral Validation on Irregular Point Clouds with Arbitrary Vector Directors}{57}{subsection.213}\protected@file@percent }
+\newlabel{subsec:spectral_irregular_clouds}{{5.7}{57}{Spectral Validation on Irregular Point Clouds with Arbitrary Vector Directors}{subsection.213}{}}
 \citation{chen2001stabilized}
 \citation{atluri2002meshless}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Spectral convergence of VNMM $\mathcal  {P}^1$ on regular versus irregular point clouds. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm  {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm  {DoF}}$, showing fitted slopes of $\mathcal  {O}(h_{\mathrm  {DoF}}^{2.73})$ (regular grid) and $\mathcal  {O}(h_{\mathrm  {DoF}}^{2.20})$ (irregular cloud).}}{54}{figure.202}\protected@file@percent }
-\newlabel{fig:convergencia_cavidade_aleatoria}{{9}{54}{Spectral convergence of VNMM $\mathcal {P}^1$ on regular versus irregular point clouds. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm {DoF}}$, showing fitted slopes of $\mathcal {O}(h_{\mathrm {DoF}}^{2.73})$ (regular grid) and $\mathcal {O}(h_{\mathrm {DoF}}^{2.20})$ (irregular cloud)}{figure.202}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.8}Limitations and Scope of Applicability}{54}{subsection.207}\protected@file@percent }
-\newlabel{subsec:limitations_scope}{{5.8}{54}{Limitations and Scope of Applicability}{subsection.207}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces First 10 physical $TE_{nm}$ resonant cavity modes computed on the fine irregular point cloud against analytical references ($2{,}209$ active DoFs).}}{55}{table.206}\protected@file@percent }
-\newlabel{tab:espectro_cavidade_aleatoria_fina}{{12}{55}{First 10 physical $TE_{nm}$ resonant cavity modes computed on the fine irregular point cloud against analytical references ($2{,}209$ active DoFs)}{table.206}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion and Future Works}{56}{section.212}\protected@file@percent }
-\newlabel{sec:conclusion}{{6}{56}{Conclusion and Future Works}{section.212}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Summary of Findings and Methodological Conclusions}{56}{subsection.213}\protected@file@percent }
-\newlabel{subsec:summary_conclusions}{{6.1}{56}{Summary of Findings and Methodological Conclusions}{subsection.213}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Spectral convergence of VNMM $\mathcal  {P}^1$ on regular versus irregular point clouds. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm  {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm  {DoF}}$, showing fitted slopes of $\mathcal  {O}(h_{\mathrm  {DoF}}^{2.73})$ (regular grid) and $\mathcal  {O}(h_{\mathrm  {DoF}}^{2.20})$ (irregular cloud).}}{58}{figure.214}\protected@file@percent }
+\newlabel{fig:convergencia_cavidade_aleatoria}{{9}{58}{Spectral convergence of VNMM $\mathcal {P}^1$ on regular versus irregular point clouds. (a) Mean relative error in cutoff wavenumber $k_c$ versus degrees of freedom $N_{\mathrm {DoF}}$; (b) Convergence versus characteristic spacing $h_{\mathrm {DoF}}$, showing fitted slopes of $\mathcal {O}(h_{\mathrm {DoF}}^{2.73})$ (regular grid) and $\mathcal {O}(h_{\mathrm {DoF}}^{2.20})$ (irregular cloud)}{figure.214}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.8}Limitations and Scope of Applicability}{58}{subsection.219}\protected@file@percent }
+\newlabel{subsec:limitations_scope}{{5.8}{58}{Limitations and Scope of Applicability}{subsection.219}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces First 10 physical $TE_{nm}$ resonant cavity modes computed on the fine irregular point cloud against analytical references ($2{,}209$ active DoFs).}}{59}{table.218}\protected@file@percent }
+\newlabel{tab:espectro_cavidade_aleatoria_fina}{{12}{59}{First 10 physical $TE_{nm}$ resonant cavity modes computed on the fine irregular point cloud against analytical references ($2{,}209$ active DoFs)}{table.218}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion and Future Works}{60}{section.225}\protected@file@percent }
+\newlabel{sec:conclusion}{{6}{60}{Conclusion and Future Works}{section.225}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Summary of Findings and Methodological Conclusions}{60}{subsection.226}\protected@file@percent }
+\newlabel{subsec:summary_conclusions}{{6.1}{60}{Summary of Findings and Methodological Conclusions}{subsection.226}{}}
 \citation{goncalves2023vector}
+\citation{houston2004mixed,hesthaven2004high,nguyen2011hybridizable}
 \citation{chen2001stabilized}
 \citation{atluri2002meshless}
 \citation{parreira2006efficient}
 \citation{coppoli2012induction}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Promising Directions for Future Research}{57}{subsection.218}\protected@file@percent }
-\newlabel{subsec:future_works}{{6.2}{57}{Promising Directions for Future Research}{subsection.218}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Promising Directions for Future Research}{62}{subsection.233}\protected@file@percent }
+\newlabel{subsec:future_works}{{6.2}{62}{Promising Directions for Future Research}{subsection.233}{}}
 \@writefile{toc}{\let\numberline\tmptocnumberline}
-\@writefile{toc}{\contentsline {section}{\numberline {Appendix\nobreakspace  {}A}Formal Proof of the Local Constructive Equivalence Theorem}{57}{appendix.224}\protected@file@percent }
-\newlabel{app:dual_whitney_proof}{{Appendix\nobreakspace  {}A}{57}{Formal Proof of the Local Constructive Equivalence Theorem}{appendix.224}{}}
-\newlabel{eq:edge_constancy_app}{{A.2}{58}{Formal Proof of the Local Constructive Equivalence Theorem}{equation.226}{}}
-\newlabel{eq:whitney_midpoint_proj_app}{{A.4}{58}{Formal Proof of the Local Constructive Equivalence Theorem}{equation.228}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {Appendix\nobreakspace  {}B}Derivation of the Derivative Aliasing Scaling in the Incomplete Basis}{59}{appendix.232}\protected@file@percent }
-\newlabel{app:heuristic_aliasing_proof}{{Appendix\nobreakspace  {}B}{59}{Derivation of the Derivative Aliasing Scaling in the Incomplete Basis}{appendix.232}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {Appendix\nobreakspace  {}A}Formal Proof of the Local Constructive Equivalence Theorem}{63}{appendix.240}\protected@file@percent }
+\newlabel{app:dual_whitney_proof}{{Appendix\nobreakspace  {}A}{63}{Formal Proof of the Local Constructive Equivalence Theorem}{appendix.240}{}}
+\newlabel{eq:edge_constancy_app}{{A.2}{63}{Formal Proof of the Local Constructive Equivalence Theorem}{equation.242}{}}
+\newlabel{eq:whitney_midpoint_proj_app}{{A.4}{64}{Formal Proof of the Local Constructive Equivalence Theorem}{equation.244}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {Appendix\nobreakspace  {}B}Derivation of the Derivative Aliasing Scaling in the Incomplete Basis}{64}{appendix.248}\protected@file@percent }
+\newlabel{app:heuristic_aliasing_proof}{{Appendix\nobreakspace  {}B}{64}{Derivation of the Derivative Aliasing Scaling in the Incomplete Basis}{appendix.248}{}}
 \bibstyle{elsarticle-num}
 \bibdata{references}
 \bibcite{jin2014finite}{{1}{}{{}}{{}}}
@@ -342,30 +354,34 @@
 \bibcite{nicomedes2012meshless}{{17}{}{{}}{{}}}
 \bibcite{nicomedes2015mixed}{{18}{}{{}}{{}}}
 \bibcite{lima2016metodos}{{19}{}{{}}{{}}}
-\bibcite{lima2017edge}{{20}{}{{}}{{}}}
-\bibcite{silva2018new}{{21}{}{{}}{{}}}
-\bibcite{ortiz2021creating}{{22}{}{{}}{{}}}
-\bibcite{ortiz2021nodal}{{23}{}{{}}{{}}}
-\bibcite{ortiz2023tese}{{24}{}{{}}{{}}}
-\bibcite{goncalves2023vector}{{25}{}{{}}{{}}}
-\bibcite{goncalves2025tese}{{26}{}{{}}{{}}}
-\bibcite{goncalves2026periodic}{{27}{}{{}}{{}}}
-\bibcite{liu2005introduction}{{28}{}{{}}{{}}}
-\bibcite{parreira2006efficient}{{29}{}{{}}{{}}}
-\bibcite{li2007meshfree}{{30}{}{{}}{{}}}
-\bibcite{nedelec1986new}{{31}{}{{}}{{}}}
-\bibcite{golub2013matrix}{{32}{}{{}}{{}}}
-\bibcite{bentley1975multidimensional}{{33}{}{{}}{{}}}
-\bibcite{fasshauer2007meshfree}{{34}{}{{}}{{}}}
-\bibcite{wu2026high}{{35}{}{{}}{{}}}
-\bibcite{gross2004electromagnetic}{{36}{}{{}}{{}}}
-\bibcite{costabel1991coercive}{{37}{}{{}}{{}}}
-\bibcite{costabel2002weighted}{{38}{}{{}}{{}}}
-\bibcite{saad2011numerical}{{39}{}{{}}{{}}}
-\bibcite{lehoucq1998arpack}{{40}{}{{}}{{}}}
-\bibcite{virtanen2020scipy}{{41}{}{{}}{{}}}
-\bibcite{deberg2008computational}{{42}{}{{}}{{}}}
-\bibcite{chen2001stabilized}{{43}{}{{}}{{}}}
-\bibcite{coppoli2012induction}{{44}{}{{}}{{}}}
+\bibcite{liu2001point}{{20}{}{{}}{{}}}
+\bibcite{lima2017edge}{{21}{}{{}}{{}}}
+\bibcite{silva2018new}{{22}{}{{}}{{}}}
+\bibcite{ortiz2021creating}{{23}{}{{}}{{}}}
+\bibcite{ortiz2021nodal}{{24}{}{{}}{{}}}
+\bibcite{ortiz2023tese}{{25}{}{{}}{{}}}
+\bibcite{goncalves2023vector}{{26}{}{{}}{{}}}
+\bibcite{goncalves2025tese}{{27}{}{{}}{{}}}
+\bibcite{goncalves2026periodic}{{28}{}{{}}{{}}}
+\bibcite{liu2005introduction}{{29}{}{{}}{{}}}
+\bibcite{parreira2006efficient}{{30}{}{{}}{{}}}
+\bibcite{li2007meshfree}{{31}{}{{}}{{}}}
+\bibcite{nedelec1986new}{{32}{}{{}}{{}}}
+\bibcite{golub2013matrix}{{33}{}{{}}{{}}}
+\bibcite{bentley1975multidimensional}{{34}{}{{}}{{}}}
+\bibcite{fasshauer2007meshfree}{{35}{}{{}}{{}}}
+\bibcite{wu2026high}{{36}{}{{}}{{}}}
+\bibcite{gross2004electromagnetic}{{37}{}{{}}{{}}}
+\bibcite{costabel1991coercive}{{38}{}{{}}{{}}}
+\bibcite{costabel2002weighted}{{39}{}{{}}{{}}}
+\bibcite{houston2004mixed}{{40}{}{{}}{{}}}
+\bibcite{hesthaven2004high}{{41}{}{{}}{{}}}
+\bibcite{saad2011numerical}{{42}{}{{}}{{}}}
+\bibcite{lehoucq1998arpack}{{43}{}{{}}{{}}}
+\bibcite{virtanen2020scipy}{{44}{}{{}}{{}}}
+\bibcite{deberg2008computational}{{45}{}{{}}{{}}}
+\bibcite{chen2001stabilized}{{46}{}{{}}{{}}}
+\bibcite{nguyen2011hybridizable}{{47}{}{{}}{{}}}
+\bibcite{coppoli2012induction}{{48}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{66}
+\gdef \@abspage@last{71}
