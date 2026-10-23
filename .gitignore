@@ -29,3 +29,13 @@ htmlcov/
 # Operating System Files
 .DS_Store
 Thumbs.db
+
+# Paper and Reports binary artifacts (PDF and PNG)
+paper/**/*.pdf
+paper/*.pdf
+paper/**/*.png
+paper/*.png
+reports/**/*.pdf
+reports/*.pdf
+reports/**/*.png
+reports/*.png

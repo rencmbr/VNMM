@@ -15,7 +15,7 @@ This repository provides the complete scientific computing infrastructure, numer
 The codebase directly supports and accompanies the research paper submitted to ***Engineering Analysis with Boundary Elements*** (Elsevier):
 > **"A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds"**  
 > *Authors:* Renato C. Mesquita, Elson J. da Silva, Bárbara M. F. Gonçalves, and Luilly A. G. Ortiz.  
-> *Manuscript sources & compilation:* [`paper/`](paper/) | *Public Repository:* [github.com/rencmbr/vnmm2d-eabe](https://github.com/rencmbr/vnmm2d-eabe)
+> *Manuscript sources & compilation:* [`paper/VNMM2D-EABE/`](paper/VNMM2D-EABE/) | *Public Repository:* [github.com/rencmbr/vnmm2d-eabe](https://github.com/rencmbr/vnmm2d-eabe)
 
 In addition to serving as a fully reproducible artifact for the submitted paper, this repository functions as an **active research platform** for ongoing developments in computational electromagnetics, including **direct conforming hybrid Edge-FEM + VNMM 2D coupling** on structured, unstructured, and perturbed point clouds.
 
@@ -24,51 +24,64 @@ In addition to serving as a fully reproducible artifact for the submitted paper,
 ## 2. Repository Architecture
 
 ```text
-teste-cod/
+VNMM/
 ├── requirements.txt            # Scientific Python dependencies (numpy, scipy, matplotlib, pandas)
 ├── .gitignore                  # Git exclusion rules for Python caches, venvs, and LaTeX build logs
 ├── Readme.md                   # Main documentation, theoretical overview, and execution guide
 │
-├── src/                        # Core reusable Python package
-│   ├── vnmm_assembler.py       # Vector matrix assembler with Gauss point-based support (EFG-style)
-│   ├── fem_edge_2d.py          # Lowest-order Nédélec edge finite element solver (Whitney 1-forms)
-│   ├── fem_vnmm_hybrid_2d.py   # Coupled hybrid Edge-FEM + VNMM 2D solver with direct trace continuity
-│   ├── eigen_solver_cavity.py  # Generalized eigenvalue solver for resonant PEC cavities
-│   ├── cavity_mesh.py          # Nodal cloud generators with tangential boundary directors
-│   └── gauss_quadrature.py     # 1D and tensor-product 2D Gauss-Legendre quadrature schemes
+├── 2D/                         # Two-Dimensional Vector Nodal Meshless Method (VNMM 2D)
+│   ├── README.md               # Scope, foundations, and structure of the 2D formulation
+│   ├── src/                    # Core 2D numerical libraries
+│   │   ├── vnmm_assembler_2d.py       # Vector matrix assembler with Gauss point-based support (EFG-style)
+│   │   ├── fem_edge_2d.py             # Lowest-order Nédélec edge finite element solver (Whitney 1-forms)
+│   │   ├── fem_vnmm_hybrid_2d.py      # Coupled hybrid Edge-FEM + VNMM 2D solver with direct trace continuity
+│   │   ├── eigen_solver_cavity_2d.py  # Generalized eigenvalue solver for resonant PEC cavities
+│   │   ├── cavity_mesh_2d.py          # Nodal cloud generators with tangential boundary directors
+│   │   └── gauss_quadrature_2d.py     # 1D and tensor-product 2D Gauss-Legendre quadrature schemes
+│   │
+│   ├── scripts/                # Executable research scripts, benchmarks, and figure generators (43 scripts)
+│   │   ├── generate_*_2d.py           # Publication-quality figure generation (Figures 1 to 9 of the paper)
+│   │   ├── galerkin_*_2d.py           # Variational patch test and Method of Manufactured Solutions (MMS)
+│   │   ├── dimensionless_*_2d.py      # Dimensionless placement matrix A_hat and scale-invariant stencil search
+│   │   ├── comparative_*_2d.py        # Systematic convergence benchmarks: VNMM 2D vs. Edge FEM
+│   │   ├── hybrid_*_2d.py             # Coupled hybrid FEM-VNMM solver across regular and irregular meshes
+│   │   └── parametric_*_2d.py         # Parametric tolerance sweeps and spatial density studies
+│   │
+│   ├── tests/                  # Automated unit test suite (21 passing tests)
+│   │   ├── test_eigen_cavity_2d.py            # Tests for cavity mesh, PEC boundaries, and eigenvalue accuracy
+│   │   ├── test_patch_test_galerkin_2d.py     # Unit tests for Galerkin patch test under affine vector modes
+│   │   ├── test_galerkin_source_problem_2d.py # Unit tests for MMS driven source problem
+│   │   └── test_hybrid_fem_vnmm_2d.py         # Unit tests for direct hybrid Edge-FEM + VNMM coupling
+│   │
+│   └── meshes/                 # Benchmark point cloud and mesh datasets (.csv)
+│       ├── dense_mesh_2d.csv          # Standard dense test cloud
+│       ├── dense_mesh_1928_2d.csv     # High-density 1,928-node benchmark cloud
+│       ├── medium_mesh_416_2d.csv     # Intermediate 416-node cloud
+│       └── mesh_2d.csv                # Baseline unstructured point cloud
 │
-├── scripts/                    # Executable research scripts, benchmarks, and figure generators (43 scripts)
-│   ├── generate_*.py           # Publication-quality figure generation (Figures 1 to 9 of the paper)
-│   ├── galerkin_*.py           # Variational patch test and Method of Manufactured Solutions (MMS)
-│   ├── dimensionless_*.py      # Dimensionless placement matrix A_hat and scale-invariant stencil search
-│   ├── comparative_*.py        # Systematic convergence benchmarks: VNMM 2D vs. Edge FEM
-│   ├── hybrid_*.py             # Coupled hybrid FEM-VNMM solver across regular and irregular meshes
-│   └── parametric_*.py         # Parametric tolerance sweeps and spatial density studies
+├── 3D/                         # Three-Dimensional Vector Nodal Meshless Method (VNMM 3D - Future Extension)
+│   ├── README.md               # Scope and architectural roadmap for the 3D formulation
+│   ├── src/                    # Future 3D core modules (tetrahedral/cloud support, 3D Whitney FEM)
+│   ├── scripts/                # Future 3D execution and validation scripts
+│   ├── meshes/                 # Future 3D point clouds and tetrahedral benchmark meshes
+│   └── tests/                  # Future automated test suite for 3D solvers
 │
-├── paper/                      # LaTeX publication sources and submission package for Elsevier EABE
-│   ├── stable-vnmm2d.tex       # Main manuscript source with continuous line numbering
-│   ├── stable-vnmm2d.pdf       # Compiled submission PDF
-│   ├── Cover_Letter_EABE.pdf   # 1-page cover letter to Editor-in-Chief Prof. Alexander H.-D. Cheng
-│   ├── Highlights.txt          # Research highlights (≤ 85 characters per bullet point)
-│   ├── Suggested_Reviewers.txt # 5 independent international reviewers with institutional emails
-│   ├── references.bib          # BibTeX citation database
-│   └── figura_*.pdf            # High-resolution vector figures included in the manuscript
+├── paper/                      # LaTeX publication sources and submissions
+│   ├── README.md               # Overview of scientific manuscripts, compilation instructions, and policies
+│   ├── VNMM2D-EABE/            # Elsevier EABE submission package (VNMM 2D Paper)
+│   │   ├── stable-vnmm2d.tex   # Main manuscript source with continuous line numbering
+│   │   ├── Cover_Letter_EABE.tex # Cover letter to Editor-in-Chief Prof. Alexander H.-D. Cheng
+│   │   ├── Highlights.txt      # Research highlights (≤ 85 characters per bullet point)
+│   │   ├── Suggested_Reviewers.txt # 5 independent international reviewers with institutional emails
+│   │   └── references.bib      # BibTeX citation database
+│   │
+│   └── HybridVNMM-EFEM/        # Manuscript sources for hybrid Edge-FEM + VNMM coupling
+│       ├── main-acoplamento-vnmm-efem.tex # Main manuscript source for hybrid formulation
+│       └── references-acoplamento-vnmm-efem.bib # BibTeX citation database
 │
-├── reports/                    # In-depth technical reports, derivations, and historical notes (81 files)
-│   ├── plano_implementacao_base_P1.md # Conceptual and algebraic blueprint of the complete P1 basis
-│   ├── *.md                    # Detailed Markdown reports on interpolation, coupling, and quadrature
-│   └── *.png                   # Supporting high-resolution convergence and spectral plots
-│
-├── tests/                      # Automated unit test suite (21 passing tests)
-│   ├── test_eigen_cavity.py    # Tests for cavity mesh, PEC boundaries, and eigenvalue accuracy
-│   ├── test_patch_test_galerkin.py # Unit tests for Galerkin patch test under affine vector modes
-│   ├── test_galerkin_source_problem.py # Unit tests for MMS driven source problem
-│   └── test_hybrid_fem_vnmm.py # Unit tests for direct hybrid Edge-FEM + VNMM coupling
-│
-└── meshes/                     # Benchmark point cloud and mesh datasets (.csv, .png)
-    ├── dense_mesh.csv          # Standard dense test cloud
-    ├── dense_mesh_1928.csv     # High-density 1,928-node benchmark cloud
-    └── medium_mesh_416.csv     # Intermediate 416-node cloud
+└── reports/                    # In-depth technical reports, derivations, and historical notes (81 files)
+    ├── plano_implementacao_base_P1.md # Conceptual and algebraic blueprint of the complete P1 basis
+    └── *.md                    # Detailed Markdown reports on interpolation, coupling, and quadrature
 ```
 
 ---
@@ -77,7 +90,7 @@ teste-cod/
 
 ### 3.1 Prerequisites
 - **Python**: Version 3.10 or higher.
-- **TeX Live / Tectonic** *(optional)*: Only required if recompiling the manuscript in [`paper/`](paper/).
+- **TeX Live / Tectonic** *(optional)*: Only required if recompiling the manuscript in [`paper/VNMM2D-EABE/`](paper/VNMM2D-EABE/).
 
 ### 3.2 Environment Setup
 Clone the repository and set up a dedicated virtual environment:
@@ -99,7 +112,9 @@ pip install -r requirements.txt
 Validate the entire numerical suite (21 unit tests covering mesh generation, eigenvalue solvers, patch test, MMS, and hybrid coupling):
 
 ```bash
-python3 -m unittest discover tests -v
+python3 -m unittest discover 2D/tests -v
+# or from inside the 2D directory:
+cd 2D && python3 -m unittest discover tests -v
 ```
 
 ---
@@ -142,74 +157,74 @@ Setting $s_{\text{div}} = 6.0$ selectively stiffens gradient modes ($\nabla \cdo
 
 ## 5. Scripts Catalog & Execution Guide
 
-All execution scripts are located in [`scripts/`](scripts/) and can be run directly from the repository root.
+All execution scripts for the 2D formulation are located in [`2D/scripts/`](2D/scripts/) and can be run directly from the repository root.
 
 ### 5.1 Reproduction of Manuscript Figures & Tables (EABE Submission)
 
-| Script in [`scripts/`](scripts/) | Output in Manuscript | Scientific Topic / Contribution |
+| Script in [`2D/scripts/`](2D/scripts/) | Output in Manuscript | Scientific Topic / Contribution |
 | :--- | :--- | :--- |
-| [`generate_dual_whitney_vnmm_equivalence_figure.py`](scripts/generate_dual_whitney_vnmm_equivalence_figure.py) | **Figure 1** (`figura_equivalencia_dual_whitney_vnmm.pdf`) | Geometric and numerical proof of exact dual equivalence between VNMM $\mathcal{L}^1$ and Whitney edge elements. |
-| [`generate_matrix_a_singularities_figure.py`](scripts/generate_matrix_a_singularities_figure.py) | **Figure 2** (`figura_singularidades_matriz_A.pdf`) | Classification of the 4 pathological singularity configurations of matrix $\mathbf{A}$, geometric decoupling, and admissible support. |
-| [`generate_conforming_mesh_vnmm_l1_figure.py`](scripts/generate_conforming_mesh_vnmm_l1_figure.py) | **Figure 3** (`figura_malha_conforme_vnmm_L1.pdf`) | Conforming simplicial triangulation topology used for the Whitney equivalence proof. |
-| [`generate_efem_vs_vnmm_l1_figure.py`](scripts/generate_efem_vs_vnmm_l1_figure.py) | **Figure 4** (`figura_convergencia_efem_vs_vnmm_L1.pdf`) | Asymptotic convergence rates demonstrating numerical identity between Edge FEM and VNMM $\mathcal{L}^1$ in the conforming case. |
-| [`generate_convergence_l1_vs_p1_pi_figure.py`](scripts/generate_convergence_l1_vs_p1_pi_figure.py) | **Figure 5** (`figura_convergencia_interpolacao_L1_vs_P1.pdf`) | Vector interpolation benchmark: $\mathcal{O}(1)$ curl stagnation in $\mathcal{L}^1$ vs. restoration of $\mathcal{O}(h)$ curl convergence in $\mathcal{P}^1$. |
-| [`generate_manuscript_results_figures.py`](scripts/generate_manuscript_results_figures.py) | **Figures 6, 7, and 8** | Batch generation: stochastic robustness under disorder (Fig. 6), div-curl spectral purification (Fig. 7), and convergence vs. Edge FEM (Fig. 8). |
-| [`generate_manuscript_random_cavity_figure.py`](scripts/generate_manuscript_random_cavity_figure.py) | **Figure 9** (`figura_convergencia_cavidade_aleatoria.pdf`) | Spectral cavity validation on irregular point clouds with arbitrary vector directors. |
-| [`galerkin_patch_test.py`](scripts/galerkin_patch_test.py) | **Table 6** | Variational patch test across 7 affine vector modes: machine precision ($\le 7.4 \times 10^{-14}$) for complete basis $\mathcal{P}^1$. |
-| [`galerkin_source_problem.py`](scripts/galerkin_source_problem.py) | **Table 7** | Method of Manufactured Solutions (MMS) with source term: verified $L^2$ and $H(\mathbf{curl})$ error convergence. |
-| [`s_div_sensitivity_study.py`](scripts/s_div_sensitivity_study.py) | **Table 9** | Parametric sensitivity of cavity cutoff wavenumbers and spurious mode shift as a function of $s_{\text{div}}$. |
-| [`base_case_integration_study.py`](scripts/base_case_integration_study.py) | **Table 10** | Quadrature sensitivity and background integration cell density trade-off ($3\times 3$ Gauss rule). |
-| [`comparative_convergence_vnmm_vs_fem.py`](scripts/comparative_convergence_vnmm_vs_fem.py) | **Table 11** | 6-mesh systematic convergence comparison: pure VNMM 2D vs. Nédélec Edge FEM. |
-| [`random_cavity_convergence_analysis.py`](scripts/random_cavity_convergence_analysis.py) | **Table 12** | Spectral accuracy and modal statistics on randomly perturbed/jittered clouds. |
+| [`generate_dual_whitney_vnmm_equivalence_figure_2d.py`](2D/scripts/generate_dual_whitney_vnmm_equivalence_figure_2d.py) | **Figure 1** | Geometric and numerical proof of exact dual equivalence between VNMM $\mathcal{L}^1$ and Whitney edge elements. |
+| [`generate_matrix_a_singularities_figure_2d.py`](2D/scripts/generate_matrix_a_singularities_figure_2d.py) | **Figure 2** | Classification of the 4 pathological singularity configurations of matrix $\mathbf{A}$, geometric decoupling, and admissible support. |
+| [`generate_conforming_mesh_vnmm_l1_figure_2d.py`](2D/scripts/generate_conforming_mesh_vnmm_l1_figure_2d.py) | **Figure 3** | Conforming simplicial triangulation topology used for the Whitney equivalence proof. |
+| [`generate_efem_vs_vnmm_l1_figure_2d.py`](2D/scripts/generate_efem_vs_vnmm_l1_figure_2d.py) | **Figure 4** | Asymptotic convergence rates demonstrating numerical identity between Edge FEM and VNMM $\mathcal{L}^1$ in the conforming case. |
+| [`generate_convergence_l1_vs_p1_pi_figure_2d.py`](2D/scripts/generate_convergence_l1_vs_p1_pi_figure_2d.py) | **Figure 5** | Vector interpolation benchmark: $\mathcal{O}(1)$ curl stagnation in $\mathcal{L}^1$ vs. restoration of $\mathcal{O}(h)$ curl convergence in $\mathcal{P}^1$. |
+| [`generate_manuscript_results_figures_2d.py`](2D/scripts/generate_manuscript_results_figures_2d.py) | **Figures 6, 7, and 8** | Batch generation: stochastic robustness under disorder (Fig. 6), div-curl spectral purification (Fig. 7), and convergence vs. Edge FEM (Fig. 8). |
+| [`generate_manuscript_random_cavity_figure_2d.py`](2D/scripts/generate_manuscript_random_cavity_figure_2d.py) | **Figure 9** | Spectral cavity validation on irregular point clouds with arbitrary vector directors. |
+| [`galerkin_patch_test_2d.py`](2D/scripts/galerkin_patch_test_2d.py) | **Table 6** | Variational patch test across 7 affine vector modes: machine precision ($\le 7.4 \times 10^{-14}$) for complete basis $\mathcal{P}^1$. |
+| [`galerkin_source_problem_2d.py`](2D/scripts/galerkin_source_problem_2d.py) | **Table 7** | Method of Manufactured Solutions (MMS) with source term: verified $L^2$ and $H(\mathbf{curl})$ error convergence. |
+| [`s_div_sensitivity_study_2d.py`](2D/scripts/s_div_sensitivity_study_2d.py) | **Table 9** | Parametric sensitivity of cavity cutoff wavenumbers and spurious mode shift as a function of $s_{\text{div}}$. |
+| [`base_case_integration_study_2d.py`](2D/scripts/base_case_integration_study_2d.py) | **Table 10** | Quadrature sensitivity and background integration cell density trade-off ($3\times 3$ Gauss rule). |
+| [`comparative_convergence_vnmm_vs_fem_2d.py`](2D/scripts/comparative_convergence_vnmm_vs_fem_2d.py) | **Table 11** | 6-mesh systematic convergence comparison: pure VNMM 2D vs. Nédélec Edge FEM. |
+| [`random_cavity_convergence_analysis_2d.py`](2D/scripts/random_cavity_convergence_analysis_2d.py) | **Table 12** | Spectral accuracy and modal statistics on randomly perturbed/jittered clouds. |
 
 #### Reproduction Quick Commands:
 ```bash
 # 1. Run the Galerkin Patch Test (Table 6):
-python3 scripts/galerkin_patch_test.py
+python3 2D/scripts/galerkin_patch_test_2d.py
 
 # 2. Run the Method of Manufactured Solutions (MMS) source problem (Table 7):
-python3 scripts/galerkin_source_problem.py
+python3 2D/scripts/galerkin_source_problem_2d.py
 
 # 3. Generate key manuscript result figures (Figures 6, 7, and 8):
-python3 scripts/generate_manuscript_results_figures.py
+python3 2D/scripts/generate_manuscript_results_figures_2d.py
 
 # 4. Generate systematic convergence comparison VNMM vs Edge FEM (Table 11):
-python3 scripts/comparative_convergence_vnmm_vs_fem.py
+python3 2D/scripts/comparative_convergence_vnmm_vs_fem_2d.py
 ```
 
 ---
 
 ### 5.2 Dimensionless Formulation & Stability Analysis
 
-| Script in [`scripts/`](scripts/) | Functionality & Role |
+| Script in [`2D/scripts/`](2D/scripts/) | Functionality & Role |
 | :--- | :--- |
-| [`dimensionless_vnmm_6_p1.py`](scripts/dimensionless_vnmm_6_p1.py) | Module implementing the local dimensionless placement matrix $\widehat{\mathbf{A}}$ and scale-invariant stencil qualification. |
-| [`dimensionless_matrix_sequence_test.py`](scripts/dimensionless_matrix_sequence_test.py) | Test verifying elimination of the quartic $\mathcal{O}(h^4)$ determinant decay under spatial refinement. |
-| [`run_dimensionless_sweep.py`](scripts/run_dimensionless_sweep.py) | Automated parametric sweep across $\widehat{\text{Tol}} \in [0.05, 6.0]$ to identify the stable operating window. |
-| [`generate_pi_floor_robustness_study.py`](scripts/generate_pi_floor_robustness_study.py) | Stability study evaluating conditioning and error behavior under $25\%$ directional and positional perturbations. |
-| [`dimensionless_cavity_test.py`](scripts/dimensionless_cavity_test.py) | End-to-end cavity eigenvalue benchmark using pure dimensionless support selection. |
+| [`dimensionless_vnmm_6_p1_2d.py`](2D/scripts/dimensionless_vnmm_6_p1_2d.py) | Module implementing the local dimensionless placement matrix $\widehat{\mathbf{A}}$ and scale-invariant stencil qualification. |
+| [`dimensionless_matrix_sequence_test_2d.py`](2D/scripts/dimensionless_matrix_sequence_test_2d.py) | Test verifying elimination of the quartic $\mathcal{O}(h^4)$ determinant decay under spatial refinement. |
+| [`run_dimensionless_sweep_2d.py`](2D/scripts/run_dimensionless_sweep_2d.py) | Automated parametric sweep across $\widehat{\text{Tol}} \in [0.05, 6.0]$ to identify the stable operating window. |
+| [`generate_pi_floor_robustness_study_2d.py`](2D/scripts/generate_pi_floor_robustness_study_2d.py) | Stability study evaluating conditioning and error behavior under $25\%$ directional and positional perturbations. |
+| [`dimensionless_cavity_test_2d.py`](2D/scripts/dimensionless_cavity_test_2d.py) | End-to-end cavity eigenvalue benchmark using pure dimensionless support selection. |
 
 ---
 
 ### 5.3 Comparative Studies & Alternative Formulations
 
-| Script in [`scripts/`](scripts/) | Functionality & Role |
+| Script in [`2D/scripts/`](2D/scripts/) | Functionality & Role |
 | :--- | :--- |
-| [`compare_vnmm_vs_edge_fem.py`](scripts/compare_vnmm_vs_edge_fem.py) | Modewise direct comparison of physical eigenvalues computed by VNMM and Edge FEM in the baseline cavity. |
-| [`cavity_convergence_analysis.py`](scripts/cavity_convergence_analysis.py) | Modal convergence analysis across uniform and semi-structured clouds. |
-| [`l1_basis_study.py`](scripts/l1_basis_study.py) | Investigates why $\mathcal{L}^1$ cannot be regularized (divergence identically zero: $\mathbf{K}_{\text{div}} \equiv 0$). |
-| [`unregularized_vnmm_study.py`](scripts/unregularized_vnmm_study.py) | Demonstrates gradient nullspace contamination when div-curl penalization is inactive ($s_{\text{div}} = 0.0$). |
-| [`mimetic_curl_stokes_study.py`](scripts/mimetic_curl_stokes_study.py) | Investigates a mimetic discrete Stokes circulation weak form based on closed boundary contours. |
+| [`compare_vnmm_vs_edge_fem_2d.py`](2D/scripts/compare_vnmm_vs_edge_fem_2d.py) | Modewise direct comparison of physical eigenvalues computed by VNMM and Edge FEM in the baseline cavity. |
+| [`cavity_convergence_analysis_2d.py`](2D/scripts/cavity_convergence_analysis_2d.py) | Modal convergence analysis across uniform and semi-structured clouds. |
+| [`l1_basis_study_2d.py`](2D/scripts/l1_basis_study_2d.py) | Investigates why $\mathcal{L}^1$ cannot be regularized (divergence identically zero: $\mathbf{K}_{\text{div}} \equiv 0$). |
+| [`unregularized_vnmm_study_2d.py`](2D/scripts/unregularized_vnmm_study_2d.py) | Demonstrates gradient nullspace contamination when div-curl penalization is inactive ($s_{\text{div}} = 0.0$). |
+| [`mimetic_curl_stokes_study_2d.py`](2D/scripts/mimetic_curl_stokes_study_2d.py) | Investigates a mimetic discrete Stokes circulation weak form based on closed boundary contours. |
 
 ---
 
 ### 5.4 Advanced Research: Coupled Hybrid Edge-FEM + VNMM 2D Solver
 
-| Script in [`scripts/`](scripts/) | Functionality & Role |
+| Script in [`2D/scripts/`](2D/scripts/) | Functionality & Role |
 | :--- | :--- |
-| [`test_fem_vnmm_coupling.py`](scripts/test_fem_vnmm_coupling.py) | Demonstrates the coupled hybrid Edge-FEM + VNMM 2D solver enforcing direct tangential continuity across $\Gamma_{\text{int}}$. |
-| [`hybrid_fem_vnmm_convergence_comparison.py`](scripts/hybrid_fem_vnmm_convergence_comparison.py) | Compares accuracy, DoF efficiency, and convergence between hybrid coupling, pure VNMM, and pure Edge FEM. |
-| [`hybrid_random_mesh_convergence_analysis.py`](scripts/hybrid_random_mesh_convergence_analysis.py) | Evaluates hybrid coupling under severe stochastic mesh deformation. |
+| [`test_fem_vnmm_coupling_2d.py`](2D/scripts/test_fem_vnmm_coupling_2d.py) | Demonstrates the coupled hybrid Edge-FEM + VNMM 2D solver enforcing direct tangential continuity across $\Gamma_{\text{int}}$. |
+| [`hybrid_fem_vnmm_convergence_comparison_2d.py`](2D/scripts/hybrid_fem_vnmm_convergence_comparison_2d.py) | Compares accuracy, DoF efficiency, and convergence between hybrid coupling, pure VNMM, and pure Edge FEM. |
+| [`hybrid_random_mesh_convergence_analysis_2d.py`](2D/scripts/hybrid_random_mesh_convergence_analysis_2d.py) | Evaluates hybrid coupling under severe stochastic mesh deformation. |
 
 ---
 
