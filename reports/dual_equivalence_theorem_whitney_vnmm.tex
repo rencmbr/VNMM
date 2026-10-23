@@ -1,0 +1,126 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{bm}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+
+\title{\textbf{Dual Equivalence Theorem: Whitney Edge Finite Elements and VNMM 2D $\mathcal{L}^1$}}
+\author{Renato C. Mesquita}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+\section{Introduction and Problem Setting}
+
+Let $T \subset \mathbb{R}^2$ be a non-degenerate triangular simplex with vertices $V_1, V_2, V_3$ arranged in counter-clockwise order, and non-zero area $|T| > 0$.
+
+\begin{definition}[Boundary Edges and Midpoints]
+The three directed boundary edges of $T$ are denoted by $e_1 = (V_1, V_2)$, $e_2 = (V_2, V_3)$, and $e_3 = (V_3, V_1)$. For each edge $k \in \{1, 2, 3\}$:
+\begin{itemize}
+    \item Length: $L_k = \|V_{k+1} - V_k\| > 0$ (with cyclic index $V_4 \equiv V_1$);
+    \item Unit tangent vector: $\mathbf{t}_k = \frac{V_{k+1} - V_k}{L_k}$;
+    \item Edge midpoint: $M_k = \frac{1}{2}(V_k + V_{k+1})$.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Whitney 1-Forms / N\'ed\'elec First Family]
+Let $\lambda_i(\mathbf{x})$ be the affine barycentric coordinate associated with vertex $V_i$, such that $\lambda_i(V_j) = \delta_{ij}$ and $\sum_{i=1}^3 \lambda_i(\mathbf{x}) \equiv 1$. The standard Whitney 1-form associated with edge $e_k = (V_i, V_j)$ is:
+\begin{equation}
+    \mathbf{w}_k(\mathbf{x}) = \lambda_i(\mathbf{x}) \nabla \lambda_j - \lambda_j(\mathbf{x}) \nabla \lambda_i
+\end{equation}
+The polynomial approximation space is:
+\begin{equation}
+    \mathcal{W}(T) = \operatorname{span}\left\{ \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \; \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \; \begin{bmatrix} y \\ -x \end{bmatrix} \right\}
+\end{equation}
+The finite element degrees of freedom (DoFs) are edge circulations:
+\begin{equation}
+    \alpha_k(\mathbf{u}) = \oint_{e_k} \mathbf{u} \cdot d\boldsymbol{\ell} = \int_{e_k} (\mathbf{u} \cdot \mathbf{t}_k) \, ds, \quad \text{with} \quad \oint_{e_j} \mathbf{w}_k \cdot d\boldsymbol{\ell} = \delta_{jk}
+\end{equation}
+\end{definition}
+
+\begin{definition}[VNMM 2D $\mathcal{L}^1$ Formulation]
+The Vector Nodal Meshless Method (VNMM 2D) based on the solenoidal linear basis employs the 3-term polynomial space:
+\begin{equation}
+    \mathcal{L}^1 = \operatorname{span}\left\{ \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \; \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \; \begin{bmatrix} y \\ -x \end{bmatrix} \right\}
+\end{equation}
+Given a triad of support nodes at the edge midpoints $\{P_k = M_k, \mathbf{t}_k\}_{k=1}^3$, the VNMM shape functions $\mathbf{N}_k(\mathbf{x}) \in \mathcal{L}^1$ are uniquely defined by the pointwise Kronecker projection condition:
+\begin{equation}
+    \mathbf{N}_k(P_j) \cdot \mathbf{t}_j = \delta_{jk}, \quad \forall j, k \in \{1, 2, 3\}
+\end{equation}
+\end{definition}
+
+\section{The Dual Equivalence Theorem}
+
+\begin{theorem}[Dual Equivalence of Whitney 1-Forms and VNMM 2D $\mathcal{L}^1$]
+Let $T \subset \mathbb{R}^2$ be an arbitrary non-degenerate triangle. Consider the support triad of vector nodes $\{P_k, \mathbf{t}_k\}_{k=1}^3$ collocated at the midpoints $P_k = M_k$ with tangent vectors $\mathbf{t}_k$. Then:
+\begin{enumerate}
+    \item \textbf{Constructive Isomorphism:} The VNMM 2D shape functions $\mathbf{N}_k(\mathbf{x})$ and the Whitney 1-forms $\mathbf{w}_k(\mathbf{x})$ are identical everywhere in $\mathbb{R}^2$ up to the edge length scaling factor $L_k$:
+    \begin{equation}
+        \mathbf{N}_k(\mathbf{x}) \equiv L_k \, \mathbf{w}_k(\mathbf{x}) \quad \Longleftrightarrow \quad \mathbf{w}_k(\mathbf{x}) \equiv \frac{1}{L_k} \mathbf{N}_k(\mathbf{x}), \quad \forall k \in \{1, 2, 3\}
+    \end{equation}
+    \item \textbf{Duality of Degrees of Freedom:} The integral edge circulation $\alpha_k^{\mathrm{FEM}}$ and the pointwise directional projection $e_k^{\mathrm{VNMM}} = \mathbf{E}(P_k) \cdot \mathbf{t}_k$ satisfy:
+    \begin{equation}
+        \alpha_k^{\mathrm{FEM}} = \oint_{e_k} \mathbf{E} \cdot d\boldsymbol{\ell} = L_k \, e_k^{\mathrm{VNMM}} = \lim_{\Delta L \to 0} \frac{L_k}{\Delta L} \int_{P_k - \frac{\Delta L}{2}\mathbf{t}_k}^{P_k + \frac{\Delta L}{2}\mathbf{t}_k} (\mathbf{E} \cdot \mathbf{t}_k) \, ds
+    \end{equation}
+    \item \textbf{Differential Invariants:} Both representations share identical differential properties:
+    \begin{equation}
+        \nabla \cdot \mathbf{w}_k \equiv 0 \quad \text{and} \quad \nabla \cdot \mathbf{N}_k \equiv 0 \quad (\text{identically solenoidal})
+    \end{equation}
+    \begin{equation}
+        (\nabla \times \mathbf{w}_k)_z = \frac{1}{|T|} \quad \text{and} \quad (\nabla \times \mathbf{N}_k)_z = \frac{L_k}{|T|} \quad (\text{constant curl})
+    \end{equation}
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\textbf{Step 1: Isomorphism of Spaces.} By direct inspection:
+\begin{equation}
+    \mathcal{W}(T) = \left\{ \begin{bmatrix} a_1 + \alpha y \\ a_2 - \alpha x \end{bmatrix} : a_1, a_2, \alpha \in \mathbb{R} \right\} \equiv \mathcal{L}^1
+\end{equation}
+
+\textbf{Step 2: Constancy of Tangential Component.} For any $\mathbf{u}(\mathbf{x}) \in \mathcal{W}(T) \equiv \mathcal{L}^1$, its Jacobian matrix is skew-symmetric:
+\begin{equation}
+    J_{\mathbf{u}} = \nabla \mathbf{u} = \begin{bmatrix} 0 & \alpha \\ -\alpha & 0 \end{bmatrix}, \quad J_{\mathbf{u}}^T = -J_{\mathbf{u}}
+\end{equation}
+Parameterizing edge $e_k$ by arc length $s \in [-L_k/2, L_k/2]$ centered at $M_k$: $\mathbf{x}(s) = M_k + s \mathbf{t}_k$. The directional derivative satisfies:
+\begin{equation}
+    \frac{d}{ds} (\mathbf{u}(\mathbf{x}(s)) \cdot \mathbf{t}_k) = \mathbf{t}_k^T J_{\mathbf{u}} \, \mathbf{t}_k \equiv 0
+\end{equation}
+Hence, $\mathbf{u}(\mathbf{x}) \cdot \mathbf{t}_k = \mathbf{u}(M_k) \cdot \mathbf{t}_k$ is strictly constant along edge $e_k$.
+
+\textbf{Step 3: Reduction of Line Integral.} Integrating the constant along edge $e_j$:
+\begin{equation}
+    \oint_{e_j} \mathbf{w}_k \cdot d\boldsymbol{\ell} = \Big( \mathbf{w}_k(M_j) \cdot \mathbf{t}_j \Big) \int_{-L_j/2}^{L_j/2} ds = L_j \Big( \mathbf{w}_k(M_j) \cdot \mathbf{t}_j \Big)
+\end{equation}
+Since $\oint_{e_j} \mathbf{w}_k \cdot d\boldsymbol{\ell} = \delta_{jk}$, we have:
+\begin{equation}
+    L_j \Big( \mathbf{w}_k(M_j) \cdot \mathbf{t}_j \Big) = \delta_{jk} \quad \Longrightarrow \quad \Big( L_k \mathbf{w}_k(M_j) \Big) \cdot \mathbf{t}_j = \delta_{jk}
+\end{equation}
+
+\textbf{Step 4: Uniqueness.} The difference field $\mathbf{d}_k(\mathbf{x}) = \mathbf{N}_k(\mathbf{x}) - L_k \mathbf{w}_k(\mathbf{x}) \in \mathcal{L}^1$ satisfies:
+\begin{equation}
+    \mathbf{d}_k(M_j) \cdot \mathbf{t}_j = \delta_{jk} - \delta_{jk} = 0, \quad \forall j \in \{1, 2, 3\}
+\end{equation}
+Because the moment matrix $\mathbf{A}$ is non-singular for any non-degenerate triangle, the only element in $\mathcal{L}^1$ satisfying this condition is the trivial field $\mathbf{d}_k \equiv \mathbf{0}$. Therefore:
+\begin{equation}
+    \mathbf{N}_k(\mathbf{x}) \equiv L_k \, \mathbf{w}_k(\mathbf{x}) \quad \forall \mathbf{x} \in \mathbb{R}^2
+\end{equation}
+
+\textbf{Step 5: Differential Invariants.} The divergence vanishes identically:
+\begin{equation}
+    \nabla \cdot \mathbf{u} = \frac{\partial (a_1 + \alpha y)}{\partial x} + \frac{\partial (a_2 - \alpha x)}{\partial y} = 0 + 0 = 0
+\end{equation}
+By Stokes' theorem on $T$:
+\begin{equation}
+    \int_T (\nabla \times \mathbf{w}_k)_z \, d\Omega = \oint_{\partial T} \mathbf{w}_k \cdot d\boldsymbol{\ell} = \sum_{j=1}^3 \delta_{jk} = 1
+\end{equation}
+Since $(\nabla \times \mathbf{w}_k)_z = -2\alpha$ is constant, $(\nabla \times \mathbf{w}_k)_z = 1/|T|$, and $(\nabla \times \mathbf{N}_k)_z = L_k / |T|$.
+\end{proof}
+
+\end{document}

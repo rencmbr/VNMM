@@ -1,3 +1,3 @@
 """
-Módulo VNMM 2D - Solver de Autovalores Eletromagnéticos para Cavidade 2D.
+VNMM 2D Package - 2D Electromagnetic Cavity Eigenvalue and Variational Solver.
 """

@@ -1,0 +1,31 @@
+Suggested Reviewers for EABE Submission:
+
+1. Prof. Igor Tsukerman
+   Institution: Department of Electrical and Computer Engineering, The University of Akron, Akron, OH, USA
+   E-mail: igor@uakron.edu
+   Expertise: Non-conforming vector approximations, meshless methods in electromagnetics, Trefftz methods, suppression of spurious modes.
+   Reason: Pioneer in vector nodal formulations, finite-difference and meshless vector schemes in electromagnetics.
+
+2. Prof. Božidar Šarler
+   Institution: Faculty of Mechanical Engineering, University of Ljubljana, Ljubljana, Slovenia
+   E-mail: bozidar.sarler@fs.uni-lj.si
+   Expertise: Mesh-free methods, radial basis functions (RBF), local collocation schemes, boundary-value problems.
+   Reason: Leading international authority on meshless methods and frequent contributor/editor in EABE.
+
+3. Prof. Jeng-Tzong Chen
+   Institution: Department of Harbor and River Engineering, National Taiwan Ocean University, Keelung, Taiwan
+   E-mail: jtchen@mail.ntou.edu.tw
+   Expertise: Boundary element methods, meshless collocation methods, spurious eigensolutions, Helmholtz/wave eigenvalue problems.
+   Reason: Renowned specialist in spurious eigenvalue elimination and meshless methods; long-standing contributor to EABE.
+
+4. Prof. Daniele Boffi
+   Institution: CEMSE Division, King Abdullah University of Science and Technology (KAUST), Saudi Arabia / University of Pavia, Italy
+   E-mail: daniele.boffi@kaust.edu.sa
+   Expertise: Finite element approximation of eigenvalue problems, H(curl) and H(div) spaces, spurious modes in electromagnetics, discrete de Rham complex.
+   Reason: World authority on spectral approximation of Maxwell equations and edge finite elements.
+
+5. Prof. Qing-Hua Qin
+   Institution: Shenzhen MSU-BIT University, China / Australian National University, Canberra, Australia
+   E-mail: qin@smbu.edu.cn
+   Expertise: Meshless methods, Trefftz boundary formulations, computational engineering mechanics.
+   Reason: Highly cited expert in meshless and boundary formulations in EABE.

@@ -1,0 +1,737 @@
+@article{ortiz2021nodal,
+  author  = {Ortiz, Luilly A. G. and Mesquita, Renato C. and Lima, Na{\'i}sses Z.},
+  title   = {Nodal Meshless Method With Vectorial Shape Functions Based on {H(curl)}},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {57},
+  number  = {6},
+  pages   = {1--4},
+  year    = {2021},
+  doi     = {10.1109/TMAG.2021.3061526}
+}
+
+@article{goncalves2023vector,
+  author  = {Gon{\c{c}}alves, B{\'a}rbara M. F. and Silva, Elson J. and Mesquita, Renato C.},
+  title   = {Vector Nodal Meshless Method for {3-D} Applications},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {59},
+  number  = {5},
+  pages   = {1--4},
+  year    = {2023},
+  doi     = {10.1109/TMAG.2022.3233527}
+}
+
+@article{nedelec1980mixed,
+  author  = {N{\'e}d{\'e}lec, Jean Claude},
+  title   = {Mixed finite elements in {$\mathbb{R}^3$}},
+  journal = {Numerische Mathematik},
+  volume  = {35},
+  number  = {3},
+  pages   = {315--341},
+  year    = {1980},
+  doi     = {10.1007/BF01396415}
+}
+
+@phdthesis{ortiz2023tese,
+  author  = {Ortiz, Luilly A. G.},
+  title   = {M{\'e}todo Sem Malha Nodal utilizando Fun{\c{c}}{\~o}es de Forma Vetoriais baseadas em {H(curl)}},
+  school  = {Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade Federal de Minas Gerais (UFMG)},
+  address = {Belo Horizonte, Brasil},
+  year    = {2023}
+}
+
+@phdthesis{goncalves2025tese,
+  author  = {Gon{\c{c}}alves, B{\'a}rbara M. F.},
+  title   = {Constru{\c{c}}{\~a}o das Fun{\c{c}}{\~o}es de Forma {3-D} para o M{\'e}todo Sem Malha Nodal Vetorial},
+  school  = {Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade Federal de Minas Gerais (UFMG)},
+  address = {Belo Horizonte, Brasil},
+  year    = {2025}
+}
+
+@book{monk2003finite,
+  author    = {Monk, Peter},
+  title     = {Finite Element Methods for Maxwell's Equations},
+  publisher = {Oxford University Press},
+  address   = {Oxford},
+  year      = {2003},
+  doi       = {10.1093/acprof:oso/9780198508885.001.0001}
+}
+
+@article{lima2017edge,
+  author  = {Lima, Na{\'i}sses Z. and Mesquita, Renato C.},
+  title   = {Edge Meshless Method Applied to Vector Electromagnetic Problems},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {53},
+  number  = {6},
+  pages   = {1--4},
+  year    = {2017},
+  doi     = {10.1109/TMAG.2017.2653769}
+}
+
+@article{belytschko1994element,
+  author  = {Belytschko, Ted and Lu, Y. Y. and Gu, L.},
+  title   = {Element-free {G}alerkin methods},
+  journal = {International Journal for Numerical Methods in Engineering},
+  volume  = {37},
+  number  = {2},
+  pages   = {229--256},
+  year    = {1994},
+  doi     = {10.1002/nme.1620370205}
+}
+
+@article{elkadmiri2022hybrid,
+  author  = {El Kadmiri, R. and Belaasilia, Y. and Timesli, A. and Kadiri, M. S.},
+  title   = {A hybrid algorithm using the {FEM-MESHLESS} method to solve nonlinear structural problems},
+  journal = {Engineering Analysis with Boundary Elements},
+  volume  = {140},
+  pages   = {531--543},
+  year    = {2022},
+  doi     = {10.1016/j.enganabound.2022.04.018}
+}
+
+@article{tsukerman1992overlapping,
+  author  = {Tsukerman, Igor A.},
+  title   = {Overlapping finite elements for problems with movement},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {28},
+  number  = {5},
+  pages   = {2247--2249},
+  year    = {1992},
+  doi     = {10.1109/20.179458}
+}
+
+
+@article{nitsche1971uber,
+  author  = {Nitsche, Joachim},
+  title   = {{\"U}ber ein {V}ariationsprinzip zur L{\"o}sung von {D}irichlet-{P}roblemen bei {V}erwendung von {T}eilr{\"a}umen, die die {R}andbedingungen nicht erf{\"u}llen},
+  journal = {Abhandlungen aus dem Mathematischen Seminar der Universit{\"a}t Hamburg},
+  volume  = {36},
+  number  = {1},
+  pages   = {9--15},
+  year    = {1971},
+  doi     = {10.1007/BF02995904}
+}
+
+@article{bossavit1990spurious,
+  author  = {Bossavit, Alain},
+  title   = {Solving {M}axwell equations in a closed cavity, and the question of 'spurious modes'},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {26},
+  number  = {2},
+  pages   = {702--705},
+  year    = {1990},
+  doi     = {10.1109/20.106414}
+}
+
+@book{bossavit1998computational,
+  author    = {Bossavit, Alain},
+  title     = {Computational Electromagnetism: Variational Formulations, Complementarity, Edge Elements},
+  publisher = {Academic Press},
+  address   = {San Diego, CA},
+  year      = {1998},
+  isbn      = {978-0-12-117580-2}
+}
+
+@article{jiang2014mixed,
+  author  = {Jiang, W. and Liu, N. and Tang, Y. and Liu, Q. H.},
+  title   = {Mixed {F}inite {E}lement {M}ethod for 2{D} {V}ector {M}axwell's {E}igenvalue {P}roblem in {A}nisotropic {M}edia},
+  journal = {Progress In Electromagnetics Research},
+  volume  = {148},
+  pages   = {159--170},
+  year    = {2014},
+  doi     = {10.2528/PIER14052608}
+}
+
+@article{slak2018refined,
+  author  = {Slak, Jure and Kosec, Gregor},
+  title   = {Refined Meshless Local Strong Form solution of Cauchy-Navier equation on an irregular domain},
+  journal = {Engineering Analysis with Boundary Elements},
+  volume  = {90},
+  pages   = {1--11},
+  year    = {2018},
+  doi     = {10.1016/j.enganabound.2018.01.001}
+}
+
+@book{jin2014finite,
+  author    = {Jin, Jian Ming},
+  title     = {The Finite Element Method in Electromagnetics},
+  edition   = {3rd},
+  publisher = {John Wiley \& Sons},
+  address   = {Hoboken, NJ},
+  year      = {2014}
+}
+
+@book{harrington2001time,
+  author    = {Harrington, Roger F.},
+  title     = {Time-Harmonic Electromagnetic Fields},
+  publisher = {IEEE Press},
+  address   = {Piscataway, NJ},
+  year      = {2001}
+}
+
+@article{yee1966numerical,
+  author  = {Yee, Kane},
+  title   = {Numerical solution of initial boundary value problems involving {M}axwell's equations in isotropic media},
+  journal = {IEEE Transactions on Antennas and Propagation},
+  volume  = {14},
+  number  = {3},
+  pages   = {302--307},
+  year    = {1966},
+  doi     = {10.1109/TAP.1966.1138693}
+}
+
+@article{boffi1999computational,
+  author  = {Boffi, Daniele and Fernandes, Paolo and Gastaldi, Lucia and Perugia, Ilaria},
+  title   = {Computational models of electromagnetic resonators: Analysis of edge element approximation},
+  journal = {SIAM Journal on Numerical Analysis},
+  volume  = {36},
+  number  = {4},
+  pages   = {1264--1290},
+  year    = {1999},
+  doi     = {10.1137/S003614299731853X}
+}
+
+@book{boffi2013mixed,
+  author    = {Boffi, Daniele and Brezzi, Franco and Fortin, Michel},
+  title     = {Mixed Finite Element Methods and Applications},
+  series    = {Springer Series in Computational Mathematics},
+  volume    = {44},
+  publisher = {Springer-Verlag},
+  address   = {Berlin Heidelberg},
+  year      = {2013},
+  doi       = {10.1007/978-3-642-36519-5}
+}
+
+
+@book{liu2009mesh,
+  author    = {Liu, Gui Rong},
+  title     = {Mesh Free Methods: Moving Beyond the Finite Element Method},
+  edition   = {2nd},
+  publisher = {CRC Press},
+  address   = {Boca Raton, FL},
+  year      = {2009}
+}
+
+@book{li2007meshfree,
+  author    = {Li, Shaofan and Liu, Wing Kam},
+  title     = {Meshfree Particle Methods},
+  publisher = {Springer Science \& Business Media},
+  address   = {Berlin, Germany},
+  year      = {2007},
+  doi       = {10.1007/978-3-540-71471-2}
+}
+
+@book{liu2005introduction,
+  author    = {Liu, Gui Rong and Gu, Yuan Tong},
+  title     = {An Introduction to Meshfree Methods and Their Programming},
+  publisher = {Springer},
+  address   = {Dordrecht, Netherlands},
+  year      = {2005},
+  doi       = {10.1007/1-4020-3228-5}
+}
+
+@article{atluri1998new,
+  author  = {Atluri, Satya N. and Zhu, T.},
+  title   = {A new meshless local {P}etrov-{G}alerkin ({MLPG}) approach in computational mechanics},
+  journal = {Computational Mechanics},
+  volume  = {22},
+  number  = {2},
+  pages   = {117--127},
+  year    = {1998},
+  doi     = {10.1007/s004660050346}
+}
+
+@book{atluri2002meshless,
+  author    = {Atluri, Satya N. and Shen, Sheng-Ping},
+  title     = {The Meshless Local {P}etrov-{G}alerkin ({MLPG}) Method},
+  publisher = {Tech Science Press},
+  address   = {Encino, CA},
+  year      = {2002}
+}
+
+@article{liu2001point,
+  author  = {Liu, Gui Rong and Gu, Yuan Tong},
+  title   = {A point interpolation method for two-dimensional solids},
+  journal = {International Journal for Numerical Methods in Engineering},
+  volume  = {50},
+  number  = {4},
+  pages   = {937--951},
+  year    = {2001},
+  doi     = {10.1002/1097-0207(20010210)50:4<937::AID-NME62>3.0.CO;2-X}
+}
+
+@article{monaghan1992smoothed,
+  author  = {Monaghan, Joe J.},
+  title   = {Smoothed particle hydrodynamics},
+  journal = {Annual Review of Astronomy and Astrophysics},
+  volume  = {30},
+  number  = {1},
+  pages   = {543--574},
+  year    = {1992},
+  doi     = {10.1146/annurev.aa.30.090192.002551}
+}
+
+@article{idelsohn2006mesh,
+  author  = {Idelsohn, Sergio R. and O{\~n}ate, Eugenio},
+  title   = {To mesh or not to mesh... that is the question...},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {195},
+  number  = {37--40},
+  pages   = {4681--4696},
+  year    = {2006},
+  doi     = {10.1016/j.cma.2005.11.006}
+}
+
+@article{viana1999moving,
+  author  = {Viana, S. A. and Mesquita, Renato C.},
+  title   = {Moving least square reproducing kernel method for electromagnetic field computation},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {35},
+  number  = {3},
+  pages   = {1372--1375},
+  year    = {1999},
+  doi     = {10.1109/20.767218}
+}
+
+@article{cingoski1998element,
+  author  = {Cingoski, Vlatko and Miyamoto, N. and Yamashita, H.},
+  title   = {Element-free {G}alerkin method for electromagnetic field computations},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {34},
+  number  = {5},
+  pages   = {3236--3239},
+  year    = {1998},
+  doi     = {10.1109/20.717759}
+}
+
+@phdthesis{nicomedes2015mixed,
+  author  = {Nicomedes, W. L.},
+  title   = {Mixed Meshfree Methods in Computational Electromagnetism: Mathematical Foundations and Problems in Wave Scattering},
+  school  = {Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade Federal de Minas Gerais (UFMG)},
+  address = {Belo Horizonte, Brasil},
+  year    = {2015}
+}
+
+@phdthesis{lima2016metodos,
+  author  = {Lima, Na{\'i}sses Z.},
+  title   = {M{\'e}todos sem Malha Aplicados ao Eletromagnetismo: Formas Fracas Enfraquecidas e Fun{\c{c}}{\~o}es de Forma Vetoriais},
+  school  = {Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade Federal de Minas Gerais (UFMG)},
+  address = {Belo Horizonte, Brasil},
+  year    = {2016}
+}
+
+@article{silva2018new,
+  author  = {Silva, P. M. I. and Mesquita, Renato C. and Lima, Na{\'i}sses Z.},
+  title   = {New vectorial {$H(\mathrm{curl})$} shape functions for the edge meshless method},
+  journal = {IET Science, Measurement \& Technology},
+  volume  = {12},
+  number  = {6},
+  pages   = {821--828},
+  year    = {2018},
+  doi     = {10.1049/iet-smt.2018.0111}
+}
+
+@article{ortiz2021creating,
+  author  = {Ortiz, Luilly A. G. and Mesquita, Renato C. and Lima, Na{\'i}sses Z.},
+  title   = {Creating higher order vector shape functions based on {$H(\mathrm{curl})$} for the edge meshless method},
+  journal = {Journal of Electromagnetic Waves and Applications},
+  volume  = {35},
+  number  = {11},
+  pages   = {1511--1528},
+  year    = {2021},
+  doi     = {10.1080/09205071.2021.1901787}
+}
+
+@article{goncalves2026periodic,
+  author  = {Gon{\c{c}}alves, B{\'a}rbara M. F. and Silva, Elson J. and Mesquita, Renato C. and Afonso, Marcio M. and Ramdane, Brahim},
+  title   = {Periodic boundary conditions in {V}ector {N}odal {M}eshless {M}ethod},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {62},
+  year    = {2026},
+  doi     = {10.1109/TMAG.2025.3609622}
+}
+
+
+@article{parreira2006efficient,
+  author  = {Parreira, Guilherme F. and Fonseca, Alexandre R. and Lisboa, Adriano C. and Silva, Elson J. and Mesquita, Renato C.},
+  title   = {Efficient Algorithms and Data Structures for {E}lement-{F}ree {G}alerkin Method},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {42},
+  number  = {4},
+  pages   = {659--662},
+  year    = {2006},
+  doi     = {10.1109/TMAG.2006.871432}
+}
+
+@article{nedelec1986new,
+  author  = {N{\'e}d{\'e}lec, Jean C.},
+  title   = {A new family of mixed finite elements in {$\mathbb{R}^3$}},
+  journal = {Numerische Mathematik},
+  volume  = {50},
+  number  = {1},
+  pages   = {57--81},
+  year    = {1986},
+  doi     = {10.1007/BF01389668}
+}
+
+@article{parreira2006element,
+  author  = {Parreira, Guilherme F. and Silva, Elson J. and Fonseca, Alexandre R. and Mesquita, Renato C.},
+  title   = {The {E}lement-{F}ree {G}alerkin Method in Three-Dimensional Electromagnetic Problems},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {42},
+  number  = {4},
+  pages   = {711--714},
+  month   = {Apr.},
+  year    = {2006},
+  doi     = {10.1109/TMAG.2006.872014}
+}
+
+@article{fonseca2008imposing,
+  author  = {Fonseca, Alexandre R. and Viana, S. A. and Silva, Elson J. and Mesquita, Renato C.},
+  title   = {Imposing boundary conditions in the meshless local {P}etrov--{G}alerkin method},
+  journal = {IET Science, Measurement \& Technology},
+  volume  = {2},
+  number  = {6},
+  pages   = {387--394},
+  year    = {2008},
+  doi     = {10.1049/iet-smt:20080082}
+}
+
+@article{nicomedes2012meshless,
+  author  = {Nicomedes, William L. and Mesquita, Renato C. and Moreira, Fernando J. S.},
+  title   = {The Meshless Local {P}etrov--{G}alerkin Method in Two-Dimensional Electromagnetic Wave Analysis},
+  journal = {IEEE Transactions on Antennas and Propagation},
+  volume  = {60},
+  number  = {4},
+  pages   = {1957--1968},
+  month   = {Apr.},
+  year    = {2012},
+  doi     = {10.1109/TAP.2012.2186223}
+}
+
+@book{fasshauer2007meshfree,
+  title     = {Meshfree Approximation Methods with {MATLAB}},
+  author    = {Fasshauer, Gregory E.},
+  series    = {Interdisciplinary Mathematical Sciences},
+  volume    = {6},
+  year      = {2007},
+  publisher = {World Scientific Publishing},
+  address   = {Singapore},
+  doi       = {10.1142/6437}
+}
+
+@article{dolbow1999numerical,
+  author  = {Dolbow, John and Belytschko, Ted},
+  title   = {Numerical integration of {G}alerkin weak forms in meshfree methods},
+  journal = {International Journal for Numerical Methods in Engineering},
+  volume  = {46},
+  number  = {5},
+  pages   = {657--683},
+  year    = {1999},
+  doi     = {10.1007/s004660050403}
+}
+
+@book{saad2011numerical,
+  author    = {Saad, Yousef},
+  title     = {Numerical Methods for Large Eigenvalue Problems},
+  edition   = {Revised},
+  publisher = {SIAM},
+  address   = {Philadelphia, PA},
+  year      = {2011},
+  doi       = {10.1137/1.9781611970739}
+}
+
+@book{lehoucq1998arpack,
+  author    = {Lehoucq, R. B. and Sorensen, D. C. and Yang, C.},
+  title     = {{ARPACK} Users' Guide: Solution of Large-Scale Eigenvalue Problems with Implicitly Restarted {A}rnoldi Methods},
+  publisher = {SIAM},
+  address   = {Philadelphia, PA},
+  year      = {1998},
+  doi       = {10.1137/1.9780898719628}
+}
+
+@article{virtanen2020scipy,
+  author  = {Virtanen, Pauli and Gommers, Ralf and Oliphant, Travis E. and others},
+  title   = {{{SciPy} 1.0: Fundamental Algorithms for Scientific Computing in Python}},
+  journal = {Nature Methods},
+  volume  = {17},
+  number  = {3},
+  pages   = {261--272},
+  year    = {2020},
+  doi     = {10.1038/s41592-019-0686-2}
+}
+
+@article{fernandez2004imposing,
+  title   = {Imposing essential boundary conditions in mesh-free methods},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {193},
+  number  = {12},
+  pages   = {1257-1275},
+  year    = {2004},
+  issn    = {0045-7825},
+  doi     = {https://doi.org/10.1016/j.cma.2003.12.019},
+  author  = {Sonia Fernández-Méndez and Antonio Huerta}
+}
+
+@article{hansbo2002unfitted,
+  author  = {Hansbo, Anita and Hansbo, Peter},
+  title   = {An unfitted finite element method, based on {N}itsche's formulation, for elliptic interface problems},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {191},
+  number  = {47-48},
+  pages   = {5537--5552},
+  year    = {2002},
+  doi     = {10.1016/S0045-7825(02)00524-8}
+}
+
+@article{brezzi1974existence,
+  author  = {Brezzi, Franco},
+  title   = {On the existence, uniqueness and approximation of saddle-point problems arising from {L}agrange multipliers},
+  journal = {RAIRO. Analyse Num{\'e}rique},
+  volume  = {8},
+  number  = {R2},
+  pages   = {129--151},
+  year    = {1974}
+}
+
+@incollection{bernardi1994mortar,
+  author    = {Bernardi, Christine and Maday, Yvon and Patera, Anthony},
+  title     = {A new non-conforming approach to domain decomposition: {T}he mortar element method},
+  booktitle = {Nonlinear Partial Differential Equations and Their Applications},
+  editor    = {Br{\'e}zis, H. and Lions, J. L.},
+  publisher = {Pitman},
+  pages     = {13--51},
+  year      = {1994}
+}
+
+@article{benbelgacem1999mortar,
+  author  = {Ben Belgacem, Faker},
+  title   = {The Mortar finite element method with {L}agrange multipliers},
+  journal = {Numerische Mathematik},
+  volume  = {84},
+  number  = {2},
+  pages   = {173--197},
+  year    = {1999},
+  doi     = {10.1007/s002110050468}
+}
+
+@article{buffa2001mortar,
+  author  = {Buffa, Annalisa and Maday, Yvon and Rapetti, Francesca},
+  title   = {A Mortar Element Method for ${H}(\text{curl})$-Conforming Windowing Problems},
+  journal = {SIAM Journal on Numerical Analysis},
+  volume  = {39},
+  number  = {1},
+  pages   = {81--101},
+  year    = {2001},
+  doi     = {10.1137/S0036142999357968}
+}
+
+@article{melenk1996partition,
+  author  = {Melenk, Jens Markus and Babu{\v{s}}ka, Ivo},
+  title   = {The partition of unity finite element method: {B}asic theory and applications},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {139},
+  number  = {1-4},
+  pages   = {289--314},
+  year    = {1996},
+  doi     = {10.1016/S0045-7825(96)01087-0}
+}
+
+@article{babuska1997partition,
+  author  = {Babu{\v{s}}ka, Ivo and Melenk, Jens Markus},
+  title   = {The partition of unity method},
+  journal = {International Journal for Numerical Methods in Engineering},
+  volume  = {40},
+  number  = {4},
+  pages   = {727--758},
+  year    = {1997},
+  doi     = {10.1002/(SICI)1097-0207(19970228)40:4<727::AID-NME86>3.0.CO;2-N}
+}
+
+@article{krongauz1996enforcement,
+  author  = {Krongauz, Y. and Belytschko, T.},
+  title   = {Enforcement of essential boundary conditions in meshless approximations using finite elements},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {131},
+  number  = {1-2},
+  pages   = {133--145},
+  year    = {1996},
+  doi     = {10.1016/0045-7825(95)00954-X}
+}
+
+@article{belytschko1995coupled,
+  author  = {Belytschko, T. and Organ, D. and Krongauz, Y.},
+  title   = {A coupled finite element-element-free {G}alerkin method},
+  journal = {Computational Mechanics},
+  volume  = {17},
+  number  = {3},
+  pages   = {186--195},
+  year    = {1995},
+  doi     = {10.1007/BF00364080}
+}
+
+@book{quarteroni1999domain,
+  author    = {Quarteroni, Alfio and Valli, Alberto},
+  title     = {Domain Decomposition Methods for Partial Differential Equations},
+  publisher = {Oxford University Press},
+  address   = {Oxford, UK},
+  year      = {1999},
+  isbn      = {978-0198501787}
+}
+
+@book{toselli2005domain,
+  author    = {Toselli, Andrea and Widlund, Olof},
+  title     = {Domain Decomposition Methods --- Algorithms and Theory},
+  series    = {Springer Series in Computational Mathematics},
+  volume    = {34},
+  publisher = {Springer},
+  address   = {Berlin, Germany},
+  year      = {2005},
+  doi       = {10.1007/b137868}
+}
+
+@book{smith1996domain,
+  author    = {Smith, Barry and Bj{\o}rstad, Petter and Gropp, William},
+  title     = {Domain Decomposition: Parallel Multilevel Methods for Elliptic Partial Differential Equations},
+  publisher = {Cambridge University Press},
+  address   = {Cambridge, UK},
+  year      = {1996},
+  isbn      = {978-0521495899}
+}
+
+@book{deberg2008computational,
+  author    = {Mark de Berg and Otfried Cheong and Marc van Kreveld and Mark Overmars},
+  title     = {Computational Geometry: Algorithms and Applications},
+  edition   = {3rd},
+  publisher = {Springer-Verlag},
+  address   = {Berlin, Heidelberg},
+  year      = {2008},
+  doi       = {10.1007/978-3-540-77974-2}
+}
+
+@article{coppoli2012induction,
+  author  = {Coppoli, E. H. R. and Mesquita, Renato C. and Silva, R. S.},
+  title   = {Induction Machines Modeling With Meshless Methods},
+  journal = {IEEE Transactions on Magnetics},
+  volume  = {48},
+  number  = {2},
+  pages   = {847--850},
+  month   = {Feb.},
+  year    = {2012},
+  doi     = {10.1109/TMAG.2011.2174211}
+}
+
+@article{bentley1975multidimensional,
+  author    = {Bentley, Jon Louis},
+  title     = {Multidimensional binary search trees used for associative searching},
+  journal   = {Communications of the ACM},
+  volume    = {18},
+  number    = {9},
+  pages     = {509--517},
+  year      = {1975},
+  publisher = {ACM},
+  address   = {New York, NY, USA},
+  doi       = {10.1145/361002.361007}
+}
+
+@article{chen2001stabilized,
+  author    = {Chen, Jiun-Shyan and Wu, Cheng-Tang and Yoon, Seungwhan and You, Yang},
+  title     = {A stabilized conforming nodal integration for {G}alerkin mesh-free methods},
+  journal   = {International Journal for Numerical Methods in Engineering},
+  volume    = {50},
+  number    = {2},
+  pages     = {435--466},
+  year      = {2001},
+  publisher = {Wiley Online Library},
+  doi       = {10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}
+}
+
+@article{wu2026high,
+  title   = {A high precision Galerkin meshless method with moving Kriging interpolation and kd-tree for anisotropic thermal transfer problems},
+  journal = {Engineering Analysis with Boundary Elements},
+  volume  = {193},
+  pages   = {107014},
+  year    = {2026},
+  issn    = {0955-7997},
+  doi     = {https://doi.org/10.1016/j.enganabound.2026.107014},
+  author  = {Xirong Wu and Xiaobin Wang and Dongsheng Yang and Zhenhua Zhao}
+}
+
+@book{golub2013matrix,
+  author    = {Golub, Gene H. and Van Loan, Charles F.},
+  title     = {Matrix Computations},
+  edition   = {4th},
+  publisher = {Johns Hopkins University Press},
+  address   = {Baltimore, MD, USA},
+  year      = {2013}
+}
+
+@article{hesthaven2004high,
+  author    = {Hesthaven, Jan S. and Warburton, Tim},
+  title     = {High-order nodal discontinuous {G}alerkin methods for the {M}axwell eigenvalue problem},
+  journal   = {Philosophical Transactions of the Royal Society of London. Series A: Mathematical, Physical and Engineering Sciences},
+  volume    = {362},
+  number    = {1816},
+  pages     = {493--524},
+  year      = {2004},
+  publisher = {The Royal Society},
+  doi       = {10.1098/rsta.2003.1332}
+}
+
+@article{houston2004mixed,
+  author    = {Houston, Paul and Perugia, Ilaria and Sch{\"o}tzau, Dominik},
+  title     = {Mixed discontinuous {G}alerkin approximation of the {M}axwell operator},
+  journal   = {SIAM Journal on Numerical Analysis},
+  volume    = {42},
+  number    = {1},
+  pages     = {434--459},
+  year      = {2004},
+  publisher = {SIAM},
+  doi       = {10.1137/S003614290241790X}
+}
+
+@article{nguyen2011hybridizable,
+  author    = {Nguyen, Ngoc Cuong and Peraire, Jaime and Cockburn, Bernardo},
+  title     = {Hybridizable discontinuous {G}alerkin methods for the time-harmonic {M}axwell's equations},
+  journal   = {Journal of Computational Physics},
+  volume    = {230},
+  number    = {18},
+  pages     = {7151--7175},
+  year      = {2011},
+  publisher = {Elsevier},
+  doi       = {10.1016/j.jcp.2011.05.018}
+}
+
+@book{gross2004electromagnetic,
+  author    = {Gross, Paul W. and Kotiuga, P. Robert},
+  title     = {Electromagnetic Theory and Computation: A Topological Approach},
+  publisher = {Cambridge University Press},
+  address   = {Cambridge},
+  series    = {Mathematical Sciences Research Institute Publications},
+  volume    = {48},
+  year      = {2004},
+  isbn      = {978-0-521-80160-7},
+}
+
+@article{costabel1991coercive,
+  author    = {Costabel, Martin},
+  title     = {A coercive bilinear form for {Maxwell}'s equations},
+  journal   = {Journal of Mathematical Analysis and Applications},
+  volume    = {157},
+  number    = {2},
+  pages     = {527--541},
+  year      = {1991},
+  publisher = {Elsevier},
+  doi       = {10.1016/0022-247X(91)90104-8}
+}
+
+@article{costabel2002weighted,
+  author    = {Costabel, Martin and Dauge, Monique},
+  title     = {Weighted regularization of {Maxwell} equations in polyhedral domains: {A} rehabilitation of nodal finite elements},
+  journal   = {Numerische Mathematik},
+  volume    = {93},
+  number    = {2},
+  pages     = {239--277},
+  year      = {2002},
+  publisher = {Springer},
+  doi       = {10.1007/s002110100388}
+}

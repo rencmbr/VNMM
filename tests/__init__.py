@@ -1,3 +1,3 @@
 """
-Suíte de testes automatizados para o solver de autovalores VNMM 2D.
+Automated unit test suite for the VNMM 2D eigenvalue and variational solver.
 """

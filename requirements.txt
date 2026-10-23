@@ -1,0 +1,6 @@
+# VNMM 2D - Dependencies
+# Scientific Python stack for Vector Nodal Meshless Method and Edge FEM simulations
+numpy>=1.24.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+pandas>=2.0.0

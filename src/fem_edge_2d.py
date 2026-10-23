@@ -6,26 +6,44 @@ from scipy.sparse import coo_matrix, csr_matrix
 from scipy.sparse.linalg import eigs
 
 
-def gerar_malha_triangular_cavidade(
+def generate_triangular_cavity_mesh(
     Nex=11, 
     Ney=11, 
     Lx=np.pi, 
     Ly=np.pi, 
     jitter_frac=0.0, 
-    seed=42
+    seed=42,
+    nex=None,
+    ney=None,
+    nx=None,
+    ny=None,
+    lx=None,
+    ly=None
 ):
+    if nex is not None:
+        Nex = nex
+    elif nx is not None:
+        Nex = nx
+    if ney is not None:
+        Ney = ney
+    elif ny is not None:
+        Ney = ny
+    if lx is not None:
+        Lx = lx
+    if ly is not None:
+        Ly = ly
     """
-    Gera uma malha triangular 2D cobrindo o domínio [0, Lx] x [0, Ly].
-    Cada célula retangular é subdividida em 2 triângulos.
-    Suporta perturbação estocástica controlada (jitter) para os nós internos.
+    Generates a 2D triangular mesh covering domain [0, Lx] x [0, Ly].
+    Each rectangular cell is subdivided into two triangles.
+    Supports controlled stochastic perturbation (jitter) for internal vertices.
     
-    Retorna:
-    - nodes: Array numpy (N_nodes, 2) com as coordenadas cartesianas (x, y) de cada vértice.
-    - elements: Array numpy (N_elem, 3) com os índices dos 3 vértices de cada triângulo (em sentido anti-horário).
-    - edges: Array numpy (N_edges, 2) com os pares (n1, n2) de cada aresta orientada (com n1 < n2).
-    - elem_edges: Array numpy (N_elem, 3) com os índices globais das 3 arestas de cada elemento.
-    - elem_edge_signs: Array numpy (N_elem, 3) com +1 ou -1 indicando a orientação relativa da aresta no elemento.
-    - is_boundary_edge: Array booleano (N_edges,) indicando True para arestas na fronteira PEC.
+    Returns:
+    - nodes: Numpy array (N_nodes, 2) of Cartesian coordinates (x, y).
+    - elements: Numpy array (N_elem, 3) of vertex indices for each triangle (CCW).
+    - edges: Numpy array (N_edges, 2) of vertex pairs (n1, n2) per oriented edge (n1 < n2).
+    - elem_edges: Numpy array (N_elem, 3) of global edge indices per element.
+    - elem_edge_signs: Numpy array (N_elem, 3) with +1 or -1 for relative edge orientation.
+    - is_boundary_edge: Boolean array (N_edges,) True for PEC boundary edges.
     """
     if seed is not None:
         np.random.seed(seed)
@@ -35,14 +53,14 @@ def gerar_malha_triangular_cavidade(
     dx = Lx / Nex
     dy = Ly / Ney
     
-    # 1. Criação dos nós
+    # 1. Create nodes
     nodes_list = []
     node_grid = np.zeros((Ney + 1, Nex + 1), dtype=int)
     node_id = 0
     for j in range(Ney + 1):
         for i in range(Nex + 1):
             x, y = x_lin[i], y_lin[j]
-            # Aplica perturbação aleatória estocástica (jitter) apenas aos nós estritamente internos
+            # Apply stochastic perturbation only to strictly interior nodes
             if jitter_frac > 0.0 and 0 < i < Nex and 0 < j < Ney:
                 x += np.random.uniform(-jitter_frac * dx, jitter_frac * dx)
                 y += np.random.uniform(-jitter_frac * dy, jitter_frac * dy)
@@ -51,7 +69,7 @@ def gerar_malha_triangular_cavidade(
             node_id += 1
     nodes = np.array(nodes_list, dtype=float)
     
-    # 2. Criação dos elementos triangulares (sentido anti-horário)
+    # 2. Create triangular elements (counter-clockwise)
     elements_list = []
     for j in range(Ney):
         for i in range(Nex):
@@ -60,42 +78,45 @@ def gerar_malha_triangular_cavidade(
             n_tl = node_grid[j + 1, i]   # top-left
             n_tr = node_grid[j + 1, i + 1] # top-right
             
-            # Triângulo 1 (inferior direito): n_bl -> n_br -> n_tr
+            # Lower triangle (bl, br, tr)
             elements_list.append([n_bl, n_br, n_tr])
-            # Triângulo 2 (superior esquerdo): n_bl -> n_tr -> n_tl
+            # Upper triangle (bl, tr, tl)
             elements_list.append([n_bl, n_tr, n_tl])
             
     elements = np.array(elements_list, dtype=int)
     
-    # 3. Mapeamento de arestas globais únicas e orientadas
-    edge_dict = {} # (min(n1, n2), max(n1, n2)) -> edge_id
+    # 3. Unique edges and connectivity
+    edge_dict = {}
+    edges_list = []
     elem_edges = np.zeros((len(elements), 3), dtype=int)
-    elem_edge_signs = np.zeros((len(elements), 3), dtype=float)
+    elem_edge_signs = np.zeros((len(elements), 3), dtype=int)
     
     edge_id = 0
-    for elem_idx, elem in enumerate(elements):
-        # 3 arestas locais: (0, 1), (1, 2), (2, 0)
-        local_edges = [(elem[0], elem[1]), (elem[1], elem[2]), (elem[2], elem[0])]
+    for e_idx, elem in enumerate(elements):
+        local_edges = [
+            (elem[0], elem[1]),
+            (elem[1], elem[2]),
+            (elem[2], elem[0])
+        ]
         
-        for local_idx, (n1, n2) in enumerate(local_edges):
-            ordered_edge = (min(n1, n2), max(n1, n2))
-            if ordered_edge not in edge_dict:
-                edge_dict[ordered_edge] = edge_id
-                global_eid = edge_id
+        for k, (u, v) in enumerate(local_edges):
+            canonical = (min(u, v), max(u, v))
+            sign = 1 if u < v else -1
+            
+            if canonical not in edge_dict:
+                edge_dict[canonical] = edge_id
+                edges_list.append(canonical)
+                elem_edges[e_idx, k] = edge_id
+                elem_edge_signs[e_idx, k] = sign
                 edge_id += 1
             else:
-                global_eid = edge_dict[ordered_edge]
+                eid = edge_dict[canonical]
+                elem_edges[e_idx, k] = eid
+                elem_edge_signs[e_idx, k] = sign
                 
-            elem_edges[elem_idx, local_idx] = global_eid
-            # Se a aresta local vai de n1 -> n2 e n1 < n2, o sinal é +1; caso contrário -1
-            elem_edge_signs[elem_idx, local_idx] = 1.0 if n1 < n2 else -1.0
-            
-    # Cria a lista de arestas globais
-    edges = np.zeros((edge_id, 2), dtype=int)
-    for (n1, n2), eid in edge_dict.items():
-        edges[eid] = [n1, n2]
-        
-    # 4. Identificação de arestas de fronteira PEC
+    edges = np.array(edges_list, dtype=int)
+    
+    # 4. Identify PEC boundary edges
     is_boundary_edge = np.zeros(edge_id, dtype=bool)
     tol = 1e-7
     for eid in range(edge_id):
@@ -103,32 +124,40 @@ def gerar_malha_triangular_cavidade(
         x1, y1 = nodes[n1]
         x2, y2 = nodes[n2]
         
-        # Borda inferior (y=0) ou superior (y=Ly)
+        # Bottom or top boundary
         if (abs(y1) < tol and abs(y2) < tol) or (abs(y1 - Ly) < tol and abs(y2 - Ly) < tol):
             is_boundary_edge[eid] = True
-        # Borda esquerda (x=0) ou direita (x=Lx)
+        # Left or right boundary
         elif (abs(x1) < tol and abs(x2) < tol) or (abs(x1 - Lx) < tol and abs(x2 - Lx) < tol):
             is_boundary_edge[eid] = True
             
     return nodes, elements, edges, elem_edges, elem_edge_signs, is_boundary_edge
 
 
-def montar_matrizes_fem_aresta_2d(
+def assemble_edge_fem_matrices_2d(
     nodes, 
-    elements, 
-    edges, 
-    elem_edges, 
-    elem_edge_signs, 
+    elements=None, 
+    edges=None, 
+    elem_edges=None, 
+    elem_edge_signs=None, 
     mu_r=1.0, 
     epsilon_r=1.0
 ):
     """
-    Monta as matrizes esparsas globais de rigidez K_curl e de massa M para elementos de aresta triangulares
-    de Nédélec de 1ª ordem (1-formas de Whitney).
+    Assembles global sparse curl stiffness matrix K_curl and mass matrix M
+    for 1st-order Nédélec triangular edge elements (Whitney 1-forms).
     
-    K_ij = integral_Omega (1/mu_r) * (rot W_i)_z * (rot W_j)_z dOmega
+    K_ij = integral_Omega (1/mu_r) * (curl W_i)_z * (curl W_j)_z dOmega
     M_ij = integral_Omega epsilon_r * (W_i . W_j) dOmega
     """
+    if isinstance(nodes, (tuple, list)) and len(nodes) >= 5 and elements is None:
+        nodes, elements, edges, elem_edges, elem_edge_signs = nodes[:5]
+    elif isinstance(nodes, dict) and elements is None:
+        elements = nodes['elements']
+        edges = nodes['edges']
+        elem_edges = nodes['elem_edges']
+        elem_edge_signs = nodes['elem_edge_signs']
+        nodes = nodes['nodes']
     N_edges = len(edges)
     inv_mu = 1.0 / mu_r
     eps = epsilon_r
@@ -142,34 +171,31 @@ def montar_matrizes_fem_aresta_2d(
         x2, y2 = p2
         x3, y3 = p3
         
-        # Área do triângulo (2 * Area = (x2-x1)(y3-y1) - (x3-x1)(y2-y1))
+        # Triangle area (2 * Area = (x2-x1)(y3-y1) - (x3-x1)(y2-y1))
         det2 = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)
         area = 0.5 * det2
         if area <= 0:
-            raise ValueError(f"Triângulo {e_idx} possui área não-positiva: {area}")
+            raise ValueError(f"Triangle {e_idx} has non-positive area: {area}")
             
-        # Gradientes das coordenadas baricêntricas L1, L2, L3
+        # Barycentric coordinate gradients grad(L1), grad(L2), grad(L3)
         grad_L = np.zeros((3, 2), dtype=float)
         grad_L[0] = [(y2 - y3) / det2, (x3 - x2) / det2]
         grad_L[1] = [(y3 - y1) / det2, (x1 - x3) / det2]
         grad_L[2] = [(y1 - y2) / det2, (x2 - x1) / det2]
         
-        # 3 arestas locais com pares de nós: (0, 1), (1, 2), (2, 0)
+        # 3 local edges with node pairs: (0, 1), (1, 2), (2, 0)
         local_nodes = [(0, 1), (1, 2), (2, 0)]
         signs = elem_edge_signs[e_idx]
         global_eids = elem_edges[e_idx]
         
-        # 1. Matriz de Rigidez Elementar K_e (Rotacional Constante no Triângulo)
-        # (rot w_k)_z = sign_k / area
+        # 1. Element Stiffness Matrix K_e (constant curl in triangle)
         rot_W = np.zeros(3, dtype=float)
         for k in range(3):
             rot_W[k] = signs[k] / area
             
         K_e = (inv_mu * area) * np.outer(rot_W, rot_W)
         
-        # 2. Matriz de Massa Elementar M_e (Integração Exata Baricêntrica)
-        # w_k = sign_k * (L_i grad_L_j - L_j grad_L_i)
-        # Integral de L_p * L_q em T_e = area/6 se p==q e area/12 se p!=q
+        # 2. Element Mass Matrix M_e (exact barycentric integration)
         M_e = np.zeros((3, 3), dtype=float)
         for a in range(3):
             ia, ja = local_nodes[a]
@@ -177,10 +203,6 @@ def montar_matrizes_fem_aresta_2d(
             for b in range(3):
                 ib, jb = local_nodes[b]
                 sb = signs[b]
-                
-                # Produto escalar expandido
-                # w_a . w_b = sa*sb * [ (L_ia L_ib)(grad_ja . grad_jb) - (L_ia L_jb)(grad_ja . grad_ib)
-                #                     - (L_ja L_ib)(grad_ia . grad_jb) + (L_ja L_jb)(grad_ia . grad_ib) ]
                 
                 def int_LL(p, q):
                     return area / 6.0 if p == q else area / 12.0
@@ -193,7 +215,7 @@ def montar_matrizes_fem_aresta_2d(
                 val_m = eps * sa * sb * (term1 - term2 - term3 + term4)
                 M_e[a, b] = val_m
                 
-        # Acumula nas matrizes globais
+        # Accumulate into global matrices
         for a in range(3):
             ea = global_eids[a]
             for b in range(3):
@@ -216,37 +238,84 @@ def montar_matrizes_fem_aresta_2d(
     return K_glob, M_glob
 
 
-def resolver_autovalores_fem_aresta_2d(
+def solve_edge_fem_cavity_eigenvalues(
     Nex=11, 
     Ney=11, 
     Lx=np.pi, 
     Ly=np.pi, 
     mu_r=1.0, 
     epsilon_r=1.0, 
-    num_autovalores=10, 
+    num_eigenvalues=10, 
     tol_zero=1e-3,
     jitter_frac=0.0,
-    seed=42
+    seed=42,
+    # Backward compatibility
+    num_autovalores=None,
+    num_modes=None,
+    n_modes=None,
+    nex=None,
+    ney=None,
+    nx=None,
+    ny=None,
+    lx=None,
+    ly=None
 ):
     """
-    Pipeline completo do solver de autovalores com elementos de aresta triangulares 2D (Nédélec 1ª ordem).
+    Complete eigenvalue solver pipeline for 2D triangular Nédélec edge elements.
     
-    Retorna dicionário completo com os autovalores, erros percentuais e estatísticas da malha.
+    Returns dictionary with numerical eigenvalues, percentage errors, and mesh metadata.
     """
-    nodes, elements, edges, elem_edges, elem_edge_signs, is_boundary_edge = gerar_malha_triangular_cavidade(
-        Nex=Nex, Ney=Ney, Lx=Lx, Ly=Ly, jitter_frac=jitter_frac, seed=seed
-    )
+    if num_autovalores is not None:
+        num_eigenvalues = num_autovalores
+    elif num_modes is not None:
+        num_eigenvalues = num_modes
+    elif n_modes is not None:
+        num_eigenvalues = n_modes
+
+    if nex is not None:
+        Nex = nex
+    elif nx is not None:
+        Nex = nx
+    if ney is not None:
+        Ney = ney
+    elif ny is not None:
+        Ney = ny
+    if lx is not None:
+        Lx = lx
+    if ly is not None:
+        Ly = ly
+
+    if isinstance(Nex, (tuple, list)) and len(Nex) >= 6:
+        nodes, elements, edges, elem_edges, elem_edge_signs, is_boundary_edge = Nex[:6]
+        Nex = max(int(np.sqrt(len(elements) // 2)), 1)
+        Ney = Nex
+    elif isinstance(Nex, dict) and 'nodes' in Nex:
+        nodes = Nex['nodes']
+        elements = Nex['elements']
+        edges = Nex['edges']
+        elem_edges = Nex['elem_edges']
+        elem_edge_signs = Nex['elem_edge_signs']
+        is_boundary_edge = Nex['is_boundary_edge']
+        Nex = max(int(np.sqrt(len(elements) // 2)), 1)
+        Ney = Nex
+    else:
+        nodes, elements, edges, elem_edges, elem_edge_signs, is_boundary_edge = generate_triangular_cavity_mesh(
+            Nex=Nex, Ney=Ney, Lx=Lx, Ly=Ly, jitter_frac=jitter_frac, seed=seed
+        )
     
-    K_glob, M_glob = montar_matrizes_fem_aresta_2d(
-        nodes, elements, edges, elem_edges, elem_edge_signs, mu_r=mu_r, epsilon_r=epsilon_r
-    )
+    if isinstance(Ly, (tuple, list)) and len(Ly) >= 2:
+        K_glob, M_glob = Ly[0], Ly[1]
+    else:
+        K_glob, M_glob = assemble_edge_fem_matrices_2d(
+            nodes, elements, edges, elem_edges, elem_edge_signs, mu_r=mu_r, epsilon_r=epsilon_r
+        )
     
-    # Aplica condição de contorno PEC (Dirichlet homogênea E_t = 0 nas arestas de fronteira)
-    idx_internos = np.where(~is_boundary_edge)[0]
-    K_red = K_glob[idx_internos, :][:, idx_internos]
-    M_red = M_glob[idx_internos, :][:, idx_internos]
+    # Enforce PEC boundary conditions (Dirichlet E_t = 0 on boundary edges)
+    interior_indices = np.where(~is_boundary_edge)[0]
+    K_red = K_glob[interior_indices, :][:, interior_indices]
+    M_red = M_glob[interior_indices, :][:, interior_indices]
     
-    # Resolução do problema generalizado de autovalores
+    # Generalized eigenvalue solve
     try:
         vals, vecs = la.eigh(K_red.toarray(), M_red.toarray())
     except Exception:
@@ -254,22 +323,22 @@ def resolver_autovalores_fem_aresta_2d(
         vals = np.real(vals)
         vecs = np.real(vecs)
         
-    # Filtra e descarta os autovalores nulos de gradiente (espaço nulo exato de rotacional)
-    mascara_positivos = vals > tol_zero
-    vals_positivos = np.sort(vals[mascara_positivos])
-    n_nulos = np.sum(~mascara_positivos)
+    # Filter and discard gradient nullspace eigenvalues
+    positive_mask = vals > tol_zero
+    positive_vals = np.sort(vals[positive_mask])
+    n_null = np.sum(~positive_mask)
     
-    autovalores_num = vals_positivos[:num_autovalores]
+    num_eigenvals = positive_vals[:num_eigenvalues]
     
-    from src.eigen_solver_cavity import MODOS_ANALITICOS_REF
-    ref_vals = np.array([item[2] for item in MODOS_ANALITICOS_REF[:len(autovalores_num)]])
-    ref_kc = np.array([item[3] for item in MODOS_ANALITICOS_REF[:len(autovalores_num)]])
+    from src.eigen_solver_cavity import ANALYTICAL_REFERENCE_MODES
+    ref_vals = np.array([item[2] for item in ANALYTICAL_REFERENCE_MODES[:len(num_eigenvals)]])
+    ref_kc = np.array([item[3] for item in ANALYTICAL_REFERENCE_MODES[:len(num_eigenvals)]])
     
-    kc_num = np.sqrt(np.maximum(autovalores_num, 0.0))
-    erros_lambda = np.abs(autovalores_num - ref_vals) / ref_vals * 100.0
-    erros_kc = np.abs(kc_num - ref_kc) / ref_kc * 100.0
+    kc_num = np.sqrt(np.maximum(num_eigenvals, 0.0))
+    errors_lambda = np.abs(num_eigenvals - ref_vals) / ref_vals * 100.0
+    errors_kc = np.abs(kc_num - ref_kc) / ref_kc * 100.0
     
-    h_max = max(Lx / Nex, Ly / Ney)
+    h_max = float(max(np.linalg.norm(nodes[e[0]] - nodes[e[1]]) for e in edges))
     
     return {
         'Nex': Nex,
@@ -277,19 +346,38 @@ def resolver_autovalores_fem_aresta_2d(
         'N_nodes': len(nodes),
         'N_elements': len(elements),
         'N_edges_total': len(edges),
-        'N_incognitas': len(idx_internos), # DoFs ativos
-        'N_fronteira': int(np.sum(is_boundary_edge)),
-        'n_nulos_descartados': int(n_nulos),
+        'active_dofs': len(interior_indices),
+        'boundary_edges': int(np.sum(is_boundary_edge)),
+        'discarded_null_modes': int(n_null),
         'h_max': h_max,
-        'autovalores_numericos': autovalores_num,
+        'numerical_eigenvalues': num_eigenvals,
+        'analytical_eigenvalues': ref_vals,
+        'numerical_kc': kc_num,
+        'analytical_kc': ref_kc,
+        'rel_errors_lambda_pct': errors_lambda,
+        'rel_errors_kc_pct': errors_kc,
+        'mean_error_lambda_pct': float(np.mean(errors_lambda)),
+        'mean_error_kc_pct': float(np.mean(errors_kc)),
+        'max_error_kc_pct': float(np.max(errors_kc)),
+        'K_red': K_red,
+        'M_red': M_red,
+        # Backward compatibility aliases
+        'N_incognitas': len(interior_indices),
+        'N_fronteira': int(np.sum(is_boundary_edge)),
+        'n_nulos_descartados': int(n_null),
+        'autovalores_numericos': num_eigenvals,
         'autovalores_analiticos': ref_vals,
         'kc_numerico': kc_num,
         'kc_analitico': ref_kc,
-        'erros_lambda_pct': erros_lambda,
-        'erros_kc_pct': erros_kc,
-        'erro_medio_lambda_pct': float(np.mean(erros_lambda)),
-        'erro_medio_kc_pct': float(np.mean(erros_kc)),
-        'erro_max_kc_pct': float(np.max(erros_kc)),
-        'K_red': K_red,
-        'M_red': M_red
+        'erros_lambda_pct': errors_lambda,
+        'erros_kc_pct': errors_kc,
+        'erro_medio_lambda_pct': float(np.mean(errors_lambda)),
+        'erro_medio_kc_pct': float(np.mean(errors_kc)),
+        'erro_max_kc_pct': float(np.max(errors_kc))
     }
+
+
+# Backward compatibility aliases
+gerar_malha_triangular_cavidade = generate_triangular_cavity_mesh
+montar_matrizes_fem_aresta_2d = assemble_edge_fem_matrices_2d
+resolver_autovalores_fem_aresta_2d = solve_edge_fem_cavity_eigenvalues
