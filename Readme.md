@@ -1,188 +1,218 @@
 # Método Sem Malha Nodal Vetorial em 2 Dimensões (VNMM 2D)
+### *A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds*
 
-## Premissas e Fundamentos
-
-O **Método Sem Malha Nodal Vetorial** (*Vector Nodal Meshless Method* - VNMM) é baseado na ideia do Método Sem Malha de Aresta (*Edge-based Meshless Method* - EMM) com o comprimento das arestas tendendo a zero. A técnica consiste em distribuir um conjunto de nós no domínio contínuo, associando a cada nó um vetor unitário com direção arbitrária. Nós também são posicionados nas fronteiras do domínio e nas interfaces entre diferentes meios materiais; para estes nós de contorno, a direção do vetor unitário não é arbitrária, mas tangente às fronteiras e interfaces físicas, conforme ilustrado na Figura 1.
-
-<img width="1079" height="537" alt="Distribuição de nós no VNMM" src="https://github.com/user-attachments/assets/aa0919de-1202-46be-aeeb-563215222cad" />
-
-**Figura 1:** Distribuição de nós e direções vetoriais para o VNMM.
-
-Sejam $(x_i, y_i)$ as coordenadas do $i$-ésimo nó e $(t_{xi}, t_{yi})$ as componentes do vetor unitário $\vec{t}_i$ associado a este mesmo nó.
-
-A formulação matemática para a construção das funções de forma vetoriais no VNMM bidimensional baseia-se na imposição da **condição de projeção nodal (delta de Kronecker vetorial)**:
-
-$$
-\vec{N}_i(\mathbf{x}_k) \cdot \vec{t}_k = \delta_{ik} \qquad (1)
-$$
-
-onde $\vec{t}_k$ é o vetor unitário associado ao nó $n_k$ e $\delta_{ik}$ assume o valor $1$ se $k=i$ e $0$ se $k \neq i$. A aplicação desta restrição gera um sistema linear local $A \beta_i = L_i$, cuja inversão define as funções de forma vetoriais locais $\vec{N}_i$ para a representação do campo vetorial aproximado:
-
-$$
-\vec{E}^h(x, y) = \sum_{i=1}^M \vec{N}_i(x, y) e_i \qquad (2)
-$$
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+[![Unit Tests](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](tests/)
+[![Paper Status](https://img.shields.io/badge/manuscript-EABE%20(Elsevier)-orange.svg)](artigo/)
+[![Code Availability](https://img.shields.io/badge/GitHub-vnmm2d--eabe-blue.svg)](https://github.com/rencmbr/vnmm2d-eabe)
 
 ---
 
-## 1. Avaliação da Base Incompleta $\mathcal{L}^1$ (3 Nós de Suporte)
+## 1. Visão Geral do Repositório
 
-A formulação original utilizava uma base vetorial linear de 3 termos com 3 nós de suporte locais:
+Este repositório contém a infraestrutura computacional completa, módulos numéricos e suíte de experimentos para o desenvolvimento, validação e aplicação do **Método Sem Malha Nodal Vetorial Bidimensional (VNMM 2D)** em problemas de eletromagnetismo governados pelo espaço funcional $H(\mathbf{curl}; \Omega)$.
 
-$$
-\mathcal{L}^1 = \left\langle \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \begin{bmatrix} y \\ -x \end{bmatrix} \right\rangle \qquad (3)
-$$
+O código apoia diretamente o artigo científico submetido ao periódico internacional ***Engineering Analysis with Boundary Elements*** (Elsevier):
+> **"A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds"**  
+> *Autores:* Renato C. Mesquita, Elson J. da Silva, Bárbara M. F. Gonçalves e Luilly A. G. Ortiz.  
+> *Manuscrito e fontes disponíveis em:* [`artigo/`](artigo/) | *Repositório público:* [github.com/rencmbr/vnmm2d-eabe](https://github.com/rencmbr/vnmm2d-eabe)
 
-A função de forma local associada é expressa por:
-
-$$
-\vec{N}_i = \beta_{1i} \begin{bmatrix} 1 \\ 0 \end{bmatrix} + \beta_{2i} \begin{bmatrix} 0 \\ 1 \end{bmatrix} + \beta_{3i} \begin{bmatrix} y \\ -x \end{bmatrix} \qquad (4)
-$$
-
-com a correspondente matriz de momento $A \in \mathbb{R}^{3 \times 3}$:
-
-$$
-A = \begin{bmatrix}
-t_{1x} & t_{1y} & y_1 t_{1x} - x_1 t_{1y} \\
-t_{2x} & t_{2y} & y_2 t_{2x} - x_2 t_{2y} \\
-t_{3x} & t_{3y} & y_3 t_{3x} - x_3 t_{3y}
-\end{bmatrix} \qquad (5)
-$$
-
-O rotacional resultante é dado analiticamente por:
-
-$$
-(\nabla \times \vec{E}^h)_z = -2 \sum_{i=1}^3 \beta_{3i} e_i \qquad (6)
-$$
-
-### Resultados de Convergência da Interpolação com $\mathcal{L}^1$:
-
-| Configuração | $N_{\text{total}}$ | $h_{\text{méd}}$ | $Tol_{\text{det}}(h)$ | Erro RMS $\vec{E}$ | Ordem $\vec{E}$ | Erro RMS $\nabla\times\vec{E}$ | Ordem $\nabla\times\vec{E}$ |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Esparsa** | 84 | 3.3333 | 1.6667 | $1.63 \times 10^{-1}$ | — | $1.29 \times 10^{-1}$ | — |
-| **Média** | 416 | 1.4286 | 0.7143 | $6.75 \times 10^{-2}$ | $O(h)$ | $1.37 \times 10^{-1}$ | $O(1)$ |
-| **Densa** | 1928 | 0.6250 | 0.3125 | $2.84 \times 10^{-2}$ | $O(h)$ | $1.34 \times 10^{-1}$ | $O(1)$ |
-| **Ultra Densa** | 8408 | 0.2174 | 0.1087 | **$1.82 \times 10^{-2}$** | **$O(h)$** | **$1.58 \times 10^{-1}$** | **$O(1)$ (Estagna)** |
+Além de replicar rigorosamente todos os resultados, figuras e tabelas do artigo, este repositório é uma **plataforma ativa de pesquisa** voltada à modelagem eletromagnética avançada, incluindo o **acoplamento híbrido conforme entre Elementos Finitos de Aresta (Edge FEM) e VNMM 2D**.
 
 ---
 
-## 2. Diagnóstico do Vazamento Modal (*Aliasing*) na Base $\mathcal{L}^1$
+## 2. Estrutura do Repositório
 
-A estagnação do erro do rotacional em $O(1)$ ($\approx 15\%$) decorre da **incompletude da matriz Jacobiana de Taylor** associada à base $\mathcal{L}^1$:
-- A expansão linear completa em 2D requer 4 derivadas espaciais: $\frac{\partial E_x}{\partial x}, \frac{\partial E_x}{\partial y}, \frac{\partial E_y}{\partial x}, \frac{\partial E_y}{\partial y}$.
-- A base $\mathcal{L}^1$ possui apenas 3 graus de liberdade, forçando artificialmente $\frac{\partial E_x^h}{\partial x} \equiv 0$ e $\frac{\partial E_y^h}{\partial y} \equiv 0$.
-- **Mecanismo de Vazamento:** O resíduo das derivadas normais não representadas $\mathbf{r} \sim O(h)$ é multiplicado pela 3ª linha de $A^{-1}$ (que escala com $O(1/h)$), resultando em um erro residual constante de ordem:
-
-$$
-\text{Erro no Rotacional} \sim O\left(\frac{1}{h}\right) \times O(h) = \mathbf{O(1) \quad (Constante)} \qquad (7)
-$$
-
-no coeficiente $\beta_3$, impedindo a convergência do rotacional.
-
----
-
-## 3. Formulação com a Base Completa $\mathcal{P}^1$ (6 Nós de Suporte)
-
-Para eliminar o vazamento modal e garantir completude de 1ª ordem, adota-se o espaço polinomial vetorial linear completo $\mathcal{P}_1 \times \mathcal{P}_1$ com **6 nós de suporte**:
-
-$$
-\mathcal{P}^1 = \left\langle \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \begin{bmatrix} x \\ 0 \end{bmatrix}, \begin{bmatrix} y \\ 0 \end{bmatrix}, \begin{bmatrix} 0 \\ x \end{bmatrix}, \begin{bmatrix} 0 \\ y \end{bmatrix} \right\rangle \qquad (8)
-$$
-
-A matriz de momento $A \in \mathbb{R}^{6 \times 6}$ em coordenadas locais $(\Delta x_k = x_k - x_P, \Delta y_k = y_k - y_P)$ é dada por:
-
-$$
-A = \begin{bmatrix}
-t_{1x} & t_{1y} & \Delta x_1 t_{1x} & \Delta y_1 t_{1x} & \Delta x_1 t_{1y} & \Delta y_1 t_{1y} \\
-t_{2x} & t_{2y} & \Delta x_2 t_{2x} & \Delta y_2 t_{2x} & \Delta x_2 t_{2y} & \Delta y_2 t_{2y} \\
-\vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-t_{6x} & t_{6y} & \Delta x_6 t_{6x} & \Delta y_6 t_{6x} & \Delta x_6 t_{6y} & \Delta y_6 t_{6y}
-\end{bmatrix} \qquad (9)
-$$
-
-O campo e o rotacional interpolados no ponto de avaliação $P$ ($\Delta x = 0, \Delta y = 0$) são:
-
-$$
-\vec{E}^h(P) = \begin{bmatrix} \sum_{i=1}^6 \beta_{1i} e_i \\ \sum_{i=1}^6 \beta_{2i} e_i \end{bmatrix}, \quad (\nabla \times \vec{E}^h)_z(P) = \sum_{i=1}^6 (\beta_{5i} - \beta_{4i}) e_i \qquad (10)
-$$
-
----
-
-## 4. Principais Resultados e Conclusões da Interpolação com a Base $\mathcal{P}^1$
-
-A análise paramétrica comparativa entre $\mathcal{L}^1$ e $\mathcal{P}^1$ comprovou a restauração plena das taxas assintóticas de convergência:
-
-| Malha | $N_{\text{total}}$ | $h_{\text{méd}}$ | Erro RMS $\vec{E}$ ($\mathcal{L}^1$) | Erro RMS $\vec{E}$ ($\mathcal{P}^1$) | Erro RMS $\nabla \times \vec{E}$ ($\mathcal{L}^1$) | Erro RMS $\nabla \times \vec{E}$ ($\mathcal{P}^1$) |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Esparsa** | 84 | 3.3333 | $1.63 \times 10^{-1}$ | **$2.51 \times 10^{-2}$** | $1.29 \times 10^{-1}$ | **$5.98 \times 10^{-2}$** |
-| **Média** | 416 | 1.4286 | $6.75 \times 10^{-2}$ | **$4.20 \times 10^{-3}$** | $1.37 \times 10^{-1}$ | **$1.60 \times 10^{-2}$** |
-| **Densa** | 1928 | 0.6250 | $2.84 \times 10^{-2}$ | **$7.58 \times 10^{-4}$** | $1.34 \times 10^{-1}$ | **$6.21 \times 10^{-3}$** |
-| **Ultra Densa** | 8408 | 0.2174 | $1.82 \times 10^{-2}$ | **$9.67 \times 10^{-5}$** | $1.58 \times 10^{-1}$ *(estagnado)* | **$2.45 \times 10^{-4}$** |
-| **Taxa Assintótica** | — | — | **$O(h)$** | **$O(h^2)$ (2ª Ordem)** | **$O(1)$ (Estagna)** | **$O(h)$ (1ª Ordem)** |
-
-### Principais Conclusões da Interpolação:
-1. **Eliminação Integral do Vazamento Modal:** O erro do rotacional caiu de $1.58 \times 10^{-1}$ para $2.45 \times 10^{-4}$ (redução de mais de **600 vezes**), confirmando convergência monotônica de 1ª ordem $O(h)$.
-2. **Superconvergência do Campo $\vec{E}$:** A representação completa elevou a taxa de convergência do campo de $O(h)$ para $O(h^2)$.
-3. **Escala Quártica do Determinante:** Como $\det(A) \sim O(h^4)$ para a base de 6 nós, a calibração adaptativa:
-
-$$
-Tol_{\text{det}}(h) = Tol_{\text{ref}} \left(\frac{h}{h_{\text{ref}}}\right)^4 \qquad (11)
-$$
-
-garante 100% de sucesso na seleção de nós pela `KDTree` mantendo a localidade geométrica ótima.
-
-> 📄 **Relatórios Detalhados da Interpolação:**
-> - [Relatório da Análise Paramétrica com a Base $\mathcal{P}^1$](relatorios/relatorio_analise_parametrica_P1.md)
-> - [Análise do Comportamento Assintótico em Malhas Densas](relatorios/analise_comportamento_assintotico_malhas_densas.md)
+```text
+teste-cod/
+├── requirements.txt            # Dependências científicas do Python (numpy, scipy, matplotlib, pandas)
+├── .gitignore                  # Regras de exclusão para compilações LaTeX e Python
+├── Readme.md                   # Documentação central do projeto e guia de uso dos scripts
+│
+├── src/                        # Biblioteca central de classes e rotinas de montagem/resolução
+│   ├── vnmm_assembler.py       # Montador vetorial VNMM 2D com suporte local por ponto de Gauss (EFG-style)
+│   ├── fem_edge_2d.py          # Solver de Elementos Finitos de Aresta de Nédélec (Whitney 1-forms)
+│   ├── fem_vnmm_hybrid_2d.py   # Solver Híbrido acoplado Edge-FEM + VNMM 2D com interface conforme
+│   ├── eigen_solver_cavity.py  # Solver generalizado de autovalores para cavidades PEC
+│   ├── cavity_mesh.py          # Gerador e manipulador de malhas/nuvens com vetores diretores unitários
+│   └── gauss_quadrature.py     # Regras de quadratura de Gauss-Legendre (1D e produtos tensoriais 2D)
+│
+├── codigo/                     # Scripts executáveis de experimentos, benchmarks e geração de figuras (43 scripts)
+│   ├── generate_*.py           # Geradores de figuras prontas para publicação (Figuras 1 a 9 do artigo)
+│   ├── galerkin_*.py           # Patch test e Método de Soluções Manufaturadas (MMS)
+│   ├── dimensionless_*.py      # Formulação adimensional da matriz A e seleção de suporte por escala
+│   ├── comparative_*.py        # Comparações sistemáticas de convergência VNMM 2D vs Edge FEM
+│   ├── hybrid_*.py             # Acoplamento híbrido FEM de aresta + VNMM em malhas regulares e aleatórias
+│   └── parametric_*.py         # Estudos paramétricos de tolerância e densidade nodal
+│
+├── artigo/                     # Manuscrito em LaTeX e arquivos formais de submissão ao EABE
+│   ├── stable-vnmm2d.tex       # Fonte LaTeX principal do manuscrito (com numeração contínua e referências)
+│   ├── stable-vnmm2d.pdf       # Versão compilada de submissão do artigo
+│   ├── Cover_Letter_EABE.pdf   # Carta de apresentação endereçada ao Prof. Alexander H.-D. Cheng
+│   ├── Highlights.txt          # Destaques científicos estruturados (≤ 85 caracteres por tópico)
+│   ├── Suggested_Reviewers.txt # Lista de 5 revisores internacionais independentes
+│   ├── references.bib          # Base de dados bibliográfica BibTeX
+│   └── figura_*.pdf            # Figuras vetoriais de alta resolução incluídas no artigo
+│
+├── relatorios/                 # Relatórios técnicos aprofundados e gráficos de análises preliminares (80 arquivos)
+│   ├── *.md                    # Relatórios técnicos em Markdown de cada etapa do desenvolvimento
+│   └── *.png                   # Painéis de convergência, diagramas e mapas espectrais
+│
+├── tests/                      # Suíte de testes unitários automatizados (21 testes unitários)
+│   ├── test_eigen_cavity.py
+│   ├── test_patch_test_galerkin.py
+│   ├── test_galerkin_source_problem.py
+│   └── test_hybrid_fem_vnmm.py
+│
+└── malhas/                     # Conjuntos de dados de nuvens de pontos e malhas de teste (.csv e .png)
+```
 
 ---
 
-## 5. Resolução do Problema de Autovalores Eletromagnéticos
+## 3. Instalação e Configuração
 
-O problema de autovalores bidimensional consiste em determinar as frequências de ressonância e os números de onda de corte $k_c = \sqrt{\lambda}$ dos modos transversais elétricos ($TE_z$) em uma cavidade retangular com condutor elétrico perfeito (PEC) $\Omega = [0, \pi] \times [0, \pi]$ (Seção 4.3.1 e Tabela 4-1 da tese de doutorado de Luilly Ortiz, UFMG, 2023).
+### 3.1 Requisitos de Sistema
+- **Python**: Versão 3.10 ou superior.
+- **TeX Live / Tectonic**: Opcional, apenas caso deseje recompilar o artigo em [`artigo/`](artigo/).
 
-### 5.1 Formulação Variacional Fraca com Regularização Div-Curl
-O problema de Helmholtz vetorial $\nabla \times (\nabla \times \vec{E}) = \lambda \vec{E}$ com $\hat{n} \times \vec{E} = \mathbf{0}$ em $\partial \Omega$ é formulado pelo princípio variacional de Ritz-Galerkin:
+### 3.2 Instalação das Dependências
+Recomenda-se criar um ambiente virtual isolado:
 
-$$
-\int_{\Omega} (\nabla \times \vec{W})_z (\nabla \times \vec{E})_z \, d\Omega + s_{\text{div}} \int_{\Omega} (\nabla \cdot \vec{W}) (\nabla \cdot \vec{E}) \, d\Omega = \lambda \int_{\Omega} \vec{W} \cdot \vec{E} \, d\Omega \qquad (12)
-$$
+```bash
+# Criação do ambiente virtual
+python3 -m venv .venv
+source .venv/bin/activate
 
-onde $s_{\text{div}} = 6.0$ é o parâmetro de penalização que desloca os modos espúrios de gradiente ($\vec{E} = \nabla \phi$) para altas frequências ($\lambda > 50$), mantendo os modos físicos $TE_z$ ($\nabla \cdot \vec{E} \equiv 0$) inalterados.
+# Instalação dos pacotes científicos fundamentais
+pip install -r requirements.txt
+```
 
-### 5.2 Estratégia de Implementação Numérica
+### 3.3 Execução dos Testes Automatizados
+O repositório possui uma suíte com 21 testes unitários cobrindo o solver de autovalores, o Patch Test de Galerkin, o problema MMS com fonte e o solver acoplado híbrido FEM-VNMM:
 
-1. **Determinação de Suporte por Ponto de Gauss (Estilo EFG):**  
-   Em cada ponto de integração de Gauss $P_g = (x_g, y_g)$, a `KDTree` busca os 6 nós mais próximos com orientação geométrica estável, monta $A(P_g)$ com origem no próprio ponto ($\Delta x = 0, \Delta y = 0$) e inverte $\beta = A^{-1}$. Isso garante estabilidade incondicional e natureza puramente sem malha (*truly meshless*).
-2. **Integração Numérica com Células de Fundo e Densidade Adaptativa:**  
-   Utiliza-se uma grade de células quadriláteras regulares com dimensionamento proporcional ao número de nós ($N_c = \max(4, \text{round}(0.6 \times N))$) e quadratura de Gauss-Legendre $3 \times 3$ (9 pontos de Gauss por célula, assegurando $> 2.4$ pontos de integração por grau de liberdade e eliminando qualquer risco de sub-integração ou aliasing espacial).
-3. **Condições de Contorno PEC (Dirichlet Homogêneo):**  
-   Como os nós de fronteira possuem vetor diretor alinhado com a tangente ($\vec{t} \parallel \partial \Omega$), a condição $\vec{E} \cdot \vec{t} = 0$ é imposta diretamente pela eliminação dos graus de liberdade de fronteira ($c_{\text{borda}} = 0$).
-4. **Solver de Autovalores Generalizado:**  
-   Resolve-se o sistema generalizado de autovalores reduzido:
-
-$$
-K_{\text{red}} \mathbf{c}_{\text{red}} = \lambda M_{\text{red}} \mathbf{c}_{\text{red}} \qquad (13)
-$$
-
-via `scipy.linalg.eigh` (com fallback robusto QZ).
-
-> 📄 **Relatórios de Implementação e Quadratura:**
-> - [Estudo de Integração Numérica e Quadratura no Caso Base](relatorios/relatorio_estudo_integracao_caso_base.md)
-> - [Diagnóstico de Sub-integração e Soluções para Malhas Densas](relatorios/diagnostico_caso_N25_vnmm.md)
-> - [Relatório Comparativo Global das Formulações no VNMM 2D](relatorios/relatorio_comparativo_global_vnmm2d.md)
+```bash
+python3 -m unittest discover tests -v
+```
 
 ---
 
-## 6. Principais Resultados e Conclusões para o Problema de Autovalores
+## 4. Fundamentos Teóricos e Soluções Metodológicas
 
-### 6.1 Desempenho no Caso Base ($N_x=21, N_y=21$, $361$ Incógnitas Ativas)
+O VNMM 2D aproxima campos vetoriais $H(\mathbf{curl})$ associando a cada nó $\mathbf{x}_i$ um vetor diretor unitário $\vec{t}_i = [t_{ix}, t_{iy}]^T$. Em nós de contorno e interfaces materiais, $\vec{t}_i$ é orientado tangencialmente ($\vec{t}_i \parallel \partial\Omega$), permitindo a imposição exata de condições de contorno de Dirichlet (PEC) por eliminação direta de graus de liberdade.
 
-Comparação dos 10 primeiros modos com a solução analítica da Tabela 4-1 de Luilly Ortiz ($\lambda = n^2 + m^2$):
+As funções de forma vetoriais $\vec{N}_i(\mathbf{x})$ satisfazem a **condição de projeção nodal (delta de Kronecker vetorial)**:
+$$
+\vec{N}_i(\mathbf{x}_k) \cdot \vec{t}_k = \delta_{ik} \implies \mathbf{A} \boldsymbol{\beta}_i = \mathbf{L}_i \quad \therefore \quad \vec{E}^h(\mathbf{x}) = \sum_{i=1}^{M_{\text{supp}}} \vec{N}_i(\mathbf{x}) e_i
+$$
+
+### 4.1 Resolução do Vazamento Modal: Base Incompleta $\mathcal{L}^1$ vs. Base Completa $\mathcal{P}^1$
+- **O Gargalo da Base $\mathcal{L}^1$ (3 nós):** A base solenoidal de 3 termos $\mathcal{L}^1 = \langle [1,0]^T, [0,1]^T, [y,-x]^T \rangle$ força artificialmente nulas as derivadas normais ($\partial E_x/\partial x = \partial E_y/\partial y = 0$). Em nuvens arbitrárias de pontos (onde não há o cancelamento de circulação fechada característico de malhas triangulares de Whitney), essas componentes não representadas vazam para o grau de liberdade rotacional, gerando um **platô de estagnação de erro $\mathcal{O}(1)$ no rotacional** ($\approx 15\%$ de erro residual mesmo sob refinamento espacial estrito).
+- **A Solução via Base Completa $\mathcal{P}^1$ (6 nós):** Adota-se o espaço linear vetorial completo $\mathcal{P}_1 \times \mathcal{P}_1$ com 6 nós de suporte:
+  $$
+  \mathcal{P}^1 = \left\langle \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \begin{bmatrix} x \\ 0 \end{bmatrix}, \begin{bmatrix} y \\ 0 \end{bmatrix}, \begin{bmatrix} 0 \\ x \end{bmatrix}, \begin{bmatrix} 0 \\ y \end{bmatrix} \right\rangle
+  $$
+  A base $\mathcal{P}^1$ captura todas as 4 componentes do Jacobiano de campo $\mathbf{J} = \nabla \vec{E}$, elimina o vazamento modal e restaura a **convergência de 1ª ordem $\mathcal{O}(h)$ no rotacional** e **superconvergência $\mathcal{O}(h^2)$ na interpolação do campo**.
+
+### 4.2 Seleção de Suporte Invariante de Escala (Matriz Adimensional $\widehat{\mathbf{A}}$)
+Em coordenadas físicas, o determinante da matriz de colocação $6 \times 6$ escala com a quarta potência do espaçamento nodal ($\det(\mathbf{A}) \sim \mathcal{O}(h^4)$). Sob refinamento espacial ($h \to 0$), qualquer limiar fixo causava dilatação artificial do raio de suporte.  
+Ao normalizar as coordenadas locais pela escala de comprimento local $h_{\text{local}}$:
+$$
+\hat{x} = \frac{x - x_P}{h_{\text{local}}}, \quad \hat{y} = \frac{y - y_P}{h_{\text{local}}} \implies |\det(\widehat{\mathbf{A}})| = \frac{|\det(\mathbf{A})|}{h_{\text{local}}^4}
+$$
+A matriz $\widehat{\mathbf{A}}$ torna-se adimensional ($\mathcal{O}(1)$). O algoritmo de busca via `scipy.spatial.KDTree` associado ao limiar universal $\widehat{\text{Tol}} = 0.80$ rejeita singularidades direcionais e geométricas (paralelismo, linhas de ação concorrentes) de forma estável, mantendo vizinhanças compactas ($K_{\text{avg}} \approx 10\text{--}11$ nós) mesmo sob $25\%$ de desordem estocástica.
+
+### 4.3 Estabilização Espectral: Não Conformidade Global e Regularização Div-Curl
+Embora o VNMM apresente equivalência dual construtiva exata a elementos de Whitney de menor ordem em triângulos conformes (Teorema da Equivalência Dual Local), em nuvens desestruturadas os suportes nodais mudam dinamicamente ponto a ponto, quebrando a conformidade global de traço ($V_h \not\subset H(\mathbf{curl}; \Omega)$).  
+Essa não conformidade viola o complexo de de Rham discreto, fazendo com que modos espúrios de gradiente invadam a faixa espectral física. Para contornar essa patologia, formula-se o problema variacional com termo de penalidade div-curl:
+$$
+\int_{\Omega} (\nabla \times \vec{W})_z (\nabla \times \vec{E})_z \, d\Omega + s_{\text{div}} \int_{\Omega} (\nabla \cdot \vec{W}) (\nabla \cdot \vec{E}) \, d\Omega = \lambda \int_{\Omega} \vec{W} \cdot \vec{E} \, d\Omega
+$$
+Com $s_{\text{div}} = 6.0$, os modos de gradiente ($\nabla \cdot \vec{E} \neq 0$) são seletivamente enrijecidos e **deslocados para fora da janela de frequências de interesse operacional**, deixando os modos físicos da cavidade ressonante ($\nabla \cdot \vec{E} \equiv 0$) imperturbados.
+
+---
+
+## 5. Catálogo Completo de Scripts e Guia de Execução
+
+Todos os scripts encontram-se no diretório [`codigo/`](codigo/) e podem ser executados diretamente a partir da raiz do repositório.
+
+### 5.1 Reprodução Direta das Figuras e Tabelas do Artigo EABE
+
+| Script em [`codigo/`](codigo/) | Saída / Figura Gerada no Artigo | Descrição Científica |
+| :--- | :--- | :--- |
+| [`generate_dual_whitney_vnmm_equivalence_figure.py`](codigo/generate_dual_whitney_vnmm_equivalence_figure.py) | **Figura 1** (`figura_equivalencia_dual_whitney_vnmm.pdf`) | Demonstração geométrica e numérica da equivalência dual exata entre VNMM $\mathcal{L}^1$ e formas de Whitney em triângulos conformes. |
+| [`generate_matrix_a_singularities_figure.py`](codigo/generate_matrix_a_singularities_figure.py) | **Figura 2** (`figura_singularidades_matriz_A.pdf`) | Painel com as 4 configurações singulares patológicas da matriz $\mathbf{A}$, desacoplamento geométrico-direcional e suporte admissível. |
+| [`generate_conforming_mesh_vnmm_l1_figure.py`](codigo/generate_conforming_mesh_vnmm_l1_figure.py) | **Figura 3** (`figura_malha_conforme_vnmm_L1.pdf`) | Malha simplicial de teste utilizada na validação conforme do VNMM $\mathcal{L}^1$. |
+| [`generate_efem_vs_vnmm_l1_figure.py`](codigo/generate_efem_vs_vnmm_l1_figure.py) | **Figura 4** (`figura_convergencia_efem_vs_vnmm_L1.pdf`) | Curvas assintóticas de convergência comprovando identidade numérica entre Edge FEM e VNMM $\mathcal{L}^1$ no caso conforme. |
+| [`generate_convergence_l1_vs_p1_pi_figure.py`](codigo/generate_convergence_l1_vs_p1_pi_figure.py) | **Figura 5** (`figura_convergencia_interpolacao_L1_vs_P1.pdf`) | Comparação de interpolação: estagnação $\mathcal{O}(1)$ da base $\mathcal{L}^1$ vs restauração de taxa $\mathcal{O}(h)$ e $\mathcal{O}(h^2)$ na base $\mathcal{P}^1$. |
+| [`generate_manuscript_results_figures.py`](codigo/generate_manuscript_results_figures.py) | **Figuras 6, 7 e 8** | Gera em lote: robustez estocástica (Fig. 6), purificação espectral div-curl (Fig. 7) e convergência comparativa VNMM vs FEM (Fig. 8). |
+| [`generate_manuscript_random_cavity_figure.py`](codigo/generate_manuscript_random_cavity_figure.py) | **Figura 9** (`figura_convergencia_cavidade_aleatoria.pdf`) | Validação espectral da cavidade em nuvens de pontos irregulares com diretores arbitrários. |
+| [`galerkin_patch_test.py`](codigo/galerkin_patch_test.py) | **Tabela 6** | Patch test variacional para campos afins: erro em precisão de máquina ($\le 7.4 \times 10^{-14}$) na base $\mathcal{P}^1$. |
+| [`galerkin_source_problem.py`](codigo/galerkin_source_problem.py) | **Tabela 7** | Método das Soluções Manufaturadas (MMS) com termo fonte: convergência em $L^2$ e $H(\mathbf{curl})$. |
+| [`s_div_sensitivity_study.py`](codigo/s_div_sensitivity_study.py) | **Tabela 9** | Análise de sensibilidade ao parâmetro de penalização $s_{\text{div}}$ na cavidade ressonante. |
+| [`base_case_integration_study.py`](codigo/base_case_integration_study.py) | **Tabela 10** | Estudo de convergência e trade-off quanto à ordem de quadratura e densidade de células de fundo. |
+| [`comparative_convergence_vnmm_vs_fem.py`](codigo/comparative_convergence_vnmm_vs_fem.py) | **Tabela 11** | Estudo comparativo de convergência em 6 refinamentos: VNMM 2D puro vs Edge FEM. |
+| [`random_cavity_convergence_analysis.py`](codigo/random_cavity_convergence_analysis.py) | **Tabela 12** | Convergência espectral e estatísticas modais em nuvens de pontos aleatórias/perturbadas. |
+
+#### Como executar as reproduções:
+```bash
+# Para reproduzir o Patch Test de Galerkin (Tabela 6):
+python3 codigo/galerkin_patch_test.py
+
+# Para reproduzir a análise MMS de convergência com termo fonte (Tabela 7):
+python3 codigo/galerkin_source_problem.py
+
+# Para reproduzir as figuras principais de resultados (Figuras 6, 7 e 8):
+python3 codigo/generate_manuscript_results_figures.py
+
+# Para gerar o estudo comparativo VNMM vs FEM (Tabela 11):
+python3 codigo/comparative_convergence_vnmm_vs_fem.py
+```
+
+---
+
+### 5.2 Formulação e Estabilidade Adimensional (Matriz $\widehat{\mathbf{A}}$)
+
+| Script em [`codigo/`](codigo/) | Função e Conteúdo |
+| :--- | :--- |
+| [`dimensionless_vnmm_6_p1.py`](codigo/dimensionless_vnmm_6_p1.py) | Módulo com funções para cálculo da matriz adimensional $\widehat{\mathbf{A}}$ e qualificação geométrica local. |
+| [`dimensionless_matrix_sequence_test.py`](codigo/dimensionless_matrix_sequence_test.py) | Teste numérico verificando a eliminação da dependência quártica $\mathcal{O}(h^4)$ do determinante sob refinamento. |
+| [`run_dimensionless_sweep.py`](codigo/run_dimensionless_sweep.py) | Varredura paramétrica do limiar adimensional $\widehat{\text{Tol}} \in [0.05, 6.0]$ para determinação da janela ótima de operação. |
+| [`generate_pi_floor_robustness_study.py`](codigo/generate_pi_floor_robustness_study.py) | Avaliação detalhada de estabilidade sob perturbações estocásticas severas ($25\%$ de deslocamento e rotação). |
+| [`dimensionless_cavity_test.py`](codigo/dimensionless_cavity_test.py) | Teste integrado da cavidade ressonante utilizando o seletor de suporte puramente adimensional. |
+
+---
+
+### 5.3 Análise Comparativa e Formulações Alternativas
+
+| Script em [`codigo/`](codigo/) | Função e Conteúdo |
+| :--- | :--- |
+| [`compare_vnmm_vs_edge_fem.py`](codigo/compare_vnmm_vs_edge_fem.py) | Comparação direta modo a modo dos autovalores calculados pelo VNMM e pelo FEM de aresta no caso base. |
+| [`cavity_convergence_analysis.py`](codigo/cavity_convergence_analysis.py) | Análise de convergência espectral em malhas uniformes e semi-estruturadas. |
+| [`l1_basis_study.py`](codigo/l1_basis_study.py) | Demonstração da incapacidade de regularização da base $\mathcal{L}^1$ devido à divergência identicamente nula ($K_{\text{div}} \equiv 0$). |
+| [`unregularized_vnmm_study.py`](codigo/unregularized_vnmm_study.py) | Diagnóstico da invasão de modos espúrios de gradiente quando a penalização é desligada ($s_{\text{div}} = 0.0$). |
+| [`mimetic_curl_stokes_study.py`](codigo/mimetic_curl_stokes_study.py) | Implementação e teste da formulação mimética de Stokes baseada em circulação de contorno fechado. |
+
+---
+
+### 5.4 Pesquisa em Andamento: Acoplamento Híbrido FEM de Aresta + VNMM 2D
+
+| Script em [`codigo/`](codigo/) | Função e Conteúdo |
+| :--- | :--- |
+| [`test_fem_vnmm_coupling.py`](codigo/test_fem_vnmm_coupling.py) | Demonstração do solver híbrido acoplado com continuidade tangencial direta na interface $\Gamma_{\text{int}}$. |
+| [`hybrid_fem_vnmm_convergence_comparison.py`](codigo/hybrid_fem_vnmm_convergence_comparison.py) | Comparação sistemática de acurácia e DoFs entre a formulação híbrida, o VNMM puro e o FEM de aresta puro. |
+| [`hybrid_random_mesh_convergence_analysis.py`](codigo/hybrid_random_mesh_convergence_analysis.py) | Estudo de convergência do solver híbrido sob malhas deformadas e perturbadas aleatoriamente. |
+
+---
+
+## 6. Resultados Principais
+
+### 6.1 Desempenho no Problema de Autovalores da Cavidade PEC ($TE_z$)
+No caso base ($N_x=21, N_y=21$, 361 graus de liberdade ativos), a comparação com os autovalores analíticos exatos ($\lambda = n^2 + m^2$) apresenta excelente precisão:
 
 | Modo ($TE_{nm}$) | $\lambda_{\text{analítico}}$ | $k_{c, \text{analítico}}$ | $\lambda_{\text{VNMM } \mathcal{P}^1}$ | $k_{c, \text{VNMM}}$ | Erro $k_c$ (%) | Diagnóstico |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---|
-| **$TE_{10}$** | 1.00 | 1.000 | 0.9785 | 0.989 | **1.08%** | Físico Fundamental |
-| **$TE_{01}$** | 1.00 | 1.000 | 0.9904 | 0.995 | **0.48%** | Físico Fundamental |
+| **$TE_{10}$** | 1.00 | 1.000 | 0.9785 | 0.989 | **1.08%** | Modo Fundamental |
+| **$TE_{01}$** | 1.00 | 1.000 | 0.9904 | 0.995 | **0.48%** | Modo Fundamental |
 | **$TE_{11}$** | 2.00 | 1.414 | 1.9723 | 1.404 | **0.70%** | Físico |
 | **$TE_{20}$** | 4.00 | 2.000 | 3.9634 | 1.991 | **0.46%** | Físico |
 | **$TE_{02}$** | 4.00 | 2.000 | 4.0152 | 2.004 | **0.19%** | Físico |
@@ -192,71 +222,61 @@ Comparação dos 10 primeiros modos com a solução analítica da Tabela 4-1 de 
 | **$TE_{30}$** | 9.00 | 3.000 | 9.3872 | 3.064 | **2.13%** | Físico |
 | **$TE_{03}$** | 9.00 | 3.000 | 9.4751 | 3.078 | **2.61%** | Físico |
 
-- **Erro Médio de $k_c$ no Caso Base:** **$0.85\%$** (Erro Máximo: **$2.61\%$**)
-- **Tempo de Montagem e Resolução:** **$0.128\text{s}$**
+- **Erro médio global de $k_c$:** **$0.85\%$**
+- **Tempo de montagem e solução:** **$0.13\text{s}$**
 
 ---
 
-### 6.2 Comparação Sistemática de Convergência: VNMM 2D vs. Híbrido FEM-VNMM vs. FEM de Aresta
+### 6.2 Comparação de Convergência Sistemática
 
-| Nível ($N$) | $h$ (m) | DoFs VNMM | Erro Méd $k_c$ VNMM | DoFs Híbrido | Erro Méd $k_c$ Híbrido | DoFs FEM | Erro Méd $k_c$ FEM |
+| Nível ($N$) | $h$ (m) | DoFs VNMM | Erro Médio $k_c$ VNMM | DoFs Híbrido | Erro Médio $k_c$ Híbrido | DoFs FEM de Aresta | Erro Médio $k_c$ FEM |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **N1 (Muito Esparsa)** | 0.3927 | 49 | **32.42%** | 113 | **3.74%** | 40 | **3.19%** |
-| **N2 (Esparsa)** | 0.2618 | 121 | **10.82%** | 265 | **2.40%** | 133 | **1.05%** |
-| **N3 (Média-Esparsa)** | 0.1963 | 225 | **5.01%** | 481 | **0.71%** | 225 | **0.64%** |
-| **N4 (Caso Base)** | 0.1571 | **361** | **2.53%** | **761** | **0.53%** | **341** | **0.44%** |
-| **N5 (Média-Densa)** | 0.1309 | 529 | **1.31%** | 1105 | **0.22%** | 560 | **0.27%** |
-| **N6 (Densa)** | 0.1122 | 729 | **0.79%** | 1513 | **0.36%** | 736 | **0.21%** |
-| **N7 (Muito Densa)** | 0.0982 | **961** | **0.50%** | **1985** | **0.26%** | **936** | **0.16%** |
-
-### 6.3 Avaliação de Formulações Alternativas Testadas
-
-1. **Base Incompleta $\mathcal{L}^1$ (3 Nós):** Como $\nabla \cdot \vec{N}_i \equiv 0$, a matriz de divergência é identicamente nula ($K_{\text{div}} \equiv 0$), não permitindo regularização. O erro médio de $k_c$ fica entre **$28.32\%$ e $48.95\%$** devido a vazamento modal.
-2. **Formulação Sem Penalização ($s_{\text{div}} = 0.0$ na Base $\mathcal{P}^1$):** Modos espúrios de gradiente invadem a faixa espectral física ($0.8 < \lambda < 5.0$), elevando o erro médio para **$19.75\%$ a $90\%$**.
-3. **Formulação Mimética de Stokes ($\oint_{\partial \Omega_e} \vec{E} \cdot d\vec{\ell}$ com $s_{\text{div}} = 0$):** Consegue colapsar $262$ modos espúrios para autovalores nulos exatos ($\lambda \approx 0$), atingindo erro médio de **$12.76\%$**. Contudo, a aproximação de rotacional constante por célula a torna menos acurada que o VNMM diferencial pontual (**$0.85\%$**).
-
-### 6.4 Conclusões Globais:
-- O VNMM 2D com a base linear completa $\mathcal{P}^1$, suporte individual por ponto de Gauss (estilo EFG), quadratura $3 \times 3$ com $N_c = \text{round}(0.6 N)$ e regularização div-curl ($s_{\text{div}} = 6.0$) consolida-se como a formulação ótima definitiva, combinando **convergência monotônica estrita até $0.50\%$**, **eliminação total de modos espúrios** e a **plena flexibilidade de um método sem malha**.
-
-> 📄 **Relatórios de Convergência e Comparações:**
-> - [Relatório Comparativo de Convergência: Híbrido vs VNMM vs FEM](relatorios/relatorio_convergencia_hibrido_vs_vnmm_vs_fem.md)
-> - [Relatório de Acoplamento Híbrido FEM-VNMM](relatorios/relatorio_acoplamento_hibrido_fem_vnmm.md)
-> - [Estratégias Teóricas de Acoplamento Híbrido](relatorios/estrategias_acoplamento_fem_vnmm.md)
-> - [Relatório Final de Convergência: VNMM 2D vs FEM de Aresta](relatorios/relatorio_final_convergencia_vnmm_vs_fem.md)
-> - [Comparação Modal Detalhada: VNMM vs FEM de Aresta](relatorios/relatorio_comparacao_vnmm_vs_fem_aresta.md)
-> - [Análise Teórica das Origens dos Erros entre VNMM e FEM](relatorios/analise_origem_erros_vnmm_vs_fem.md)
-> - [Diagnóstico de Sub-integração e Soluções para Malhas Densas](relatorios/diagnostico_caso_N25_vnmm.md)
-> - [Estudo da Formulação Mimética de Stokes](relatorios/relatorio_rotacional_mimetico_stokes.md)
-> - [Estudo do Problema Sem Regularização do Divergente](relatorios/relatorio_sem_regularizacao_divergente.md)
-> - [Estudo do Problema de Autovalores com a Base $\mathcal{L}^1$](relatorios/relatorio_estudo_base_L1.md)
+| **N1** | 0.3927 | 49 | **32.42%** | 113 | **3.74%** | 40 | **3.19%** |
+| **N2** | 0.2618 | 121 | **10.82%** | 265 | **2.40%** | 133 | **1.05%** |
+| **N3** | 0.1963 | 225 | **5.01%** | 481 | **0.71%** | 225 | **0.64%** |
+| **N4 (Base)** | 0.1571 | **361** | **2.53%** | **761** | **0.53%** | **341** | **0.44%** |
+| **N5** | 0.1309 | 529 | **1.31%** | 1105 | **0.22%** | 560 | **0.27%** |
+| **N6** | 0.1122 | 729 | **0.79%** | 1513 | **0.36%** | 736 | **0.21%** |
+| **N7** | 0.0982 | **961** | **0.50%** | **1985** | **0.26%** | **936** | **0.16%** |
 
 ---
 
-## 7. Estrutura do Repositório e Execução
+## 7. Relatórios Técnicos e Documentos Complementares
 
-### Organização de Diretórios
-- [`src/`](src/): Módulos e bibliotecas fundamentais do método:
-  - [`montador_vnmm.py`](src/montador_vnmm.py): Montador de matrizes globais de rigidez e massa com quadratura $3 \times 3$ e suporte por ponto de Gauss.
-  - [`eigen_solver_cavity.py`](src/eigen_solver_cavity.py): Solver de autovalores para cavidades PEC com cálculo de métricas e erros modais.
-  - [`fem_edge_2d.py`](src/fem_edge_2d.py): Solver de Elementos Finitos de Aresta Triangulares de Nédélec (1ª ordem).
-  - [`fem_vnmm_hybrid_2d.py`](src/fem_vnmm_hybrid_2d.py): Solver Híbrido Acoplado FEM de Aresta + VNMM 2D com acoplamento direto conforme.
-  - [`malha_cavidade.py`](src/malha_cavidade.py): Gerador de malhas nodais com direções tangenciais de contorno.
-  - [`quadratura_gauss.py`](src/quadratura_gauss.py): Quadratura de Gauss-Legendre 1D e 2D.
-- [`codigo/`](codigo/): Scripts executáveis de análises paramétricas e estudos comparativos.
-- [`relatorios/`](relatorios/): Relatórios técnicos em Markdown e figuras de alta resolução.
-- [`tests/`](tests/): Suíte de testes unitários automatizados.
+Para aprofundamento teórico, diagnósticos matemáticos e histórico das formulações testadas, consulte os relatórios em [`relatorios/`](relatorios/):
 
-### Comandos de Execução
+- [Plano de Implementação da Base Completa $\mathcal{P}^1$](relatorios/plano_implementacao_base_P1.md)
+- [Equivalência Dual entre Formas de Whitney e VNMM](relatorios/dual_equivalence_theorem_whitney_vnmm.md)
+- [Análise Teórica das Origens dos Erros entre VNMM e FEM](relatorios/analise_origem_erros_vnmm_vs_fem.md)
+- [Relatório de Acoplamento Híbrido FEM-VNMM](relatorios/relatorio_acoplamento_hibrido_fem_vnmm.md)
+- [Estratégias Teóricas de Acoplamento Híbrido](relatorios/estrategias_acoplamento_fem_vnmm.md)
+- [Convergência do Acoplamento Híbrido em Malhas Aleatórias](relatorios/relatorio_acoplamento_hibrido_malhas_aleatorias.md)
+- [Estudo de Integração Numérica e Quadratura no Caso Base](relatorios/relatorio_estudo_integracao_caso_base.md)
+- [Diagnóstico de Sub-integração e Soluções para Malhas Densas](relatorios/diagnostico_caso_N25_vnmm.md)
+- [Estudo do Problema Sem Regularização do Divergente ($s_{\text{div}}=0$)](relatorios/relatorio_sem_regularizacao_divergente.md)
+- [Estudo do Problema com a Base $\mathcal{L}^1$](relatorios/relatorio_estudo_base_L1.md)
+- [Estudo da Formulação Mimética de Stokes](relatorios/relatorio_rotacional_mimetico_stokes.md)
 
-1. **Executar a Suíte de Testes Unitários:**
-   ```bash
-   python3 -m unittest tests/test_eigen_cavity.py
-   ```
-2. **Executar a Comparação VNMM 2D vs FEM de Aresta no Caso Base:**
-   ```bash
-   python3 codigo/comparacao_vnmm_vs_fem_aresta.py
-   ```
-3. **Executar a Análise de Convergência Paramétrica Completa:**
-   ```bash
-   python3 codigo/analise_convergencia_comparativa_vnmm_vs_fem.py
-   ```
+---
+
+## 8. Como Citar
+
+Se este código ou trabalho for útil em sua pesquisa, por favor cite:
+
+```bibtex
+@article{mesquita2026stabilized,
+  title={A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds},
+  author={Mesquita, Renato C. and da Silva, Elson J. and Gon{\c{c}}alves, B{\'a}rbara M. F. and Ortiz, Luilly A. G.},
+  journal={Engineering Analysis with Boundary Elements},
+  year={2026},
+  note={Under review. Source code available at \url{https://github.com/rencmbr/vnmm2d-eabe}}
+}
+```
+
+---
+
+## 9. Suporte e Contato
+
+- **Prof. Renato C. Mesquita** (Autor Correspondente): `renato@ufmg.br`  
+  *Departamento de Engenharia Elétrica, Universidade Federal de Minas Gerais (UFMG)*  
+  *Belo Horizonte, MG, Brasil*
