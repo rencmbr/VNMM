@@ -1,23 +1,29 @@
-# Vector Nodal Meshless Method in Two Dimensions (VNMM 2D)
-### *A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds*
+# Vector Nodal Meshless Method (VNMM)
+### *A Stabilized Computational Electromagnetics Research Platform in 2D and 3D*
 
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
-[![Unit Tests](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](tests/)
-[![Paper Status](https://img.shields.io/badge/manuscript-EABE%20(Elsevier)-orange.svg)](paper/)
-[![Code Availability](https://img.shields.io/badge/GitHub-vnmm2d--eabe-blue.svg)](https://github.com/rencmbr/vnmm2d-eabe)
+[![Computational Scope](https://img.shields.io/badge/scope-2D%20%7C%203D-blue.svg)](#)
+[![Unit Tests](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](2D/tests/)
+[![Paper EABE](https://img.shields.io/badge/paper-EABE%20(Elsevier)-orange.svg)](paper/VNMM2D-EABE/)
+[![Paper Hybrid](https://img.shields.io/badge/paper-Hybrid%20FEM--VNMM-blueviolet.svg)](paper/HybridVNMM-EFEM/)
+[![Repository](https://img.shields.io/badge/GitHub-VNMM-blue.svg)](https://github.com/rencmbr/VNMM)
 
 ---
 
 ## 1. Overview
 
-This repository provides the complete scientific computing infrastructure, numerical libraries, and benchmark reproduction scripts for the **Two-Dimensional Vector Nodal Meshless Method (VNMM 2D)** applied to electromagnetic boundary-value and eigenvalue problems in $H(\mathbf{curl}; \Omega)$.
+This repository hosts the central scientific computing platform, numerical libraries, and research datasets for the **Vector Nodal Meshless Method (VNMM)**, developing advanced mesh-free and hybrid discretization techniques for vector electromagnetic field problems in $H(\mathbf{curl}; \Omega)$.
 
-The codebase directly supports and accompanies the research paper submitted to ***Engineering Analysis with Boundary Elements*** (Elsevier):
-> **"A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds"**  
-> *Authors:* Renato C. Mesquita, Elson J. da Silva, Bárbara M. F. Gonçalves, and Luilly A. G. Ortiz.  
-> *Manuscript sources & compilation:* [`paper/VNMM2D-EABE/`](paper/VNMM2D-EABE/) | *Public Repository:* [github.com/rencmbr/vnmm2d-eabe](https://github.com/rencmbr/vnmm2d-eabe)
+Rather than serving solely as a companion to a single publication, this repository functions as an **active, multi-dimensional research platform** dedicated to the continuous theoretical and computational advancement of the VNMM in both **two dimensions (2D)** and **three dimensions (3D)**:
 
-In addition to serving as a fully reproducible artifact for the submitted paper, this repository functions as an **active research platform** for ongoing developments in computational electromagnetics, including **direct conforming hybrid Edge-FEM + VNMM 2D coupling** on structured, unstructured, and perturbed point clouds.
+- **Two-Dimensional Formulations ([`2D/`](2D/)):**
+  - **Stabilized VNMM 2D:** Complete linear vector polynomial basis $\mathcal{P}^1$ ($M_{\text{supp}} = 6$), scale-invariant dimensionless placement criterion $\widehat{\mathbf{A}}$ ($\widehat{\mathrm{Tol}} = 0.80$), Gauss-point-based support selection, and Ritz-Galerkin div-curl regularization ($s_{\text{div}} = 6.0$).
+  - **Conforming Hybrid Edge-FEM + VNMM 2D:** Direct master-slave domain decomposition coupling lowest-order Whitney edge finite elements to interior VNMM clouds via exact trace continuity without auxiliary Lagrange multipliers.
+- **Three-Dimensional Formulations ([`3D/`](3D/)):**
+  - **VNMM 3D Platform & Roadmap:** Development space for 3D vector meshless solvers, extending the stabilized framework to 3D high-frequency waveguiding and radiation problems with 12-dimensional polynomial spaces ($\mathcal{P}^1$ in 3D), 3D dimensionless stencil selection, and tetrahedral Whitney edge coupling.
+- **Scientific Publications ([`paper/`](paper/)):**
+  - **EABE Elsevier Submission ([`paper/VNMM2D-EABE/`](paper/VNMM2D-EABE/)):** *"A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds"*, under review in *Engineering Analysis with Boundary Elements*.
+  - **Hybrid Coupling Manuscript ([`paper/HybridVNMM-EFEM/`](paper/HybridVNMM-EFEM/)):** *"Conforming Hybrid Edge Finite Element and Vector Nodal Meshless Formulation for 2D Electromagnetics"*.
 
 ---
 
@@ -97,8 +103,8 @@ Clone the repository and set up a dedicated virtual environment:
 
 ```bash
 # Clone the repository
-git clone https://github.com/rencmbr/vnmm2d-eabe.git
-cd vnmm2d-eabe
+git clone https://github.com/rencmbr/VNMM.git
+cd VNMM
 
 # Create and activate a virtual environment
 python3 -m venv .venv
@@ -152,6 +158,16 @@ $$
 \int_{\Omega} (\nabla \times \vec{W})_z (\nabla \times \vec{E})_z \, d\Omega + s_{\text{div}} \int_{\Omega} (\nabla \cdot \vec{W}) (\nabla \cdot \vec{E}) \, d\Omega = \lambda \int_{\Omega} \vec{W} \cdot \vec{E} \, d\Omega
 $$
 Setting $s_{\text{div}} = 6.0$ selectively stiffens gradient modes ($\nabla \cdot \vec{E} \neq 0$), shifting them outside the operational frequency window ($\lambda_{\text{spur}} > 10$) while preserving solenoidal physical cavity modes ($\nabla \cdot \vec{E} \equiv 0$).
+
+### 4.4 Conforming Hybrid Edge-FEM + VNMM 2D Coupling
+For problems with geometrically complex boundaries or subdomains with established triangular edge finite elements, the repository provides direct master-slave hybrid coupling ([`2D/scripts/hybrid_fem_vnmm_convergence_comparison_2d.py`](2D/scripts/hybrid_fem_vnmm_convergence_comparison_2d.py)). By positioning VNMM interface nodes at the midpoints of adjacent Whitney edges and setting the exact dimensional scaling $c_k = e_k / \Delta y$, interface continuity is enforced directly without auxiliary Lagrange multipliers, preserving positive-definiteness and eliminating zero-mass saddle-point indefiniteness.
+
+### 4.5 Architectural Roadmap for Three-Dimensional Extension (VNMM 3D)
+Extending the stabilized vector nodal meshless methodology to three dimensions ([`3D/`](3D/)) addresses full 3D vector electromagnetic boundary-value and eigenvalue problems:
+- **3D Complete Polynomial Space ($\mathcal{P}^1$ in 3D):** Requires $M_{\text{supp}} = 12$ support nodes per stencil to span the 12-dimensional vector polynomial space $\mathcal{P}_1 \times \mathcal{P}_1 \times \mathcal{P}_1$, completely capturing the 9-component 3D displacement gradient tensor $\mathbf{J} = \nabla\vec{E}$ and eliminating 3D curl stagnation.
+- **3D Scale-Invariant Placement Matrix ($\widehat{\mathbf{A}}_{12 \times 12}$):** Extends dimensionless coordinate normalization to 3D spherical neighborhoods, establishing reliable conditioning thresholds against 3D coplanar, concurrent, and degenerated director stencils.
+- **3D Variational Div-Curl Regularization:** Incorporates 3D divergence penalization ($\int_{\Omega} s_{\text{div}} (\nabla \cdot \vec{W})(\nabla \cdot \vec{E})\, d\Omega$) to stiffen the 3D discrete gradient nullspace across unconstrained volumetric point clouds.
+- **Coupling with 3D Tetrahedral Whitney Elements:** Establishes master-slave trace coupling with tetrahedral Whitney 1-forms on boundary-fitted conformal interfaces.
 
 ---
 
@@ -285,7 +301,7 @@ For in-depth mathematical derivations, failure mode analyses, and comprehensive 
 
 ## 8. Citation
 
-If this codebase or methodology contributes to your research, please cite:
+If this codebase, the stabilized 2D formulation, or the VNMM research platform contributes to your research, please cite:
 
 ```bibtex
 @article{mesquita2026stabilized,
@@ -293,7 +309,7 @@ If this codebase or methodology contributes to your research, please cite:
   author={Mesquita, Renato C. and da Silva, Elson J. and Gon{\c{c}}alves, B{\'a}rbara M. F. and Ortiz, Luilly A. G.},
   journal={Engineering Analysis with Boundary Elements},
   year={2026},
-  note={Under review. Public repository at \url{https://github.com/rencmbr/vnmm2d-eabe}}
+  note={Under review. Public repository at \url{https://github.com/rencmbr/VNMM}}
 }
 ```
 
