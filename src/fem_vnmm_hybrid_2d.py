@@ -13,7 +13,7 @@ if ROOT_DIR not in sys.path:
 
 from src.fem_edge_2d import assemble_edge_fem_matrices_2d
 from src.gauss_quadrature import get_gauss_points_weights_1d
-from codigo.support_nodes_vnmm_2d_6_p1 import support_nodes_vnmm_2d_6_p1
+from scripts.support_nodes_vnmm_2d_6_p1 import support_nodes_vnmm_2d_6_p1
 from src.eigen_solver_cavity import ANALYTICAL_REFERENCE_MODES, MODOS_ANALITICOS_REF
 
 

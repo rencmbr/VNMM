@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from codigo.galerkin_source_problem import (
+from scripts.galerkin_source_problem import (
     assemble_and_solve_mms,
     generate_cavity_mesh
 )

@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from codigo.galerkin_patch_test import (
+from scripts.galerkin_patch_test import (
     run_patch_test_mode,
     generate_cavity_mesh
 )

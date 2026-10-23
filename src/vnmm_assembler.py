@@ -7,15 +7,15 @@ from scipy.sparse import coo_matrix, csr_matrix
 # Add root directory and codigo to sys.path
 SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SRC_DIR)
-CODIGO_DIR = os.path.join(ROOT_DIR, "codigo")
-for p in [ROOT_DIR, CODIGO_DIR]:
+SCRIPTS_DIR = os.path.join(ROOT_DIR, "scripts")
+for p in [ROOT_DIR, SCRIPTS_DIR]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from codigo.support_nodes_vnmm_2d_3_l1 import support_nodes_vnmm_2d_3_l1
-from codigo.shape_functions_vnmm_2d_3_l1 import shape_functions_vnmm_2d_3_l1
-from codigo.support_nodes_vnmm_2d_6_p1 import support_nodes_vnmm_2d_6_p1
-from codigo.shape_functions_vnmm_2d_6_p1 import shape_functions_vnmm_2d_6_p1
+from scripts.support_nodes_vnmm_2d_3_l1 import support_nodes_vnmm_2d_3_l1
+from scripts.shape_functions_vnmm_2d_3_l1 import shape_functions_vnmm_2d_3_l1
+from scripts.support_nodes_vnmm_2d_6_p1 import support_nodes_vnmm_2d_6_p1
+from scripts.shape_functions_vnmm_2d_6_p1 import shape_functions_vnmm_2d_6_p1
 from src.gauss_quadrature import get_gauss_points_weights_1d
 
 
