@@ -302,3 +302,16 @@ Para nós na fronteira física ($I \in \partial \Omega$):
    - Extração e classificação dos primeiros 10 autovalores físicos (modos $TE_{10}, TE_{01}, TE_{11}, \dots$) em comparação direta com a Tabela 4-1 de Luilly Ortiz (UFMG, 2023).
    - Análise de sensibilidade do parâmetro de regularização divergente $s_{\text{div}}$ na purificação espectral (eliminação de modos espúrios de rotacional nulo).
    - Benchmarking de desempenho computacional e tempo de montagem: VNMM-MLPG (*cell-free*) vs. VNMM-Gauss (células cartesianas de fundo).
+
+---
+
+## 10. Resumo dos Resultados Obtidos (Fases 1 a 5)
+
+| Fase | Script / Módulo | Teste Unitário | Critério / Métrica | Resultado Obtido | Status |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **Fase 1** | `src/mlpg_subdomains.py` | `test_mlpg_subdomains_2d.py` | Cobertura $100\%$, $\det(\mathbf{A}) \ge \text{Tol}$, operadores analíticos | 5 testes aprovados | **Aprovado** |
+| **Fase 2** | `src/mlpg_assembler_2d.py` | `test_mlpg_assembler_2d.py` | Simetria $\mathbf{K}=\mathbf{K}^T$, $\mathbf{M}=\mathbf{M}^T$, quadratura polar = analítica $<10^{-12}$ | 5 testes aprovados | **Aprovado** |
+| **Fase 3** | `scripts/mlpg_patch_test_2d.py` | `test_mlpg_patch_test_2d.py` | Erro relativo linear $\|\mathbf{e} - \mathbf{e}^*\|_\infty / \|\mathbf{e}^*\|_\infty \le 10^{-11}$ (regular e $25\%$ jitter) | Erro $\sim 10^{-15}$ | **Aprovado** |
+| **Fase 4** | `scripts/mlpg_source_problem_2d.py` | `test_mlpg_source_problem_2d.py` | Taxas assintóticas MMS: $L^2 \to \mathcal{O}(h^2)$, $H(\mathbf{curl}) \to \mathcal{O}(h)$ | $L^2: \mathcal{O}(h^{2.06})$, $H(\mathbf{curl}): \mathcal{O}(h^{1.24})$ | **Aprovado** |
+| **Fase 5** | `scripts/mlpg_cavity_eigenvalues_2d.py` | `test_mlpg_cavity_eigenvalues_2d.py` | 10 primeiros modos PEC, purificação espectral ($s_{\text{div}} \ge 10$), speedup $> 1.5\times$ vs Gauss | Erro médio $k_c = 4.13\%$, zero espúrios, **3.59x mais rápido** | **Aprovado** |
+
