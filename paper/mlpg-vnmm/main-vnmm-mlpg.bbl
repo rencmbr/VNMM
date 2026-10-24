@@ -1,0 +1,195 @@
+\begin{thebibliography}{23}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\href}[2]{#2}
+\providecommand{\path}[1]{#1}
+\providecommand{\DOIprefix}{doi:}
+\providecommand{\ArXivprefix}{arXiv:}
+\providecommand{\URLprefix}{URL: }
+\providecommand{\Pubmedprefix}{pmid:}
+\providecommand{\doi}[1]{\href{http://dx.doi.org/#1}{\path{#1}}}
+\providecommand{\Pubmed}[1]{\href{pmid:#1}{\path{#1}}}
+\providecommand{\bibinfo}[2]{#2}
+\ifx\xfnm\relax \def\xfnm[#1]{\unskip,\space#1}\fi
+%Type = Article
+\bibitem[{N{\'e}d{\'e}lec(1980)}]{nedelec1980mixed}
+\bibinfo{author}{J.~C. N{\'e}d{\'e}lec},
+\newblock \bibinfo{title}{Mixed finite elements in {$\mathbb{R}^3$}},
+\newblock \bibinfo{journal}{Numerische Mathematik} \bibinfo{volume}{35}
+  (\bibinfo{year}{1980}) \bibinfo{pages}{315--341}.
+  \DOIprefix\doi{10.1007/BF01396415}.
+%Type = Book
+\bibitem[{Monk(2003)}]{monk2003finite}
+\bibinfo{author}{P.~Monk}, \bibinfo{title}{Finite Element Methods for Maxwell's
+  Equations}, \bibinfo{publisher}{Oxford University Press},
+  \bibinfo{address}{Oxford}, \bibinfo{year}{2003}.
+  \DOIprefix\doi{10.1093/acprof:oso/9780198508885.001.0001}.
+%Type = Book
+\bibitem[{Jin(2014)}]{jin2014finite}
+\bibinfo{author}{J.~M. Jin}, \bibinfo{title}{The Finite Element Method in
+  Electromagnetics}, \bibinfo{edition}{3rd} ed., \bibinfo{publisher}{John Wiley
+  \& Sons}, \bibinfo{address}{Hoboken, NJ}, \bibinfo{year}{2014}.
+%Type = Book
+\bibitem[{Bossavit(1998)}]{bossavit1998computational}
+\bibinfo{author}{A.~Bossavit}, \bibinfo{title}{Computational Electromagnetism:
+  Variational Formulations, Complementarity, Edge Elements},
+  \bibinfo{publisher}{Academic Press}, \bibinfo{address}{San Diego, CA},
+  \bibinfo{year}{1998}.
+%Type = Article
+\bibitem[{Boffi(2010)}]{boffi2006finite}
+\bibinfo{author}{D.~Boffi},
+\newblock \bibinfo{title}{Finite element approximation of eigenvalue problems},
+\newblock \bibinfo{journal}{Acta Numerica} \bibinfo{volume}{19}
+  (\bibinfo{year}{2010}) \bibinfo{pages}{1--120}.
+  \DOIprefix\doi{10.1017/S096249291000001X}.
+%Type = Article
+\bibitem[{Belytschko et~al.(1994)Belytschko, Lu, and
+  Gu}]{belytschko1994element}
+\bibinfo{author}{T.~Belytschko}, \bibinfo{author}{Y.~Y. Lu},
+  \bibinfo{author}{L.~Gu},
+\newblock \bibinfo{title}{Element-free {G}alerkin methods},
+\newblock \bibinfo{journal}{International Journal for Numerical Methods in
+  Engineering} \bibinfo{volume}{37} (\bibinfo{year}{1994})
+  \bibinfo{pages}{229--256}. \DOIprefix\doi{10.1002/nme.1620370205}.
+%Type = Book
+\bibitem[{Liu(2009)}]{liu2009mesh}
+\bibinfo{author}{G.~R. Liu}, \bibinfo{title}{Mesh Free Methods: Moving Beyond
+  the Finite Element Method}, \bibinfo{edition}{2nd} ed.,
+  \bibinfo{publisher}{CRC Press}, \bibinfo{address}{Boca Raton, FL},
+  \bibinfo{year}{2009}.
+%Type = Book
+\bibitem[{Fasshauer(2007)}]{fasshauer2007meshfree}
+\bibinfo{author}{G.~E. Fasshauer}, \bibinfo{title}{Meshfree Approximation
+  Methods with {MATLAB}}, volume~\bibinfo{volume}{6} of
+  \textit{\bibinfo{series}{Interdisciplinary Mathematical Sciences}},
+  \bibinfo{publisher}{World Scientific Publishing},
+  \bibinfo{address}{Singapore}, \bibinfo{year}{2007}.
+  \DOIprefix\doi{10.1142/6437}.
+%Type = Book
+\bibitem[{Cheng and Fries(2014)}]{cheng2014meshless}
+\bibinfo{author}{A.~H.-D. Cheng}, \bibinfo{author}{T.-P. Fries},
+  \bibinfo{title}{Meshless Methods}, \bibinfo{publisher}{CRC Press},
+  \bibinfo{year}{2014}.
+%Type = Article
+\bibitem[{Ho et~al.(2001)Ho, Yang, Ni, and Machado}]{ho2001moving}
+\bibinfo{author}{S.~L. Ho}, \bibinfo{author}{S.~Yang}, \bibinfo{author}{G.~Ni},
+  \bibinfo{author}{J.~M. Machado},
+\newblock \bibinfo{title}{A moving least square reproducing kernel method for
+  electromagnetic field computations},
+\newblock \bibinfo{journal}{IEEE Transactions on Magnetics}
+  \bibinfo{volume}{37} (\bibinfo{year}{2001}) \bibinfo{pages}{3150--3153}.
+  \DOIprefix\doi{10.1109/20.952563}.
+%Type = Article
+\bibitem[{Parreira et~al.(2006)Parreira, Fonseca, Lisboa, Silva, and
+  Mesquita}]{parreira2006efficient}
+\bibinfo{author}{G.~F. Parreira}, \bibinfo{author}{A.~R. Fonseca},
+  \bibinfo{author}{A.~C. Lisboa}, \bibinfo{author}{E.~J. Silva},
+  \bibinfo{author}{R.~C. Mesquita},
+\newblock \bibinfo{title}{Efficient algorithms and data structures for
+  {E}lement-{F}ree {G}alerkin method},
+\newblock \bibinfo{journal}{IEEE Transactions on Magnetics}
+  \bibinfo{volume}{42} (\bibinfo{year}{2006}) \bibinfo{pages}{659--662}.
+  \DOIprefix\doi{10.1109/TMAG.2006.871432}.
+%Type = Article
+\bibitem[{Soares(2011)}]{soares2011meshless}
+\bibinfo{author}{D.~Soares, Jr.},
+\newblock \bibinfo{title}{A meshless local {Petrov}--{Galerkin} approach for
+  acoustic wave propagation in heterogeneous media},
+\newblock \bibinfo{journal}{Engineering Analysis with Boundary Elements}
+  \bibinfo{volume}{35} (\bibinfo{year}{2011}) \bibinfo{pages}{515--523}.
+  \DOIprefix\doi{10.1016/j.enganabound.2010.09.006}.
+%Type = Article
+\bibitem[{Nicomedes et~al.(2012)Nicomedes, Mesquita, and
+  Moreira}]{nicomedes2012meshless}
+\bibinfo{author}{W.~L. Nicomedes}, \bibinfo{author}{R.~C. Mesquita},
+  \bibinfo{author}{F.~J.~S. Moreira},
+\newblock \bibinfo{title}{The meshless local {P}etrov--{G}alerkin method in
+  two-dimensional electromagnetic wave analysis},
+\newblock \bibinfo{journal}{IEEE Transactions on Antennas and Propagation}
+  \bibinfo{volume}{60} (\bibinfo{year}{2012}) \bibinfo{pages}{1957--1968}.
+  \DOIprefix\doi{10.1109/TAP.2012.2186223}.
+%Type = Article
+\bibitem[{Lima and Mesquita(2017)}]{lima2017edge}
+\bibinfo{author}{N.~Z. Lima}, \bibinfo{author}{R.~C. Mesquita},
+\newblock \bibinfo{title}{Edge meshless method applied to vector
+  electromagnetic problems},
+\newblock \bibinfo{journal}{IEEE Transactions on Magnetics}
+  \bibinfo{volume}{53} (\bibinfo{year}{2017}) \bibinfo{pages}{1--4}.
+  \DOIprefix\doi{10.1109/TMAG.2017.2653769}.
+%Type = Article
+\bibitem[{Ortiz et~al.(2021)Ortiz, Mesquita, and Lima}]{ortiz2021nodal}
+\bibinfo{author}{L.~A.~G. Ortiz}, \bibinfo{author}{R.~C. Mesquita},
+  \bibinfo{author}{N.~Z. Lima},
+\newblock \bibinfo{title}{Nodal meshless method with vectorial shape functions
+  based on {H(curl)}},
+\newblock \bibinfo{journal}{IEEE Transactions on Magnetics}
+  \bibinfo{volume}{57} (\bibinfo{year}{2021}) \bibinfo{pages}{1--4}.
+  \DOIprefix\doi{10.1109/TMAG.2021.3061526}.
+%Type = Phdthesis
+\bibitem[{Ortiz(2023)}]{ortiz2023tese}
+\bibinfo{author}{L.~A.~G. Ortiz}, \bibinfo{title}{M{\'e}todo Sem Malha Nodal
+  utilizando Fun{\c{c}}{\~o}es de Forma Vetoriais baseadas em {H(curl)}}, Ph.D.
+  thesis, Programa de P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica,
+  Universidade Federal de Minas Gerais (UFMG), \bibinfo{address}{Belo
+  Horizonte, Brasil}, \bibinfo{year}{2023}.
+%Type = Article
+\bibitem[{Gon{\c{c}}alves et~al.(2023)Gon{\c{c}}alves, Silva, and
+  Mesquita}]{goncalves2023vector}
+\bibinfo{author}{B.~M.~F. Gon{\c{c}}alves}, \bibinfo{author}{E.~J. Silva},
+  \bibinfo{author}{R.~C. Mesquita},
+\newblock \bibinfo{title}{Vector nodal meshless method for {3-D} applications},
+\newblock \bibinfo{journal}{IEEE Transactions on Magnetics}
+  \bibinfo{volume}{59} (\bibinfo{year}{2023}) \bibinfo{pages}{1--4}.
+  \DOIprefix\doi{10.1109/TMAG.2022.3233527}.
+%Type = Phdthesis
+\bibitem[{Gon{\c{c}}alves(2025)}]{goncalves2025tese}
+\bibinfo{author}{B.~M.~F. Gon{\c{c}}alves},
+  \bibinfo{title}{Constru{\c{c}}{\~a}o das Fun{\c{c}}{\~o}es de Forma {3-D}
+  para o M{\'e}todo Sem Malha Nodal Vetorial}, Ph.D. thesis, Programa de
+  P{\'o}s-Gradua{\c{c}}{\~a}o em Engenharia El{\'e}trica, Universidade Federal
+  de Minas Gerais (UFMG), \bibinfo{address}{Belo Horizonte, Brasil},
+  \bibinfo{year}{2025}.
+%Type = Article
+\bibitem[{Mesquita et~al.(2025)Mesquita, Silva, Gon{\c{c}}alves, and
+  Ortiz}]{stable_vnmm2d_2025}
+\bibinfo{author}{R.~C. Mesquita}, \bibinfo{author}{E.~J. Silva},
+  \bibinfo{author}{B.~M.~F. Gon{\c{c}}alves}, \bibinfo{author}{L.~A.~G. Ortiz},
+\newblock \bibinfo{title}{A stabilized vector nodal meshless method for
+  {H(curl)} {2D} electromagnetic problems on irregular point clouds},
+\newblock \bibinfo{journal}{Engineering Analysis with Boundary Elements}
+  (\bibinfo{year}{2025}). \bibinfo{note}{Under review}.
+%Type = Book
+\bibitem[{Atluri and Shen(2002)}]{atluri2002meshless}
+\bibinfo{author}{S.~N. Atluri}, \bibinfo{author}{S.-P. Shen},
+  \bibinfo{title}{The Meshless Local {P}etrov-{G}alerkin ({MLPG}) Method},
+  \bibinfo{publisher}{Tech Science Press}, \bibinfo{address}{Encino, CA},
+  \bibinfo{year}{2002}.
+%Type = Article
+\bibitem[{Chen et~al.(2001)Chen, Wu, Yoon, and You}]{chen2001stabilized}
+\bibinfo{author}{J.-S. Chen}, \bibinfo{author}{C.-T. Wu},
+  \bibinfo{author}{S.~Yoon}, \bibinfo{author}{Y.~You},
+\newblock \bibinfo{title}{A stabilized conforming nodal integration for
+  {G}alerkin mesh-free methods},
+\newblock \bibinfo{journal}{International Journal for Numerical Methods in
+  Engineering} \bibinfo{volume}{50} (\bibinfo{year}{2001})
+  \bibinfo{pages}{435--466}.
+  \DOIprefix\doi{10.1002/1097-0207(20010120)50:2<435::AID-NME32>3.0.CO;2-A}.
+%Type = Article
+\bibitem[{Atluri and Zhu(1998)}]{atluri1998new}
+\bibinfo{author}{S.~N. Atluri}, \bibinfo{author}{T.~Zhu},
+\newblock \bibinfo{title}{A new meshless local {P}etrov-{G}alerkin ({MLPG})
+  approach in computational mechanics},
+\newblock \bibinfo{journal}{Computational Mechanics} \bibinfo{volume}{22}
+  (\bibinfo{year}{1998}) \bibinfo{pages}{117--127}.
+  \DOIprefix\doi{10.1007/s004660050346}.
+%Type = Article
+\bibitem[{Sladek et~al.(2001)Sladek, Sladek, and Atluri}]{sladek2001local}
+\bibinfo{author}{J.~Sladek}, \bibinfo{author}{V.~Sladek},
+  \bibinfo{author}{S.~N. Atluri},
+\newblock \bibinfo{title}{A pure contour formulation for meshless local
+  boundary integral equation method in elastostatics},
+\newblock \bibinfo{journal}{CMES - Computer Modeling in Engineering \&
+  Sciences} \bibinfo{volume}{2} (\bibinfo{year}{2001})
+  \bibinfo{pages}{423--434}.
+
+\end{thebibliography}

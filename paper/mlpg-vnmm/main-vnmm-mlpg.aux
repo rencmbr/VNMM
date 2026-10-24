@@ -1,0 +1,149 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\emailauthor{renato@ufmg.br}{Renato C. Mesquita\corref {cor1}}
+\Newlabel{cor1}{1}
+\Newlabel{ufmg}{a}
+\Newlabel{ifetcongonhas}{b}
+\Newlabel{ifmgsabara}{c}
+\citation{nedelec1980mixed,monk2003finite,jin2014finite}
+\citation{bossavit1998computational,boffi2006finite}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.5}\protected@file@percent }
+\newlabel{sec:introduction}{{1}{2}{Introduction}{section.5}{}}
+\citation{belytschko1994element,liu2009mesh,fasshauer2007meshfree,cheng2014meshless}
+\citation{ho2001moving,parreira2006efficient,soares2011meshless}
+\citation{nicomedes2012meshless}
+\citation{lima2017edge}
+\citation{ortiz2021nodal,ortiz2023tese}
+\citation{goncalves2023vector,goncalves2025tese}
+\citation{stable_vnmm2d_2025}
+\citation{stable_vnmm2d_2025}
+\citation{belytschko1994element}
+\citation{atluri2002meshless}
+\citation{stable_vnmm2d_2025}
+\citation{chen2001stabilized}
+\citation{atluri1998new,atluri2002meshless}
+\citation{sladek2001local,atluri2002meshless,nicomedes2012meshless}
+\citation{atluri2002meshless}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Theoretical Formulation of the VNMM-MLPG}{6}{section.12}\protected@file@percent }
+\newlabel{sec:formulation}{{2}{6}{Theoretical Formulation of the VNMM-MLPG}{section.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Continuous Boundary-Value Problem}{6}{subsection.13}\protected@file@percent }
+\newlabel{subsec:continuous_bvp}{{2.1}{6}{Continuous Boundary-Value Problem}{subsection.13}{}}
+\newlabel{eq:helmholtz_pde}{{1}{6}{Continuous Boundary-Value Problem}{equation.14}{}}
+\citation{stable_vnmm2d_2025}
+\newlabel{eq:pec_bc}{{2}{7}{Continuous Boundary-Value Problem}{equation.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Nodal Discretization and Local Support Geometries}{7}{subsection.17}\protected@file@percent }
+\newlabel{subsec:nodal_discretization}{{2.2}{7}{Nodal Discretization and Local Support Geometries}{subsection.17}{}}
+\newlabel{eq:subdomain_disk}{{5}{7}{Nodal Discretization and Local Support Geometries}{equation.21}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Schematic of the VNMM-MLPG discretization on a 2D domain $\Omega = [0, \pi ]^2$. For an interior node $\mathbf  {x}_I$, the circular local integration subdomain $\Omega _s^I$ (cyan dashed disk) is completely decoupled from global background grids. The trial interpolation stencil $\Omega _u^I$ consists of 6 admissible neighbor nodes connected by dotted lines. On the boundary, $\Omega _s^B$ intersects $\partial \Omega $, where the tangential director $\mathbf  {t}_B \parallel \partial \Omega $ directly enforces the PEC condition $e_B = 0$.}}{8}{figure.caption.22}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:schematic_mlpg}{{1}{8}{Schematic of the VNMM-MLPG discretization on a 2D domain $\Omega = [0, \pi ]^2$. For an interior node $\mathbf {x}_I$, the circular local integration subdomain $\Omega _s^I$ (cyan dashed disk) is completely decoupled from global background grids. The trial interpolation stencil $\Omega _u^I$ consists of 6 admissible neighbor nodes connected by dotted lines. On the boundary, $\Omega _s^B$ intersects $\partial \Omega $, where the tangential director $\mathbf {t}_B \parallel \partial \Omega $ directly enforces the PEC condition $e_B = 0$}{figure.caption.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Complete Linear Trial Space ($\mathcal  {P}^1$)}{8}{subsection.23}\protected@file@percent }
+\newlabel{subsec:trial_space}{{2.3}{8}{Complete Linear Trial Space ($\mathcal {P}^1$)}{subsection.23}{}}
+\newlabel{eq:polynomial_expansion}{{6}{8}{Complete Linear Trial Space ($\mathcal {P}^1$)}{equation.24}{}}
+\newlabel{eq:collocation_system}{{8}{8}{Complete Linear Trial Space ($\mathcal {P}^1$)}{equation.26}{}}
+\citation{atluri1998new}
+\newlabel{eq:shape_functions}{{10}{9}{Complete Linear Trial Space ($\mathcal {P}^1$)}{equation.28}{}}
+\newlabel{eq:curl_constant}{{11}{9}{Complete Linear Trial Space ($\mathcal {P}^1$)}{equation.29}{}}
+\newlabel{eq:div_constant}{{12}{9}{Complete Linear Trial Space ($\mathcal {P}^1$)}{equation.30}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Local Weak Form and the Vector Test Function Paradox}{9}{subsection.31}\protected@file@percent }
+\newlabel{subsec:local_weak_form}{{2.4}{9}{Local Weak Form and the Vector Test Function Paradox}{subsection.31}{}}
+\newlabel{eq:local_weak_form}{{13}{9}{Local Weak Form and the Vector Test Function Paradox}{equation.32}{}}
+\newlabel{eq:boundary_flux}{{14}{9}{Local Weak Form and the Vector Test Function Paradox}{equation.33}{}}
+\newlabel{eq:quartic_spline}{{15}{10}{Local Weak Form and the Vector Test Function Paradox}{equation.34}{}}
+\newlabel{thm:mlpg1_collapse}{{1}{10}{Breakdown of MLPG1 for Linear Vector Fields}{theorem.35}{}}
+\newlabel{eq:curl_zero}{{16}{10}{Breakdown of MLPG1 for Linear Vector Fields}{equation.36}{}}
+\newlabel{eq:div_zero}{{17}{10}{Breakdown of MLPG1 for Linear Vector Fields}{equation.37}{}}
+\citation{atluri2002meshless}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Justification and Selection of MLPG6 (Local Galerkin)}{11}{subsection.43}\protected@file@percent }
+\newlabel{subsec:mlpg6_selection}{{2.5}{11}{Justification and Selection of MLPG6 (Local Galerkin)}{subsection.43}{}}
+\newlabel{eq:mlpg6_choice}{{23}{11}{Justification and Selection of MLPG6 (Local Galerkin)}{equation.44}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Closed-Form Analytical Discretization Formulas}{12}{subsection.50}\protected@file@percent }
+\newlabel{subsec:analytic_formulas}{{2.6}{12}{Closed-Form Analytical Discretization Formulas}{subsection.50}{}}
+\newlabel{eq:disk_moments}{{25}{12}{Closed-Form Analytical Discretization Formulas}{equation.51}{}}
+\newlabel{eq:k_curl_analytic}{{28}{12}{Closed-Form Analytical Discretization Formulas}{equation.54}{}}
+\newlabel{eq:k_div_analytic}{{29}{12}{Closed-Form Analytical Discretization Formulas}{equation.55}{}}
+\citation{atluri2002meshless}
+\newlabel{eq:m_local_analytic}{{32}{13}{Closed-Form Analytical Discretization Formulas}{equation.58}{}}
+\newlabel{eq:global_assembly}{{33}{13}{Closed-Form Analytical Discretization Formulas}{equation.59}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Treatment of Boundary Conditions and Boundary Intersections}{13}{subsection.60}\protected@file@percent }
+\newlabel{subsec:boundary_treatment}{{2.7}{13}{Treatment of Boundary Conditions and Boundary Intersections}{subsection.60}{}}
+\newlabel{eq:reduced_eigenproblem}{{36}{14}{Treatment of Boundary Conditions and Boundary Intersections}{equation.65}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.8}Local Conformity vs. Global Non-Conformity}{14}{subsection.66}\protected@file@percent }
+\newlabel{subsec:conformity_discussion}{{2.8}{14}{Local Conformity vs. Global Non-Conformity}{subsection.66}{}}
+\citation{ortiz2023tese}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Validation Methodology}{15}{section.67}\protected@file@percent }
+\newlabel{sec:validation_methodology}{{3}{15}{Validation Methodology}{section.67}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Numerical Results}{16}{section.74}\protected@file@percent }
+\newlabel{sec:results}{{4}{16}{Numerical Results}{section.74}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Stage 1: Element-Level Closed-Form Verification}{16}{subsection.75}\protected@file@percent }
+\newlabel{subsec:stage1_results}{{4.1}{16}{Stage 1: Element-Level Closed-Form Verification}{subsection.75}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Stage 2: Galerkin Patch Test for Linear Consistency}{16}{subsection.78}\protected@file@percent }
+\newlabel{subsec:stage2_patch_test}{{4.2}{16}{Stage 2: Galerkin Patch Test for Linear Consistency}{subsection.78}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Relative infinity-norm error on free interior degrees of freedom ($\|\mathbf  {e}_{\mathrm  {int}} - \mathbf  {e}^*\|_{\infty } / \|\mathbf  {e}^*\|_{\infty }$) for the Galerkin Patch Test across 7 affine states.}}{17}{table.caption.86}\protected@file@percent }
+\newlabel{tab:patch_test_results}{{1}{17}{Relative infinity-norm error on free interior degrees of freedom ($\|\mathbf {e}_{\mathrm {int}} - \mathbf {e}^*\|_{\infty } / \|\mathbf {e}^*\|_{\infty }$) for the Galerkin Patch Test across 7 affine states}{table.caption.86}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Galerkin Patch Test satisfaction across the seven affine vector states. For both uniform grids and irregular clouds with $25\%$ spatial jitter, the discrete error on free interior DoFs is in the order of $\sim 10^{-15}$, exceeding the strict patch test tolerance ($10^{-11}$) by over four orders of magnitude.}}{17}{figure.caption.87}\protected@file@percent }
+\newlabel{fig:patch_test}{{2}{17}{Galerkin Patch Test satisfaction across the seven affine vector states. For both uniform grids and irregular clouds with $25\%$ spatial jitter, the discrete error on free interior DoFs is in the order of $\sim 10^{-15}$, exceeding the strict patch test tolerance ($10^{-11}$) by over four orders of magnitude}{figure.caption.87}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Stage 3: Asymptotic Refinement Convergence via MMS}{17}{subsection.88}\protected@file@percent }
+\newlabel{subsec:stage3_mms}{{4.3}{17}{Stage 3: Asymptotic Refinement Convergence via MMS}{subsection.88}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces MMS refinement convergence for VNMM-MLPG 2D ($s_{\mathrm  {div}} = 6.0, \alpha _s = 0.80$).}}{18}{table.caption.90}\protected@file@percent }
+\newlabel{tab:mms_convergence}{{2}{18}{MMS refinement convergence for VNMM-MLPG 2D ($s_{\mathrm {div}} = 6.0, \alpha _s = 0.80$)}{table.caption.90}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Stage 4: Resonant Cavity Eigenvalues and Spectral Purification}{18}{subsection.95}\protected@file@percent }
+\newlabel{subsec:stage4_cavity}{{4.4}{18}{Stage 4: Resonant Cavity Eigenvalues and Spectral Purification}{subsection.95}{}}
+\citation{ortiz2023tese}
+\citation{ortiz2023tese}
+\citation{ortiz2023tese}
+\citation{ortiz2023tese}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Asymptotic refinement convergence for VNMM-MLPG under MMS. The observed convergence rates are $\mathcal  {O}(h^{2.06})$ in the $L^2$ field norm and $\mathcal  {O}(h^{1.24})$ in the $H(\mathbf  {curl})$ norm, in full agreement with optimal polynomial approximation theory for linear vector elements.}}{19}{figure.caption.91}\protected@file@percent }
+\newlabel{fig:mms_convergence}{{3}{19}{Asymptotic refinement convergence for VNMM-MLPG under MMS. The observed convergence rates are $\mathcal {O}(h^{2.06})$ in the $L^2$ field norm and $\mathcal {O}(h^{1.24})$ in the $H(\mathbf {curl})$ norm, in full agreement with optimal polynomial approximation theory for linear vector elements}{figure.caption.91}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison of the first 10 numerical cavity eigenvalues and cutoff wavenumbers computed by VNMM-MLPG ($21 \times 21, s_{\mathrm  {div}} = 15.0$) against analytical reference solutions (Table 4-1 of Luilly Ortiz, 2023 \cite  {ortiz2023tese}).}}{20}{table.caption.98}\protected@file@percent }
+\newlabel{tab:cavity_eigenvalues}{{3}{20}{Comparison of the first 10 numerical cavity eigenvalues and cutoff wavenumbers computed by VNMM-MLPG ($21 \times 21, s_{\mathrm {div}} = 15.0$) against analytical reference solutions (Table 4-1 of Luilly Ortiz, 2023 \cite {ortiz2023tese})}{table.caption.98}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Physical spectral validation on the 2D PEC resonant cavity: (a) Comparison of the first 10 numerical cutoff wavenumbers $k_c = \sqrt  {\lambda }$ against exact analytical values from Table 4-1 of Ortiz (2023) \cite  {ortiz2023tese}. (b) Spectral purification parametric sweep: as $s_{\mathrm  {div}}$ increases, non-physical gradient spurious modes migrate outward, achieving zero spurious modes in the operational band for $s_{\mathrm  {div}} \ge 10$.}}{20}{figure.caption.99}\protected@file@percent }
+\newlabel{fig:cavity_modes}{{4}{20}{Physical spectral validation on the 2D PEC resonant cavity: (a) Comparison of the first 10 numerical cutoff wavenumbers $k_c = \sqrt {\lambda }$ against exact analytical values from Table 4-1 of Ortiz (2023) \cite {ortiz2023tese}. (b) Spectral purification parametric sweep: as $s_{\mathrm {div}}$ increases, non-physical gradient spurious modes migrate outward, achieving zero spurious modes in the operational band for $s_{\mathrm {div}} \ge 10$}{figure.caption.99}{}}
+\@writefile{toc}{\contentsline {paragraph}{Spectral Purification Sensitivity ($s_{\mathrm  {div}}$)}{20}{section*.100}\protected@file@percent }
+\citation{stable_vnmm2d_2025}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Parametric sensitivity of the div-curl penalty parameter $s_{\mathrm  {div}}$ on spectral purification ($21 \times 21$ grid, $\alpha _s = 0.90$).}}{21}{table.caption.101}\protected@file@percent }
+\newlabel{tab:s_div_sweep}{{4}{21}{Parametric sensitivity of the div-curl penalty parameter $s_{\mathrm {div}}$ on spectral purification ($21 \times 21$ grid, $\alpha _s = 0.90$)}{table.caption.101}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Computational benchmarking: VNMM-MLPG (cell-free) vs. VNMM-Gauss (cell-based with $3 \times 3$ Gauss quadrature).}}{21}{table.caption.103}\protected@file@percent }
+\newlabel{tab:benchmark_comparison}{{5}{21}{Computational benchmarking: VNMM-MLPG (cell-free) vs. VNMM-Gauss (cell-based with $3 \times 3$ Gauss quadrature)}{table.caption.103}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Stage 5: Computational Benchmark: VNMM-MLPG vs. VNMM-Gauss}{21}{subsection.102}\protected@file@percent }
+\newlabel{subsec:stage5_benchmark}{{4.5}{21}{Stage 5: Computational Benchmark: VNMM-MLPG vs. VNMM-Gauss}{subsection.102}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Computational benchmark comparing VNMM-MLPG against VNMM-Gauss across four grid resolutions: (a) Assembly execution time in seconds, showing a sustained $\sim 3.6\times $ speedup for the cell-free scheme. (b) Global stiffness matrix non-zero entries (NNZ), demonstrating that VNMM-MLPG produces matrices that are $33\%\text  {--}37\%$ sparser.}}{22}{figure.caption.104}\protected@file@percent }
+\newlabel{fig:benchmark}{{5}{22}{Computational benchmark comparing VNMM-MLPG against VNMM-Gauss across four grid resolutions: (a) Assembly execution time in seconds, showing a sustained $\sim 3.6\times $ speedup for the cell-free scheme. (b) Global stiffness matrix non-zero entries (NNZ), demonstrating that VNMM-MLPG produces matrices that are $33\%\text {--}37\%$ sparser}{figure.caption.104}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion: Advantages, Deficiencies, and Open Questions}{22}{section.107}\protected@file@percent }
+\newlabel{sec:discussion}{{5}{22}{Discussion: Advantages, Deficiencies, and Open Questions}{section.107}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Synthesis of Advantages}{22}{subsection.108}\protected@file@percent }
+\newlabel{subsec:advantages_synthesis}{{5.1}{22}{Synthesis of Advantages}{subsection.108}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Comparative synthesis of computational features among CEM methods.}}{23}{table.caption.109}\protected@file@percent }
+\newlabel{tab:method_comparison}{{6}{23}{Comparative synthesis of computational features among CEM methods}{table.caption.109}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Current Deficiencies and Open Challenges}{23}{subsection.110}\protected@file@percent }
+\newlabel{subsec:deficiencies_challenges}{{5.2}{23}{Current Deficiencies and Open Challenges}{subsection.110}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusions and Future Work}{24}{section.114}\protected@file@percent }
+\newlabel{sec:conclusions}{{6}{24}{Conclusions and Future Work}{section.114}{}}
+\bibstyle{elsarticle-num-names}
+\bibdata{references}
+\bibcite{nedelec1980mixed}{{1}{1980}{{N{\'e}d{\'e}lec}}{{}}}
+\bibcite{monk2003finite}{{2}{2003}{{Monk}}{{}}}
+\bibcite{jin2014finite}{{3}{2014}{{Jin}}{{}}}
+\bibcite{bossavit1998computational}{{4}{1998}{{Bossavit}}{{}}}
+\bibcite{boffi2006finite}{{5}{2010}{{Boffi}}{{}}}
+\bibcite{belytschko1994element}{{6}{1994}{{Belytschko et~al.}}{{Belytschko, Lu, and Gu}}}
+\bibcite{liu2009mesh}{{7}{2009}{{Liu}}{{}}}
+\bibcite{fasshauer2007meshfree}{{8}{2007}{{Fasshauer}}{{}}}
+\bibcite{cheng2014meshless}{{9}{2014}{{Cheng and Fries}}{{}}}
+\bibcite{ho2001moving}{{10}{2001}{{Ho et~al.}}{{Ho, Yang, Ni, and Machado}}}
+\bibcite{parreira2006efficient}{{11}{2006}{{Parreira et~al.}}{{Parreira, Fonseca, Lisboa, Silva, and Mesquita}}}
+\bibcite{soares2011meshless}{{12}{2011}{{Soares}}{{}}}
+\bibcite{nicomedes2012meshless}{{13}{2012}{{Nicomedes et~al.}}{{Nicomedes, Mesquita, and Moreira}}}
+\bibcite{lima2017edge}{{14}{2017}{{Lima and Mesquita}}{{}}}
+\bibcite{ortiz2021nodal}{{15}{2021}{{Ortiz et~al.}}{{Ortiz, Mesquita, and Lima}}}
+\bibcite{ortiz2023tese}{{16}{2023}{{Ortiz}}{{}}}
+\bibcite{goncalves2023vector}{{17}{2023}{{Gon{\c {c}}alves et~al.}}{{Gon{\c {c}}alves, Silva, and Mesquita}}}
+\bibcite{goncalves2025tese}{{18}{2025}{{Gon{\c {c}}alves}}{{}}}
+\bibcite{stable_vnmm2d_2025}{{19}{2025}{{Mesquita et~al.}}{{Mesquita, Silva, Gon{\c {c}}alves, and Ortiz}}}
+\bibcite{atluri2002meshless}{{20}{2002}{{Atluri and Shen}}{{}}}
+\bibcite{chen2001stabilized}{{21}{2001}{{Chen et~al.}}{{Chen, Wu, Yoon, and You}}}
+\bibcite{atluri1998new}{{22}{1998}{{Atluri and Zhu}}{{}}}
+\bibcite{sladek2001local}{{23}{2001}{{Sladek et~al.}}{{Sladek, Sladek, and Atluri}}}
+\gdef \@abspage@last{27}
