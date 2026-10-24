@@ -258,14 +258,42 @@ Para nós na fronteira física ($I \in \partial \Omega$):
 
 ## 9. Roteiro de Implementação e Validação
 
-1. **Fase 1: Módulo de Geometria Local (`mlpg_subdomains.py`)**
-   - Criação dos subdomínios $\Omega_s^I$ com raio adaptativo $r_s = \alpha_s h$.
-   - Avaliação e cache da função de teste radial e seus operadores diferenciais.
+1. **Fase 1: Módulo de Geometria e Subdomínios Locais (`mlpg_subdomains.py`)**
+   - Construção dos subdomínios circulares $\Omega_s^I$ com raio adaptativo $r_s = \alpha_s h$ centrado em cada nó.
+   - Implementação das funções de teste radiais suaves com suporte compacto (spline quártica) e cálculo de seus operadores diferenciais $(\nabla \times \mathbf{W}_I, \nabla \cdot \mathbf{W}_I)$.
+   - Vinculação estrita do stencil fixo de 6 nós de $\Omega_u^I$ ao respectivo $\Omega_s^I$.
 
 2. **Fase 2: Montador Local de Petrov-Galerkin (`mlpg_assembler_2d.py`)**
-   - Implementação das integrais radiais analíticas/quadratura polar em $\Omega_s^I$.
-   - Espalhamento direto nas matrizes esparsas $\mathbf{K}$ e $\mathbf{M}$.
+   - Implementação das integrais radiais analíticas ou via quadratura polar de 1D em $\Omega_s^I$.
+   - Avaliação das matrizes elementares locais de rigidez $\mathbf{K}_I^{\text{local}}$ e massa $\mathbf{M}_I^{\text{local}}$.
+   - Espalhamento (*assembly*) direto nas matrizes esparsas globais $\mathbf{K}$ e $\mathbf{M}$ (formato CSR/CSC).
+   - Vetor de forças $\mathbf{F}$ para problemas com fonte não-homogênea.
 
-3. **Fase 3: Validação da Cavidade Ressonante PEC 2D**
-   - Reprodução dos 10 primeiros modos da cavidade quadrada $[0, \pi]^2$ (Tabela 4-1 de Luilly Ortiz).
-   - Verificação de convergência assintótica e comparação direta de tempo de montagem vs. o montador de Gauss.
+3. **Fase 3: Verificação de Consistência Linear: Galerkin Patch Test (`mlpg_patch_test_2d.py`)**
+   - Aplicação do teste de consistência em campos vetoriais afins (translações rígidas, deformação axial, cisalhamento puro e campo afim genérico com rotacional e divergência constantes).
+   - Resolução do sistema particionado com valores exatos impostos na fronteira: $\mathbf{K}_{\text{int, int}} \mathbf{e}_{\text{int}} = \mathbf{F}_{\text{int}} - \mathbf{K}_{\text{int, bnd}} \mathbf{e}_{\text{bnd}}^*$.
+   - **Critério de Aceitação:** Erro relativo máximo nos graus de liberdade livres internos na ordem da precisão de máquina:
+     $$
+     \frac{\|\mathbf{e}_{\text{int}} - \mathbf{e}_{\text{int}}^*\|_\infty}{\|\mathbf{e}_{\text{int}}^*\|_\infty} \le 10^{-11}
+     $$
+   - Validação tanto em malhas regulares quanto em nuvens desordenadas com perturbação estocástica de coordenadas e orientações (25% de jitter espacial).
+
+4. **Fase 4: Verificação de Convergência Assintótica via Solução Fabricada (MMS) (`mlpg_source_problem_2d.py`)**
+   - Formulação de um problema de valor sobre o contorno acionado por termo-fonte não-homogêneo $\mathbf{J}_s$:
+     $$
+     \nabla \times (\nabla \times \mathbf{E}) - s_{\text{div}} \nabla(\nabla \cdot \mathbf{E}) = \mathbf{J}_s \quad \text{em } \Omega
+     $$
+   - Utilização de uma solução analítica suave de referência (com curvatura e rotacional não-constantes):
+     $$
+     \mathbf{E}^* = \begin{bmatrix} \sin(y) \cos(x) \\ -\cos(y) \sin(x) \end{bmatrix}
+     $$
+   - Avaliação das taxas assintóticas de convergência com o refinamento nodal ($h \to 0$):
+     - Taxa teórica esperada em norma $L^2$: $\mathcal{O}(h^2)$
+     - Taxa teórica esperada em norma $H(\mathbf{curl})$: $\mathcal{O}(h)$
+   - Determinação do erro residual contínuo e verificação da monotonicidade estrita.
+
+5. **Fase 5: Validação Espectral Física: Cavidade Ressonante PEC 2D (`mlpg_cavity_eigenvalues_2d.py`)**
+   - Resolução do problema generalizado de autovalores $\mathbf{K} \mathbf{e} = k^2 \mathbf{M} \mathbf{e}$ sob condições de contorno de condutor elétrico perfeito (PEC).
+   - Extração e classificação dos primeiros 10 autovalores físicos (modos $TE_{10}, TE_{01}, TE_{11}, \dots$) em comparação direta com a Tabela 4-1 de Luilly Ortiz (UFMG, 2023).
+   - Análise de sensibilidade do parâmetro de regularização divergente $s_{\text{div}}$ na purificação espectral (eliminação de modos espúrios de rotacional nulo).
+   - Benchmarking de desempenho computacional e tempo de montagem: VNMM-MLPG (*cell-free*) vs. VNMM-Gauss (células cartesianas de fundo).
