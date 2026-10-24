@@ -154,67 +154,72 @@ $$
 
 ---
 
-## 5. Seleção da Função de Teste Vetorial $\mathbf{W}_I(\mathbf{x})$
+## 5. Seleção da Função de Teste Vetorial: Local Galerkin (MLPG Tipo 6)
 
-Uma das maiores vantagens do MLPG reside na liberdade de escolha da função de teste no espaço de Petrov-Galerkin:
+Para uma base vetorial linear $\mathcal{P}^1$, onde $(\nabla \times \mathbf{E})$ e $(\nabla \cdot \mathbf{E})$ são constantes dentro de $\Omega_s^I$, adotar uma função de teste puramente escalar que se anula na fronteira ($w(r_s) = 0$) anularia identicamente o termo de rigidez por meio do Teorema de Stokes/Gauss ($\iint_{\Omega_s^I} \text{const} \cdot \nabla \times \mathbf{W} \, dA = \text{const} \oint_{\partial \Omega_s^I} \mathbf{W} \cdot d\mathbf{r} \equiv 0$).
 
-### Opção 1: Função de Teste com Suporte Compacto que se Anula em $\partial \Omega_s^I$ (MLPG Tipo 1 / 4)
-Define-se uma função de peso radial suave $w_I(r)$ com raio $r_s$, tal que $w_I(r_s) = 0$ e $\frac{\partial w_I}{\partial r}(r_s) = 0$ (ex.: spline quártica):
-
-$$
-w_I(r) = \begin{cases} 
-1 - 6\left(\frac{r}{r_s}\right)^2 + 8\left(\frac{r}{r_s}\right)^3 - 3\left(\frac{r}{r_s}\right)^4, & r \le r_s \\
-0, & r > r_s 
-\end{cases}
-$$
-
-A função de teste vetorial associada ao grau de liberdade nodal $I$ com orientação $\mathbf{t}_I$ é:
+Por essa razão matemática fundamental, no espaço $\mathcal{P}^1$ adota-se a formulação canônica **MLPG Tipo 6 (Local Galerkin)** (Atluri & Shen, 2002), na qual a função de teste vetorial associada ao grau de liberdade nodal $I$ é a **própria função de forma local correspondente ao nó central** em seu stencil:
 
 $$
-\mathbf{W}_I(\mathbf{x}) = w_I(\|\mathbf{x} - \mathbf{x}_I\|)\, \mathbf{t}_I
+\mathbf{W}_I(\mathbf{x}) = \mathbf{N}_{\text{local\_}I}^I(\mathbf{x}) \quad \text{em } \Omega_s^I
 $$
 
-#### Vantagem Fundamental:
-Para nós internos ($\Omega_s^I \cap \partial \Omega = \emptyset$), como $\mathbf{W}_I = \mathbf{0}$ em $\partial \Omega_s^I$, **a integral de contorno se anula identicamente**:
+onde $\text{local\_}I$ é o índice local do nó $I$ em seu stencil de 6 nós (geralmente $0$).
 
-$$
-\oint_{\partial \Omega_s^I} \mathcal{B}(\mathbf{E}, \mathbf{W}_I)\, d\Gamma \equiv 0
-$$
-
-A forma fraca local simplifica-se para integrações puramente volumétricas/superficiais sobre o disco:
-
-$$
-\iint_{\Omega_s^I} (\nabla \times \mathbf{E}) \cdot (\nabla \times \mathbf{W}_I) \, dA 
-+ s_{\text{div}} \iint_{\Omega_s^I} (\nabla \cdot \mathbf{E}) (\nabla \cdot \mathbf{W}_I) \, dA 
-= k^2 \iint_{\Omega_s^I} \mathbf{E} \cdot \mathbf{W}_I \, dA
-$$
+### 5.1 Propriedade Dual Nodal
+Pela definição estrita de colocação nodal do VNMM ($\mathbf{N}_k^I(\mathbf{x}_m) \cdot \mathbf{t}_m = \delta_{km}$):
+* No centro do subdomínio $\mathbf{x}_I$:
+  $$
+  \mathbf{W}_I(\mathbf{x}_I) \cdot \mathbf{t}_I = \mathbf{N}_{\text{local\_}I}^I(\mathbf{x}_I) \cdot \mathbf{t}_I = 1.0
+  $$
+* A forma fraca local sobre $\Omega_s^I$ desacopla e projeta o resíduo exatamente sobre a direção física do grau de liberdade nodal $e_I$.
 
 ---
 
-## 6. Discretização e Montagem Algébrica
+## 6. Discretização e Fórmulas Analíticas Fechadas
 
-Substituindo a aproximação nodal $\mathbf{E}^h(\mathbf{x}) = \mathbf{N}^I(\mathbf{x}) \mathbf{e}_I = \mathbf{P}(\mathbf{x}) \mathbf{A}_I^{-1} \mathbf{e}_I$:
+Dado que dentro de $\Omega_s^I$ (disco de raio $r_s$ centrado em $\mathbf{x}_I$) o campo aproxima-se por $\mathbf{E}^h(\mathbf{x}) = \sum_{k=1}^6 \mathbf{N}_k^I(\mathbf{x}) e_k^I$:
 
-Para a equação da linha associada ao nó $I$, as matrizes locais de rigidez $\mathbf{K}_I^{\text{local}} \in \mathbb{R}^{1 \times 6}$ e massa $\mathbf{M}_I^{\text{local}} \in \mathbb{R}^{1 \times 6}$ são calculadas integrando sobre o disco $\Omega_s^I$:
-
+### 6.1 Matriz de Rigidez Local $\mathbf{K}_I^{\text{local}} \in \mathbb{R}^{1 \times 6}$
+Como tanto $(\nabla \times \mathbf{N}_k^I)_z$ quanto $(\nabla \cdot \mathbf{N}_k^I)$ são **estritamente constantes** em todo o disco:
 $$
-\mathbf{K}_I^{\text{local}} = \left[ \iint_{\Omega_s^I} (\nabla \times \mathbf{P}) \cdot (\nabla \times \mathbf{W}_I) \, dA + s_{\text{div}} \iint_{\Omega_s^I} (\nabla \cdot \mathbf{P}) (\nabla \cdot \mathbf{W}_I) \, dA \right] \mathbf{A}_I^{-1}
+(\nabla \times \mathbf{N}_k^I)_z = \beta_{4, k} - \beta_{3, k} = C_{\text{curl}, k}
+$$
+$$
+(\nabla \cdot \mathbf{N}_k^I) = \beta_{2, k} + \beta_{5, k} = C_{\text{div}, k}
 $$
 
+A integral de rigidez sobre a área do disco $A_s = \pi r_s^2$ é **100% analítica e exata**:
 $$
-\mathbf{M}_I^{\text{local}} = \left[ \iint_{\Omega_s^I} \mathbf{P}(\mathbf{x}) \cdot \mathbf{W}_I(\mathbf{x}) \, dA \right] \mathbf{A}_I^{-1}
+K_I^{\text{local}}(k) = \left[ \frac{1}{\mu_r} C_{\text{curl}, k} \, C_{\text{curl}, i_0} + \frac{s_{\text{div}}}{\mu_r} C_{\text{div}, k} \, C_{\text{div}, i_0} \right] (\pi r_s^2)
+$$
+onde $i_0 = \text{local\_}I$.
+
+### 6.2 Matriz de Massa Local $\mathbf{M}_I^{\text{local}} \in \mathbb{R}^{1 \times 6}$
+Em coordenadas locais $(\Delta x = x - x_I, \Delta y = y - y_I)$, as funções de forma são:
+$$
+\mathbf{N}_k^I(\Delta x, \Delta y) = \begin{bmatrix}
+\beta_{0, k} + \beta_{2, k} \Delta x + \beta_{3, k} \Delta y \\
+\beta_{1, k} + \beta_{4, k} \Delta x + \beta_{5, k} \Delta y
+\end{bmatrix}
 $$
 
-### 6.1 Eficiência Extrema com $\mathcal{P}^1$
-Como $(\nabla \times \mathbf{P})$ e $(\nabla \cdot \mathbf{P})$ são **vetores constantes**:
-- As derivadas do campo saem da integral!
-- Apenas a função de teste $\mathbf{W}_I$ precisa ser integrada sobre o disco:
-  $$
-  \iint_{\Omega_s^I} \nabla \times \mathbf{W}_I \, dA = \oint_{\partial \Omega_s^I} \mathbf{W}_I \cdot d\mathbf{r} = 0 \quad (\text{pois } \mathbf{W}_I|_{\partial \Omega_s^I} = 0)
-  $$
-- Isso permite pré-computar as integrais polares $(r, \theta)$ de forma analítica ou com regras radiais de Gauss unidimensionais de 3 a 5 pontos.
+Integrando o produto escalar $\mathbf{N}_k^I \cdot \mathbf{N}_{i_0}^I$ sobre o disco circular de raio $r_s$:
+- Termos de ordem zero: $\iint_{\Omega_s^I} 1 \, dA = \pi r_s^2$
+- Termos lineares e cruzados: $\iint \Delta x \, dA = \iint \Delta y \, dA = \iint \Delta x \Delta y \, dA = 0$ (por simetria polar)
+- Termos quadráticos: $\iint \Delta x^2 \, dA = \iint \Delta y^2 \, dA = \frac{\pi r_s^4}{4} = I_2$
 
-### 6.2 Espalhamento (*Assembly*) Global
+Obtém-se a **fórmula analítica fechada da massa**:
+$$
+M_I^{\text{local}}(k) = \epsilon_r \left[ (\beta_{0, k} \beta_{0, i_0} + \beta_{1, k} \beta_{1, i_0}) (\pi r_s^2) + \sum_{p=2}^5 \beta_{p, k} \beta_{p, i_0} \left(\frac{\pi r_s^4}{4}\right) \right]
+$$
+
+### 6.3 Vetor de Força Local $F_I$ (Para Fontes Arbitrárias e MMS)
+Para um termo de corrente fonte $\mathbf{J}_s(\mathbf{x})$:
+$$
+F_I = \iint_{\Omega_s^I} \mathbf{J}_s(\mathbf{x}) \cdot \mathbf{N}_{i_0}^I(\mathbf{x}) \, dA
+$$
+### 6.4 Espalhamento (*Assembly*) Global
 Cada nó $I$ gera uma linha no sistema global. Os 6 coeficientes calculados em $\mathbf{K}_I^{\text{local}}$ e $\mathbf{M}_I^{\text{local}}$ são alocados nas colunas correspondentes aos 6 nós globais $\{g_1, \dots, g_6\}$ do stencil do nó $I$:
 
 $$

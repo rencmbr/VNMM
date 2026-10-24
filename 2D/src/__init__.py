@@ -45,6 +45,13 @@ from .mlpg_subdomains import (
     eval_test_function_curl_2d,
     eval_test_function_div_2d
 )
+from .mlpg_assembler_2d import (
+    assemble_mlpg_matrices_2d,
+    compute_subdomain_matrices_analytic,
+    compute_subdomain_matrices_numeric,
+    compute_subdomain_source_vector,
+    get_disk_quadrature_points_2d
+)
 
 __all__ = [
     "generate_cavity_mesh",
@@ -78,5 +85,10 @@ __all__ = [
     "quartic_spline_derivative",
     "eval_test_function_2d",
     "eval_test_function_curl_2d",
-    "eval_test_function_div_2d"
+    "eval_test_function_div_2d",
+    "assemble_mlpg_matrices_2d",
+    "compute_subdomain_matrices_analytic",
+    "compute_subdomain_matrices_numeric",
+    "compute_subdomain_source_vector",
+    "get_disk_quadrature_points_2d"
 ]
