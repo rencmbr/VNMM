@@ -167,35 +167,38 @@ def plot_fig2_patch_test():
 
 
 def plot_fig3_mms_convergence():
-    print("Generating Figure 3: MMS Asymptotic Refinement Convergence...")
+    print("Generating Figure 3: MMS Asymptotic Refinement Convergence (Dirichlet & Neumann)...")
     grids = [9, 13, 17, 21, 25]
-    res = run_mlpg_mms_convergence_study(grid_sizes=grids, alpha_s=0.8, s_div=6.0)
+    res_dir = run_mlpg_mms_convergence_study(grid_sizes=grids, alpha_s=0.8, s_div=6.0, boundary_condition="dirichlet")
+    res_neu = run_mlpg_mms_convergence_study(grid_sizes=grids, alpha_s=0.8, s_div=6.0, boundary_condition="mixed_neumann")
 
-    h_vals = res['h_values']
-    err_L2 = res['errors_L2']
-    err_curl = res['errors_curl']
-    err_dof = res['errors_dof']
+    h_vals = res_dir['h_values']
 
-    fig, ax = plt.subplots(figsize=(6.5, 4.8))
+    fig, ax = plt.subplots(figsize=(7.2, 5.0))
 
-    ax.loglog(h_vals, err_L2, 'o-b', linewidth=1.8, markersize=6,
-              label=f'$L^2(\\mathbf{{E}})$ error (Rate: $\\mathcal{{O}}(h^{{{res["rate_L2"]:.2f}}})$)')
-    ax.loglog(h_vals, err_curl, 's-r', linewidth=1.8, markersize=6,
-              label=f'$H(\\mathbf{{curl}})$ error (Rate: $\\mathcal{{O}}(h^{{{res["rate_curl"]:.2f}}})$)')
-    ax.loglog(h_vals, err_dof, '^--k', linewidth=1.4, markersize=6,
-              label=f'Discrete DoF error (Rate: $\\mathcal{{O}}(h^{{{res["rate_dof"]:.2f}}})$)')
+    # Pure Dirichlet curves
+    ax.loglog(h_vals, res_dir['errors_L2'], 'o-b', linewidth=1.8, markersize=6,
+              label=f'Dirichlet $L^2(\\mathbf{{E}})$ (Rate: $\\mathcal{{O}}(h^{{{res_dir["rate_L2"]:.2f}}})$)')
+    ax.loglog(h_vals, res_dir['errors_curl'], 's-r', linewidth=1.8, markersize=6,
+              label=f'Dirichlet $H(\\mathbf{{curl}})$ (Rate: $\\mathcal{{O}}(h^{{{res_dir["rate_curl"]:.2f}}})$)')
 
-    # Add theoretical asymptotic slopes
+    # Mixed Dirichlet-Neumann curves
+    ax.loglog(h_vals, res_neu['errors_L2'], 'o--c', linewidth=1.8, markersize=6, fillstyle='none',
+              label=f'Mixed Neumann $L^2(\\mathbf{{E}})$ (Rate: $\\mathcal{{O}}(h^{{{res_neu["rate_L2"]:.2f}}})$)')
+    ax.loglog(h_vals, res_neu['errors_curl'], 's--m', linewidth=1.8, markersize=6, fillstyle='none',
+              label=f'Mixed Neumann $H(\\mathbf{{curl}})$ (Rate: $\\mathcal{{O}}(h^{{{res_neu["rate_curl"]:.2f}}})$)')
+
+    # Theoretical asymptotic slopes
     h_ref = np.array([h_vals[1], h_vals[-1]])
-    slope2 = err_L2[1] * (h_ref / h_ref[0]) ** 2.0
-    slope1 = err_curl[1] * (h_ref / h_ref[0]) ** 1.0
-    ax.loglog(h_ref, slope2, 'b:', linewidth=1.2, label='Theoretical $\\mathcal{O}(h^2)$ slope')
-    ax.loglog(h_ref, slope1, 'r:', linewidth=1.2, label='Theoretical $\\mathcal{O}(h^1)$ slope')
+    slope2 = res_dir['errors_L2'][1] * (h_ref / h_ref[0]) ** 2.0
+    slope1 = res_dir['errors_curl'][1] * (h_ref / h_ref[0]) ** 1.0
+    ax.loglog(h_ref, slope2, 'k:', linewidth=1.2, label='Theoretical $\\mathcal{O}(h^2)$ slope')
+    ax.loglog(h_ref, slope1, 'gray', linestyle=':', linewidth=1.2, label='Theoretical $\\mathcal{O}(h^1)$ slope')
 
     ax.set_xlabel('Characteristic Nodal Spacing $h = \\pi / (N - 1)$ [rad]')
     ax.set_ylabel('Relative Error Norm')
-    ax.set_title('MMS Asymptotic Convergence: VNMM-MLPG Optimal $\\mathcal{P}^1$ Rates')
-    ax.legend(loc='lower right', framealpha=0.92)
+    ax.set_title('MMS Asymptotic Convergence: Pure Dirichlet vs. Mixed Neumann')
+    ax.legend(loc='lower right', framealpha=0.92, fontsize=8.5)
     ax.grid(True, which='both', linestyle=':', alpha=0.5)
 
     out_path = os.path.join(CURRENT_DIR, "fig_mlpg_mms_convergence.png")

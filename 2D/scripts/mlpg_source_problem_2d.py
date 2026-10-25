@@ -63,12 +63,16 @@ def assemble_and_solve_mlpg_mms(
     kappa: float = 1.0,
     mu_r: float = 1.0,
     n_r: int = 4,
-    n_theta: int = 12
+    n_theta: int = 12,
+    boundary_condition: str = "dirichlet"
 ) -> Dict[str, Any]:
     """
     Assembles and solves the MLPG MMS boundary value problem:
         (K + kappa * M) * e = F
-    under essential Dirichlet boundary conditions prescribed by E*(x_k) . t_k.
+    under either:
+      - "dirichlet": Essential Dirichlet on all boundaries (prescribed by E*(x_k) . t_k).
+      - "mixed_neumann": Dirichlet on x in {0, pi} and homogeneous natural Neumann
+                         on y in {0, pi} (where tau = n x curl E* = 0).
     """
     coords = np.asarray(coords, dtype=float)
     vectors = np.asarray(vectors, dtype=float)
@@ -132,8 +136,22 @@ def assemble_and_solve_mlpg_mms(
     # Exact DoFs on all nodes
     e_exact = np.array([np.dot(exact_solution_mms(x, y), t) for (x, y), t in zip(coords, vectors)])
 
-    idx_bnd = np.where(is_boundary)[0]
-    idx_int = np.where(~is_boundary)[0]
+    if boundary_condition.lower() in ("mixed_neumann", "neumann"):
+        # Essential Dirichlet on x = 0 and x = pi
+        # Natural Neumann on y = 0 and y = pi (traction vanishes identically: tau = 0)
+        tol = 1e-7
+        is_essential = np.zeros(N, dtype=bool)
+        for i, (x, y) in enumerate(coords):
+            if is_boundary[i]:
+                if abs(x - 0.0) < tol or abs(x - np.pi) < tol:
+                    is_essential[i] = True
+                else:
+                    is_essential[i] = False
+        idx_bnd = np.where(is_essential)[0]
+        idx_int = np.where(~is_essential)[0]
+    else:
+        idx_bnd = np.where(is_boundary)[0]
+        idx_int = np.where(~is_boundary)[0]
 
     A_ii = A[idx_int, :][:, idx_int]
     A_ib = A[idx_int, :][:, idx_bnd]
@@ -200,7 +218,8 @@ def run_mlpg_mms_convergence_study(
     grid_sizes: Optional[List[int]] = None,
     s_div: float = 6.0,
     kappa: float = 1.0,
-    alpha_s: float = 0.8
+    alpha_s: float = 0.8,
+    boundary_condition: str = "dirichlet"
 ) -> Dict[str, Any]:
     """
     Executes asymptotic convergence analysis across a sequence of grid refinements.
@@ -208,8 +227,9 @@ def run_mlpg_mms_convergence_study(
     if grid_sizes is None:
         grid_sizes = [9, 13, 17, 21, 25]
 
+    bc_desc = "Pure Dirichlet" if boundary_condition == "dirichlet" else "Mixed Dirichlet-Neumann (PMC)"
     print("=" * 88)
-    print("      VNMM-MLPG 2D CONVERGENCE STUDY: MANUFACTURED SOLUTION (MMS)")
+    print(f"      VNMM-MLPG 2D CONVERGENCE STUDY: MMS [{bc_desc.upper()}]")
     print("=" * 88)
     print(f"Parameters: s_div = {s_div:.1f}, kappa = {kappa:.1f}, alpha_s = {alpha_s:.2f} (cell-free MLPG)")
     print("Exact Field: E* = [sin(x)cos(y), -cos(x)sin(y)]^T (curl = 2*sin(x)sin(y), div = 0)")
@@ -232,7 +252,8 @@ def run_mlpg_mms_convergence_study(
             is_boundary=is_bnd,
             alpha_s=alpha_s,
             s_div=s_div,
-            kappa=kappa
+            kappa=kappa,
+            boundary_condition=boundary_condition
         )
 
         h_values.append(h)
@@ -270,4 +291,8 @@ def run_mlpg_mms_convergence_study(
 
 
 if __name__ == "__main__":
-    run_mlpg_mms_convergence_study()
+    print("\n>>> CASO 1: CONDIÇÕES DE DIRICHLET PURAS")
+    res_dir = run_mlpg_mms_convergence_study(boundary_condition="dirichlet")
+
+    print("\n>>> CASO 2: CONDIÇÕES MISTAS DIRICHLET-NEUMANN (PMC)")
+    res_neu = run_mlpg_mms_convergence_study(boundary_condition="mixed_neumann")
