@@ -150,14 +150,16 @@
   de Minas Gerais (UFMG), \bibinfo{address}{Belo Horizonte, Brasil},
   \bibinfo{year}{2025}.
 %Type = Article
-\bibitem[{Mesquita et~al.(2025)Mesquita, Silva, Gon{\c{c}}alves, and
-  Ortiz}]{stable_vnmm2d_2025}
+\bibitem[{Mesquita et~al.(2026)Mesquita, Silva, Gon{\c{c}}alves, and
+  Ortiz}]{stable_vnmm2d_2026}
 \bibinfo{author}{R.~C. Mesquita}, \bibinfo{author}{E.~J. Silva},
   \bibinfo{author}{B.~M.~F. Gon{\c{c}}alves}, \bibinfo{author}{L.~A.~G. Ortiz},
 \newblock \bibinfo{title}{A stabilized vector nodal meshless method for
-  {H(curl)} {2D} electromagnetic problems on irregular point clouds},
-\newblock \bibinfo{journal}{Engineering Analysis with Boundary Elements}
-  (\bibinfo{year}{2025}). \bibinfo{note}{Under review}.
+  {$H(\mathbf{curl})$} {2D} electromagnetic problems on irregular point
+  clouds},
+\newblock \bibinfo{journal}{SSRN Electronic Journal}  (\bibinfo{year}{2026}).
+  \DOIprefix\doi{10.2139/ssrn.7661625}, \bibinfo{note}{preprint, submitted to
+  Engineering Analysis with Boundary Elements}.
 %Type = Book
 \bibitem[{Atluri and Shen(2002)}]{atluri2002meshless}
 \bibinfo{author}{S.~N. Atluri}, \bibinfo{author}{S.-P. Shen},
