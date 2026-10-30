@@ -91,16 +91,25 @@ def assemble_mlpg_patch_test_system(
     subdomains: List[MLPGSubdomain2D],
     target_field: Dict[str, Any],
     s_div: float = 6.0,
-    mu_r: float = 1.0
+    mu_r: float = 1.0,
+    assembly_mode: str = "row_petrov_galerkin"
 ) -> Tuple[csr_matrix, np.ndarray]:
     """
     Assembles MLPG global stiffness matrix K and consistent patch test load vector F.
 
-    For each subdomain Omega_s^I (disk of radius r_s):
-    - K_I: Analytical closed-form local stiffness vector (1, 6).
-    - F_I: Consistent load from exact constant curl and divergence:
-        F_I = [ (1 / mu_r) * rot_exact * curl(W_I)_z + (s_div / mu_r) * div_exact * div(W_I) ] * Area
-      For harmonic affine fields (rot_exact = 0, div_exact = 0), F_I = 0 identically.
+    Parameters
+    ----------
+    subdomains : List[MLPGSubdomain2D]
+        List of local MLPG circular subdomains.
+    target_field : Dict[str, Any]
+        Affine target field specification with exact curl and divergence.
+    s_div : float
+        Volumetric divergence penalty factor.
+    mu_r : float
+        Relative magnetic permeability.
+    assembly_mode : str
+        - "row_petrov_galerkin" (unsymmetric): One test function W_I = N_{i0}^I per disk Omega_s^I.
+        - "subdomain_galerkin" (symmetric): Full 6x6 local Galerkin testing against all N_a^I on Omega_s^I.
     """
     N = len(subdomains)
     rows, cols, data = [], [], []
@@ -109,32 +118,66 @@ def assemble_mlpg_patch_test_system(
     rot_exact = float(target_field["rot"])
     div_exact = float(target_field["div"])
 
-    for i, sub in enumerate(subdomains):
-        k_loc, _ = compute_subdomain_matrices_analytic(
-            subdomain=sub,
-            mu_r=mu_r,
-            epsilon_r=1.0,
-            s_div=s_div
-        )
+    if assembly_mode.lower() in ("subdomain_galerkin", "symmetric", "galerkin"):
+        # Symmetric Subdomain Galerkin Assembly (MLPG6)
+        for sub in subdomains:
+            k_6x6, _ = compute_subdomain_matrices_analytic(
+                subdomain=sub,
+                mu_r=mu_r,
+                epsilon_r=1.0,
+                s_div=s_div,
+                matrix_format="6x6"
+            )
+            curls = sub.eval_shape_curl()
+            divs = sub.eval_shape_div()
+            area = np.pi * (sub.radius_s ** 2)
+            f_loc = (
+                (1.0 / mu_r) * rot_exact * curls +
+                (s_div / mu_r) * div_exact * divs
+            ) * area
 
-        for k_idx, g_col in enumerate(sub.stencil_nodes):
-            rows.append(i)
-            cols.append(g_col)
-            data.append(k_loc[k_idx])
+            st = sub.stencil_nodes
+            for a in range(6):
+                Ia = st[a]
+                F[Ia] += f_loc[a]
+                for b in range(6):
+                    Ib = st[b]
+                    rows.append(Ia)
+                    cols.append(Ib)
+                    data.append(k_6x6[a, b])
 
-        # Compute consistent force vector F_i
-        stencil = sub.stencil_nodes
-        i0 = np.where(stencil == sub.node_idx)[0][0]
-        curls = sub.eval_shape_curl()
-        divs = sub.eval_shape_div()
-        area = np.pi * (sub.radius_s ** 2)
+        K = coo_matrix((data, (rows, cols)), shape=(N, N), dtype=float).tocsr()
+        K = 0.5 * (K + K.T)
+    else:
+        # Classical Row-by-Row Petrov-Galerkin Assembly (Unsymmetric)
+        for i, sub in enumerate(subdomains):
+            k_loc, _ = compute_subdomain_matrices_analytic(
+                subdomain=sub,
+                mu_r=mu_r,
+                epsilon_r=1.0,
+                s_div=s_div,
+                matrix_format="row"
+            )
 
-        F[i] = (
-            (1.0 / mu_r) * rot_exact * curls[i0] +
-            (s_div / mu_r) * div_exact * divs[i0]
-        ) * area
+            for k_idx, g_col in enumerate(sub.stencil_nodes):
+                rows.append(i)
+                cols.append(g_col)
+                data.append(k_loc[k_idx])
 
-    K = coo_matrix((data, (rows, cols)), shape=(N, N), dtype=float).tocsr()
+            # Compute consistent force vector F_i
+            stencil = sub.stencil_nodes
+            i0 = np.where(stencil == sub.node_idx)[0][0]
+            curls = sub.eval_shape_curl()
+            divs = sub.eval_shape_div()
+            area = np.pi * (sub.radius_s ** 2)
+
+            F[i] = (
+                (1.0 / mu_r) * rot_exact * curls[i0] +
+                (s_div / mu_r) * div_exact * divs[i0]
+            ) * area
+
+        K = coo_matrix((data, (rows, cols)), shape=(N, N), dtype=float).tocsr()
+
     return K, F
 
 
@@ -146,12 +189,13 @@ def run_mlpg_patch_test_mode(
     subdomains: Optional[List[MLPGSubdomain2D]] = None,
     alpha_s: float = 0.8,
     s_div: float = 6.0,
-    mu_r: float = 1.0
+    mu_r: float = 1.0,
+    assembly_mode: str = "row_petrov_galerkin"
 ) -> Dict[str, Any]:
     """
     Executes the Galerkin Patch Test for a single affine target field:
     1. Builds subdomains (if not precomputed).
-    2. Assembles K and F analytically.
+    2. Assembles K and F analytically using either 'row_petrov_galerkin' (unsymmetric) or 'subdomain_galerkin' (symmetric).
     3. Prescribes exact values on boundary degrees of freedom: e_bnd = E_target(x_k) . t_k.
     4. Solves partitioned system: K_int,int * e_int = F_int - K_int,bnd * e_bnd.
     5. Evaluates relative infinity-norm error on free interior degrees of freedom.
@@ -183,7 +227,8 @@ def run_mlpg_patch_test_mode(
         subdomains=subdomains,
         target_field=target_field,
         s_div=s_div,
-        mu_r=mu_r
+        mu_r=mu_r,
+        assembly_mode=assembly_mode
     )
 
     # Partitioned system
@@ -206,7 +251,8 @@ def run_mlpg_patch_test_mode(
         "num_internal_dofs": len(idx_int),
         "num_boundary_dofs": len(idx_bnd),
         "e_sol_int": e_sol_int,
-        "e_exact_int": e_exact[idx_int]
+        "e_exact_int": e_exact[idx_int],
+        "assembly_mode": assembly_mode
     }
 
 
@@ -215,6 +261,7 @@ def run_mlpg_patch_test_suite(Nx: int = 11, Ny: int = 11) -> bool:
     Executes full patch test suite across all 7 affine states on two mesh topologies:
     1. Regular Cartesian grid (alternating directors 45°/135°)
     2. Irregular cloud with 25% jitter and random directors
+    Tests BOTH Unsymmetric (Row-by-Row) and Symmetric (Subdomain Galerkin) formulations.
     """
     topologies = [
         {
@@ -229,9 +276,9 @@ def run_mlpg_patch_test_suite(Nx: int = 11, Ny: int = 11) -> bool:
         }
     ]
 
-    print("=" * 85)
-    print("      VNMM-MLPG 2D GALERKIN PATCH TEST SUITE (EXACT LOCAL GALERKIN MLPG6)")
-    print("=" * 85)
+    print("=" * 105)
+    print("      VNMM-MLPG 2D GALERKIN PATCH TEST SUITE: UNSYMMETRIC VS SYMMETRIC ASSEMBLY")
+    print("=" * 105)
 
     all_passed = True
 
@@ -259,32 +306,44 @@ def run_mlpg_patch_test_suite(Nx: int = 11, Ny: int = 11) -> bool:
 
         print(f"\n>>> TOPOLOGY: {topo['name']}")
         print(f"    Total nodes: {n_tot} | Boundary nodes (Dirichlet): {n_bnd} | Internal nodes (free): {n_int}")
-        print("-" * 85)
-        print(f"{'Tested Affine State':<44} | {'Rel DoF Error':<16} | {'Verdict':<10}")
-        print("-" * 85)
+        print("-" * 105)
+        print(f"{'Tested Affine State':<38} | {'Unsym Error':<16} | {'Sym Error':<16} | {'Verdicts':<12}")
+        print("-" * 105)
 
         for mode in AFFINE_MODES:
-            res = run_mlpg_patch_test_mode(
+            res_unsym = run_mlpg_patch_test_mode(
                 coords=coords,
                 vectors=vectors,
                 is_boundary=is_bnd,
                 target_field=mode,
                 subdomains=subdomains,
-                s_div=6.0
+                s_div=6.0,
+                assembly_mode="row_petrov_galerkin"
+            )
+            res_sym = run_mlpg_patch_test_mode(
+                coords=coords,
+                vectors=vectors,
+                is_boundary=is_bnd,
+                target_field=mode,
+                subdomains=subdomains,
+                s_div=6.0,
+                assembly_mode="subdomain_galerkin"
             )
 
-            rel_err = res["error_dof_rel"]
-            passed = rel_err < 1e-10
-            if not passed:
+            rel_err_u = res_unsym["error_dof_rel"]
+            rel_err_s = res_sym["error_dof_rel"]
+            passed_u = rel_err_u < 1e-10
+            passed_s = rel_err_s < 1e-10
+            if not (passed_u and passed_s):
                 all_passed = False
 
-            verdict = "PASS" if passed else "FAIL"
-            print(f"{mode['name']:<44} | {rel_err:<16.2e} | {verdict:<10}")
+            verdict = "PASS / PASS" if (passed_u and passed_s) else "FAIL"
+            print(f"{mode['name']:<38} | {rel_err_u:<16.2e} | {rel_err_s:<16.2e} | {verdict:<12}")
 
-    print("\n" + "=" * 85)
-    final_verdict = "ALL PATCH TESTS PASSED TO MACHINE PRECISION!" if all_passed else "SOME PATCH TESTS FAILED!"
+    print("\n" + "=" * 105)
+    final_verdict = "ALL PATCH TESTS (UNSYMMETRIC & SYMMETRIC) PASSED TO MACHINE PRECISION!" if all_passed else "SOME PATCH TESTS FAILED!"
     print(f"OVERALL STATUS: {final_verdict}")
-    print("=" * 85)
+    print("=" * 105)
     return all_passed
 
 

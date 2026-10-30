@@ -46,7 +46,7 @@ def solve_mlpg_cavity_eigenvalues(
     Ny: int = 21,
     Lx: float = np.pi,
     Ly: float = np.pi,
-    alpha_s: float = 0.9,
+    alpha_s: float = 0.80,
     s_div: float = 15.0,
     num_eigenvalues: int = 10,
     interior_type: str = "alternating",
@@ -219,7 +219,7 @@ def run_mlpg_s_div_sensitivity_study(
     Nx: int = 21,
     Ny: int = 21,
     s_div_list: Optional[List[float]] = None,
-    alpha_s: float = 0.9,
+    alpha_s: float = 0.80,
     verbose: bool = True
 ) -> List[Dict[str, Any]]:
     """
@@ -342,7 +342,7 @@ def run_mlpg_vs_gauss_benchmark(
     # 2. VNMM-MLPG (cell-free, N subdominios circulares analiticos)
     t0_mlpg = time.time()
     subdomains = build_mlpg_subdomains_2d(
-        coords=coords, vectors=vectors, is_boundary=is_bnd, alpha_s=0.9
+        coords=coords, vectors=vectors, is_boundary=is_bnd, alpha_s=0.80
     )
     K_mlpg, M_mlpg, _ = assemble_mlpg_matrices_2d(
         subdomains=subdomains,
@@ -395,11 +395,11 @@ def main():
         Nx=21,
         Ny=21,
         s_div=15.0,
-        alpha_s=0.9,
+        alpha_s=0.80,
         num_eigenvalues=10
     )
 
-    print(f"\nResultados do Caso Base (Nx=Ny=21, s_div=15.0, alpha_s=0.9):")
+    print(f"\nResultados do Caso Base (Nx=Ny=21, s_div=15.0, alpha_s=0.80):")
     print(f"DoFs Internos Ativos: {res['interior_dofs']}")
     print(f"Tempo Total:          {res['total_time']:.4f} s (Montagem: {res['time_assembly']:.4f} s, Solucao: {res['time_solve']:.4f} s)")
     print(f"Condicionamento K:    {res['cond_K']:.2e}")
@@ -423,7 +423,7 @@ def main():
     print(f"Erro Relativo Maximo em kc: {res['max_error_kc_pct']:.2f}%")
 
     # 2. Estudo de Sensibilidade de s_div
-    run_mlpg_s_div_sensitivity_study(Nx=21, Ny=21, alpha_s=0.9, verbose=True)
+    run_mlpg_s_div_sensitivity_study(Nx=21, Ny=21, alpha_s=0.80, verbose=True)
 
     # 3. Benchmarking de Desempenho
     run_mlpg_vs_gauss_benchmark(Nx=21, Ny=21, s_div=6.0, verbose=True)

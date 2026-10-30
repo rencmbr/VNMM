@@ -21,6 +21,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from scipy.spatial import ConvexHull
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(CURRENT_DIR))
@@ -59,77 +60,142 @@ plt.rcParams.update({
 
 def plot_fig1_schematic():
     print("Generating Figure 1: Schematic of MLPG Subdomains...")
-    fig, ax = plt.subplots(figsize=(6.5, 5.5))
+    fig, ax = plt.subplots(figsize=(7.2, 7.8), dpi=300)
 
     Nx, Ny = 9, 9
     Lx, Ly = np.pi, np.pi
-    coords, vectors, is_bnd = generate_cavity_mesh(Nx=Nx, Ny=Ny, Lx=Lx, Ly=Ly, jitter_frac=0.08, seed=42)
-    subdomains = build_mlpg_subdomains_2d(coords, vectors, is_boundary=is_bnd, alpha_s=0.85)
+    coords, vectors, is_bnd = generate_cavity_mesh(
+        Nx=Nx, Ny=Ny, Lx=Lx, Ly=Ly, jitter_frac=0.25, interior_type='random', seed=42
+    )
+    subs = build_mlpg_subdomains_2d(coords, vectors, is_boundary=is_bnd, alpha_s=1.1)
 
-    # Draw domain boundary
-    rect = patches.Rectangle((0, 0), Lx, Ly, linewidth=1.5, edgecolor='black', facecolor='whitesmoke', zorder=1)
-    ax.add_patch(rect)
+    domain_rect = patches.Rectangle((0, 0), Lx, Ly, linewidth=2.0, edgecolor='#2c3e50', facecolor='#fafbfc', zorder=1)
+    ax.add_patch(domain_rect)
 
-    # Plot all nodes and director vectors
-    ax.quiver(coords[:, 0], coords[:, 1], vectors[:, 0], vectors[:, 1],
-              angles='xy', scale_units='xy', scale=7, color='gray', alpha=0.6, width=0.003, zorder=2)
-    ax.scatter(coords[~is_bnd, 0], coords[~is_bnd, 1], c='navy', s=25, label='Interior Nodes ($c_k$ free)', zorder=3)
-    ax.scatter(coords[is_bnd, 0], coords[is_bnd, 1], c='crimson', s=35, marker='s', label='PEC Boundary Nodes ($e_k = 0$)', zorder=3)
+    # Interior nodes with random directors (matching node color, smaller arrow heads)
+    ax.quiver(coords[~is_bnd, 0], coords[~is_bnd, 1], vectors[~is_bnd, 0], vectors[~is_bnd, 1],
+              angles='xy', scale_units='xy', scale=7.0, color='#2c3e50', alpha=0.85,
+              width=0.0055, headwidth=3.0, headlength=3.5, headaxislength=3.0, zorder=2)
+    p_int = ax.scatter(coords[~is_bnd, 0], coords[~is_bnd, 1], c='#2c3e50', s=22, zorder=3,
+                       label=r'Interior node $\mathbf{x}_k$ (random orientation)')
 
-    # Highlight an interior node I
-    idx_int = 20  # near center
-    sub_int = subdomains[idx_int]
-    c_int = sub_int.center
-    r_int = sub_int.radius_s
+    # Boundary nodes with strictly tangential directors (smaller arrow heads, smaller squares)
+    ax.quiver(coords[is_bnd, 0], coords[is_bnd, 1], vectors[is_bnd, 0], vectors[is_bnd, 1],
+              angles='xy', scale_units='xy', scale=7.0, color='#c0392b', alpha=0.90,
+              width=0.0060, headwidth=3.0, headlength=3.5, headaxislength=3.0, zorder=2)
+    p_bnd = ax.scatter(coords[is_bnd, 0], coords[is_bnd, 1], c='#c0392b', s=16, marker='s', zorder=3,
+                       label=r'Boundary node (tangential $\mathbf{t}_k$)')
 
-    # Subdomain disk Omega_s^I
-    circle_int = patches.Circle(c_int, r_int, edgecolor='blue', facecolor='cyan', alpha=0.35, linewidth=1.8,
-                                linestyle='--', zorder=4, label='Local Subdomain $\\Omega_s^I$ (radius $r_s$)')
-    ax.add_patch(circle_int)
-    ax.scatter(c_int[0], c_int[1], c='blue', s=70, marker='*', zorder=6, label='Central Node $\\mathbf{x}_I$')
+    def draw_stencil(idx, color):
+        sub = subs[idx]
+        c = sub.center
+        st_idx = sub.stencil_nodes
+        st_pts = coords[st_idx]
+        # Support stencil represented strictly by node marks and dotted lines (no shaded patch)
+        for pt in st_pts:
+            ax.plot([c[0], pt[0]], [c[1], pt[1]], color=color, linestyle=':', linewidth=1.2, alpha=0.7, zorder=4)
+        ax.scatter(st_pts[:, 0], st_pts[:, 1], edgecolors=color, facecolor='none', s=85, linewidth=1.5, zorder=5)
 
-    # Draw stencil connections for Omega_u^I
-    st_coords = coords[sub_int.stencil_nodes]
-    for pt in st_coords:
-        ax.plot([c_int[0], pt[0]], [c_int[1], pt[1]], 'b:', alpha=0.7, linewidth=1.2, zorder=4)
-    ax.scatter(st_coords[:, 0], st_coords[:, 1], edgecolors='blue', facecolor='none', s=80, linewidth=1.5, zorder=5,
-               label='Trial Support Stencil $\\Omega_u^I$ (6 nodes)')
+    # Case 1: Pure interior node 24
+    draw_stencil(24, '#1f77b4')
+    sub1 = subs[24]
+    circ1 = patches.Circle(sub1.center, sub1.radius_s, facecolor='#3498db', edgecolor='#1f77b4',
+                           alpha=0.38, linewidth=1.6, zorder=4)
+    ax.add_patch(circ1)
+    ax.scatter(sub1.center[0], sub1.center[1], c='#1f77b4', s=95, marker='*', zorder=6)
 
-    # Highlight a boundary node B
-    bnd_indices = np.where(is_bnd)[0]
-    idx_bnd = bnd_indices[4]  # on bottom wall
-    sub_b = subdomains[idx_bnd]
-    c_b = sub_b.center
-    r_b = sub_b.radius_s
+    # Case 2: Interior node intersecting boundary (node 3) - strictly truncated inside Omega
+    draw_stencil(3, '#d35400')
+    sub2 = subs[3]
+    c2 = sub2.center
+    r2 = sub2.radius_s
+    alpha2 = np.arcsin(c2[1] / r2)
+    thetas2 = np.linspace(-alpha2, np.pi + alpha2, 200)
+    arc2_x = c2[0] + r2 * np.cos(thetas2)
+    arc2_y = c2[1] + r2 * np.sin(thetas2)
+    poly2_pts = np.column_stack([arc2_x, arc2_y])
+    poly2 = patches.Polygon(poly2_pts, closed=True, facecolor='#f39c12', edgecolor='#d35400', alpha=0.42, linewidth=1.6, zorder=4)
+    ax.add_patch(poly2)
+    ax.scatter(c2[0], c2[1], c='#d35400', s=95, marker='*', zorder=6)
+    dx2 = np.sqrt(r2**2 - c2[1]**2)
+    ax.plot([c2[0] - dx2, c2[0] + dx2], [0, 0], color='#b9770e', linewidth=4.0, zorder=7)
 
-    circle_b = patches.Circle(c_b, r_b, edgecolor='red', facecolor='coral', alpha=0.4, linewidth=1.8,
-                              linestyle='--', zorder=4, label='Boundary Subdomain $\\Omega_s^B$ (intersects $\\partial\\Omega$)')
-    ax.add_patch(circle_b)
-    ax.scatter(c_b[0], c_b[1], c='red', s=70, marker='s', zorder=6)
+    # Case 3: Boundary node B (node 68 on x=0) - strictly truncated inside Omega
+    draw_stencil(68, '#8e44ad')
+    sub3 = subs[68]
+    c3 = sub3.center
+    r3 = sub3.radius_s
+    thetas3 = np.linspace(-np.pi/2, np.pi/2, 200)
+    arc3_x = c3[0] + r3 * np.cos(thetas3)
+    arc3_y = c3[1] + r3 * np.sin(thetas3)
+    poly3_pts = np.column_stack([arc3_x, arc3_y])
+    poly3 = patches.Polygon(poly3_pts, closed=True, facecolor='#9b59b6', edgecolor='#7d3c98', alpha=0.42, linewidth=1.6, zorder=4)
+    ax.add_patch(poly3)
+    ax.scatter(c3[0], c3[1], c='#7d3c98', s=65, marker='s', zorder=6)
+    ax.plot([0, 0], [c3[1] - r3, c3[1] + r3], color='#6c3483', linewidth=4.0, zorder=7)
 
-    ax.set_xlim(-0.25, Lx + 0.25)
-    ax.set_ylim(-0.25, Ly + 0.25)
+    # Domain labels
+    ax.text(Lx * 0.78, Ly * 0.90, r'Domain $\Omega$', fontsize=11, fontweight='bold', color='#2c3e50', alpha=0.65)
+    ax.text(Lx * 0.5, Ly + 0.07, r'Boundary $\partial\Omega$', fontsize=10.5, color='#2c3e50', ha='center')
+
+    # Annotations with capital B for Case 3
+    ax.annotate(r'$\mathbf{Case\ 1:\ Fully\ Interior}$' + '\n' + r'Subdomain $\Omega_s^{I_1} \subset \Omega$' + '\n' + r'Stencil $\Omega_u^{I_1}$ (6 nodes)',
+                xy=(sub1.center[0] + 0.12, sub1.center[1] + 0.12),
+                xytext=(sub1.center[0] + 0.50, sub1.center[1] + 0.55),
+                arrowprops=dict(arrowstyle='->', color='#1f77b4', lw=1.2),
+                fontsize=8.0, color='#1f77b4',
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='#ebf5fb', edgecolor='#1f77b4', alpha=0.92))
+
+    ax.annotate(r'$\mathbf{Case\ 2:\ Truncated\ Interior}$' + '\n' + r'Subdomain $\Omega_s^{I_2} \cap \Omega$' + '\n' + r'Stencil $\Omega_u^{I_2}$ (6 nodes)',
+                xy=(c2[0] + 0.22, c2[1]),
+                xytext=(c2[0] + 0.35, c2[1] + 0.40),
+                arrowprops=dict(arrowstyle='->', color='#d35400', lw=1.2),
+                fontsize=8.0, color='#d35400',
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='#fef5e7', edgecolor='#d35400', alpha=0.92))
+
+    ax.annotate(r'$\mathbf{Case\ 3:\ Truncated\ Boundary}$' + '\n' + r'Subdomain $\Omega_s^B \cap \Omega$' + '\n' + r'Stencil $\Omega_u^B$ (6 nodes)',
+                xy=(c3[0] + 0.12, c3[1] + 0.22),
+                xytext=(c3[0] + 0.08, c3[1] + 0.72),
+                arrowprops=dict(arrowstyle='->', color='#8e44ad', lw=1.2),
+                fontsize=8.0, color='#8e44ad',
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='#f5eef8', edgecolor='#8e44ad', alpha=0.92))
+
+    margin = 0.25
+    ax.set_xlim(-margin, Lx + margin)
+    ax.set_ylim(-margin, Ly + margin)
     ax.set_aspect('equal')
-    ax.set_xlabel('$x$ [rad]')
-    ax.set_ylabel('$y$ [rad]')
-    ax.set_title('VNMM-MLPG 2D Discretization: Local Subdomains $\\Omega_s$ and Stencils $\\Omega_u$')
-    ax.legend(loc='upper right', framealpha=0.92, fontsize=8)
-    ax.grid(True, linestyle=':', alpha=0.4)
+    ax.axis('off')
+
+    custom_handles = [
+        p_int,
+        p_bnd,
+        patches.Patch(facecolor='#3498db', edgecolor='#1f77b4', alpha=0.5, label=r'Subdomain $\Omega_s^{I_1} \subset \Omega$ (internal)'),
+        patches.Patch(facecolor='#f39c12', edgecolor='#d35400', alpha=0.5, label=r'Subdomain $\Omega_s^{I_2} \cap \Omega$ (truncated)'),
+        patches.Patch(facecolor='#9b59b6', edgecolor='#7d3c98', alpha=0.5, label=r'Subdomain $\Omega_s^B \cap \Omega$ (truncated)'),
+        plt.Line2D([0], [0], color='#b9770e', linewidth=3, label=r'Boundary segment $\Gamma_{sI}, \Gamma_{sB} = \Omega_s \cap \partial\Omega$'),
+        plt.Line2D([0], [0], color='#2c3e50', linestyle=':', marker='o', markerfacecolor='none', markeredgecolor='#2c3e50',
+                   linewidth=1.2, markersize=7, label=r'6-node trial stencil $\Omega_u$ (connections and nodes)')
+    ]
+
+    ax.legend(handles=custom_handles, loc='upper center', bbox_to_anchor=(0.5, -0.02),
+              ncol=2, frameon=True, framealpha=0.95, edgecolor='#bdc3c7', fontsize=8.0)
 
     out_path = os.path.join(CURRENT_DIR, "fig_mlpg_subdomains_schematic.png")
-    fig.savefig(out_path)
+    fig.savefig(out_path, bbox_inches='tight')
     plt.close(fig)
     print(f"Saved: {out_path}")
 
 
 def plot_fig2_patch_test():
-    print("Generating Figure 2: Patch Test Consistency across 7 Affine States...")
+    print("Generating Figure 2: Patch Test Consistency (Unsymmetric vs. Symmetric)...")
     states_labels = [
         "Rigid X", "Rigid Y", "Dilatation",
         "Pure Shear", "Affine Solenoidal", "Irrotational", "General Affine"
     ]
-    err_regular = []
-    err_jitter = []
+    err_reg_unsym = []
+    err_reg_sym = []
+    err_jit_unsym = []
+    err_jit_sym = []
 
     coords_reg, vecs_reg, bnd_reg = generate_cavity_mesh(Nx=11, Ny=11, jitter_frac=0.0)
     subs_reg = build_mlpg_subdomains_2d(coords_reg, vecs_reg, is_boundary=bnd_reg, alpha_s=0.8)
@@ -138,28 +204,46 @@ def plot_fig2_patch_test():
     subs_jit = build_mlpg_subdomains_2d(coords_jit, vecs_jit, is_boundary=bnd_jit, alpha_s=0.8)
 
     for mode in AFFINE_MODES:
-        res_reg = run_mlpg_patch_test_mode(coords_reg, vecs_reg, bnd_reg, mode, subdomains=subs_reg)
-        res_jit = run_mlpg_patch_test_mode(coords_jit, vecs_jit, bnd_jit, mode, subdomains=subs_jit)
-        err_regular.append(max(res_reg['error_dof_rel'], 1e-16))
-        err_jitter.append(max(res_jit['error_dof_rel'], 1e-16))
+        res_reg_u = run_mlpg_patch_test_mode(coords_reg, vecs_reg, bnd_reg, mode, subdomains=subs_reg, assembly_mode="row_petrov_galerkin")
+        res_reg_s = run_mlpg_patch_test_mode(coords_reg, vecs_reg, bnd_reg, mode, subdomains=subs_reg, assembly_mode="subdomain_galerkin")
+        res_jit_u = run_mlpg_patch_test_mode(coords_jit, vecs_jit, bnd_jit, mode, subdomains=subs_jit, assembly_mode="row_petrov_galerkin")
+        res_jit_s = run_mlpg_patch_test_mode(coords_jit, vecs_jit, bnd_jit, mode, subdomains=subs_jit, assembly_mode="subdomain_galerkin")
+
+        err_reg_unsym.append(max(res_reg_u['error_dof_rel'], 1e-16))
+        err_reg_sym.append(max(res_reg_s['error_dof_rel'], 1e-16))
+        err_jit_unsym.append(max(res_jit_u['error_dof_rel'], 1e-16))
+        err_jit_sym.append(max(res_jit_s['error_dof_rel'], 1e-16))
 
     x = np.arange(len(states_labels))
     width = 0.35
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.2))
-    rects1 = ax.bar(x - width/2, err_regular, width, label='Regular Grid ($N=11 \\times 11$)', color='steelblue')
-    rects2 = ax.bar(x + width/2, err_jitter, width, label='Irregular Cloud (25% Jitter)', color='darkorange')
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.4), sharey=True)
 
-    ax.axhline(1e-11, color='red', linestyle='--', linewidth=1.2, label='Patch Test Tolerance ($10^{-11}$)')
-    ax.set_yscale('log')
-    ax.set_ylabel('Relative Discrete Error $\\|\\mathbf{e}_{\\mathrm{int}} - \\mathbf{e}^*\\|_\\infty / \\|\\mathbf{e}^*\\|_\\infty$')
-    ax.set_title('Galerkin Patch Test Satisfaction: Machine-Precision Linearity')
-    ax.set_xticks(x)
-    ax.set_xticklabels(states_labels, rotation=25, ha='right')
-    ax.set_ylim(1e-17, 1e-8)
-    ax.legend(loc='upper right', framealpha=0.92)
-    ax.grid(True, which='both', linestyle=':', alpha=0.5)
+    # Panel (a): Regular Mesh
+    ax1.bar(x - width/2, err_reg_unsym, width, label='Unsymmetric (Row Petrov-Gal.)', color='steelblue')
+    ax1.bar(x + width/2, err_reg_sym, width, label='Symmetric (Subdomain Galerkin)', color='mediumseagreen')
+    ax1.axhline(1e-11, color='red', linestyle='--', linewidth=1.2, label='Patch Test Tol. ($10^{-11}$)')
+    ax1.set_yscale('log')
+    ax1.set_ylabel('Relative Error $\\|\\mathbf{e}_{\\mathrm{int}} - \\mathbf{e}^*\\|_\\infty / \\|\\mathbf{e}^*\\|_\\infty$')
+    ax1.set_title('(a) Regular Mesh ($11 \\times 11$)')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(states_labels, rotation=25, ha='right')
+    ax1.set_ylim(1e-16, 1e-8)
+    ax1.legend(loc='upper right', framealpha=0.92, fontsize=8.5)
+    ax1.grid(True, which='both', linestyle=':', alpha=0.5)
 
+    # Panel (b): Irregular Cloud (25% Jitter)
+    ax2.bar(x - width/2, err_jit_unsym, width, label='Unsymmetric (Row Petrov-Gal.)', color='darkorange')
+    ax2.bar(x + width/2, err_jit_sym, width, label='Symmetric (Subdomain Galerkin)', color='mediumpurple')
+    ax2.axhline(1e-11, color='red', linestyle='--', linewidth=1.2, label='Patch Test Tol. ($10^{-11}$)')
+    ax2.set_yscale('log')
+    ax2.set_title('(b) Irregular Cloud (25% Jitter)')
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(states_labels, rotation=25, ha='right')
+    ax2.legend(loc='upper right', framealpha=0.92, fontsize=8.5)
+    ax2.grid(True, which='both', linestyle=':', alpha=0.5)
+
+    fig.tight_layout()
     out_path = os.path.join(CURRENT_DIR, "fig_mlpg_patch_test.png")
     fig.savefig(out_path)
     plt.close(fig)
@@ -212,7 +296,7 @@ def plot_fig4_cavity_modes():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.5))
 
     # Panel (a): First 10 physical modes vs Reference (Ortiz 2023)
-    res_cav = solve_mlpg_cavity_eigenvalues(Nx=21, Ny=21, s_div=15.0, alpha_s=0.9, num_eigenvalues=10)
+    res_cav = solve_mlpg_cavity_eigenvalues(Nx=21, Ny=21, s_div=15.0, alpha_s=0.80, num_eigenvalues=10)
     indices = np.arange(1, 11)
     labels = res_cav['mode_labels']
     kc_num = res_cav['numerical_kc']

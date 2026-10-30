@@ -228,7 +228,8 @@ def build_mlpg_subdomains_2d(
     alpha_s: float = 0.8,
     r_s_mode: str = "adaptive",
     det_tolerance: Optional[float] = None,
-    tol_ref: float = 1e-4,
+    tol_ref: Optional[float] = None,
+    tol_hat: float = 0.80,
     h_ref: float = np.pi / 20.0,
     search_tree: Optional[KDTree] = None,
     K: int = 12,
@@ -240,9 +241,12 @@ def build_mlpg_subdomains_2d(
 
     Mathematical Formulation:
     - For each node x_I:
-        * Local nodal spacing h_I: estimated from nearest neighbor distance.
+        * Local nodal spacing h_I: estimated from nearest neighbor distance
+          (in direct correspondence with h_local(x_I) in the EABE paper).
         * Quadrature radius: r_s^I = alpha_s * h_I (if adaptive) or alpha_s * h_mean (if uniform).
-        * Scale-invariant determinant qualification: Tol_det(h) = Tol_ref * (h / h_ref)^4.
+        * Scale-invariant determinant qualification: |det(A_hat)| >= Tol_hat,
+          which corresponds to |det(A_I)| >= Tol_hat * h^4, using the calibrated baseline
+          Tol_hat = 0.80 established in the EABE paper.
         * Support stencil Omega_u^I: 6 nodes selected with admissible det(A_I) >= Tol_det(h).
         * Collocation matrix A_I is inverted to precompute beta_I = inv(A_I).
         * Interpolation radius: r_u^I = max_{k in stencil} ||x_k - x_I||.
@@ -255,7 +259,8 @@ def build_mlpg_subdomains_2d(
     - alpha_s: Subdomain radius factor r_s / h (default: 0.8).
     - r_s_mode: 'adaptive' (individual h_I) or 'uniform' (domain-wide mean h).
     - det_tolerance: Fixed determinant threshold; if None, uses quartic scaling.
-    - tol_ref: Reference tolerance at h_ref (default: 1e-4).
+    - tol_ref: Reference tolerance at h_ref; if specified, tol_det = tol_ref * (mean_h / h_ref)^4.
+    - tol_hat: Universal dimensionless determinant threshold (default: 0.80, as in EABE).
     - h_ref: Reference nodal spacing (default: pi / 20).
     - search_tree: Pre-built scipy.spatial.KDTree over coords.
     - K: Initial nearest neighbor candidate pool for support selection (default: 12).
@@ -282,11 +287,13 @@ def build_mlpg_subdomains_2d(
     local_h = nn_dists[:, 1]
     mean_h = float(np.mean(local_h))
 
-    # Scale-invariant determinant tolerance: Tol_det(h) = Tol_ref * (h / h_ref)^4
+    # Scale-invariant determinant tolerance: |det(A)| >= Tol_hat * h^4 (or via tol_ref)
     if det_tolerance is not None:
         tol_det_effective = float(det_tolerance)
+    elif tol_ref is not None:
+        tol_det_effective = float(tol_ref) * ((mean_h / h_ref) ** 4)
     else:
-        tol_det_effective = tol_ref * ((mean_h / h_ref) ** 4)
+        tol_det_effective = float(tol_hat) * (mean_h ** 4)
 
     subdomains: List[MLPGSubdomain2D] = []
 
