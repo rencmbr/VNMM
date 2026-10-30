@@ -21,22 +21,25 @@ def get_disk_quadrature_points_2d(
     center: np.ndarray,
     radius: float,
     n_r: int = 4,
-    n_theta: int = 12
+    n_theta: int = 12,
+    domain_bounds: Optional[Tuple[float, float, float, float]] = None
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
+    r"""
     Generates polar Gauss-Legendre / trapezoidal quadrature points and weights
-    for integrating over a circular disk Omega_s of given center and radius:
-        integral_{Omega_s} f(x, y) dA = sum_{q} w_q * f(x_q, y_q)
+    for integrating over a circular disk Omega_s of given center and radius
+    (or truncated subdomain Omega_s \cap Omega if domain_bounds is provided):
+        integral_{Omega_s \cap Omega} f(x, y) dA = sum_{q} w_q * f(x_q, y_q)
 
     Parameters:
     - center: Center of disk [x0, y0].
     - radius: Radius of disk r_s.
     - n_r: Number of radial Gauss-Legendre points in [0, r_s].
     - n_theta: Number of uniformly spaced angular points in [0, 2*pi).
+    - domain_bounds: Optional bounding box (xmin, xmax, ymin, ymax) to truncate points.
 
     Returns:
-    - points: Array (n_r * n_theta, 2) of Cartesian quadrature coordinates.
-    - weights: Array (n_r * n_theta,) of quadrature weights (including Jacobian r).
+    - points: Array (M, 2) of Cartesian quadrature coordinates.
+    - weights: Array (M,) of quadrature weights (including Jacobian r).
     """
     # 1D Gauss-Legendre on [-1, 1] mapped to r in [0, radius]
     xi_r, w_xi = get_gauss_points_weights_1d(n_r)
@@ -44,8 +47,8 @@ def get_disk_quadrature_points_2d(
     r_vals = 0.5 * radius * (1.0 + xi_r)
     w_r = 0.5 * radius * w_xi
 
-    # Uniform angular points in [0, 2*pi)
-    theta_vals = np.linspace(0.0, 2.0 * np.pi, n_theta, endpoint=False)
+    # Uniform midpoint angular points in [0, 2*pi) (avoids placing points on coordinate axes)
+    theta_vals = (np.arange(n_theta) + 0.5) * (2.0 * np.pi / float(n_theta))
     w_theta = (2.0 * np.pi) / float(n_theta)
 
     points = []
@@ -57,6 +60,10 @@ def get_disk_quadrature_points_2d(
         for th in theta_vals:
             qx = center[0] + r * np.cos(th)
             qy = center[1] + r * np.sin(th)
+            if domain_bounds is not None:
+                xmin, xmax, ymin, ymax = domain_bounds
+                if not ((xmin - 1e-14 <= qx <= xmax + 1e-14) and (ymin - 1e-14 <= qy <= ymax + 1e-14)):
+                    continue
             points.append([qx, qy])
             weights.append(w_circle)
 
@@ -70,9 +77,9 @@ def compute_subdomain_matrices_analytic(
     s_div: float = 4.0,
     matrix_format: str = "1x6"
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
+    r"""
     Computes local stiffness K_local and mass M_local using exact analytical integration
-    over the circular subdomain Omega_s^I.
+    over the circular subdomain Omega_s^I (or truncated region Omega_s^I \cap Omega).
 
     Parameters:
     - subdomain: MLPGSubdomain2D instance.
@@ -85,8 +92,10 @@ def compute_subdomain_matrices_analytic(
     - M_local: Array shape (6,) if matrix_format='1x6', or (6, 6) if matrix_format='6x6'.
     """
     r_s = subdomain.radius_s
-    area = np.pi * (r_s ** 2)
-    i2 = 0.25 * np.pi * (r_s ** 4)
+    full_area = np.pi * (r_s ** 2)
+    area = getattr(subdomain, 'area_active', full_area)
+    eta = area / full_area
+    i2 = 0.25 * np.pi * (r_s ** 4) * eta
 
     stencil = subdomain.stencil_nodes
     matches = np.where(stencil == subdomain.node_idx)[0]
@@ -139,12 +148,16 @@ def compute_subdomain_matrices_numeric(
     n_r: int = 4,
     n_theta: int = 12
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
+    r"""
     Computes local stiffness K_local and mass M_local via numerical polar Gauss quadrature
-    over Omega_s^I (used for validation).
+    over Omega_s^I \cap Omega (used for validation).
     """
     pts, weights = get_disk_quadrature_points_2d(
-        subdomain.center, subdomain.radius_s, n_r=n_r, n_theta=n_theta
+        subdomain.center,
+        subdomain.radius_s,
+        n_r=n_r,
+        n_theta=n_theta,
+        domain_bounds=getattr(subdomain, 'domain_bounds', None)
     )
 
     stencil = subdomain.stencil_nodes
@@ -191,7 +204,11 @@ def compute_subdomain_source_vector(
         F_I = integral_{Omega_s^I} J_s(x) . N_{local_I}^I(x) dA
     """
     pts, weights = get_disk_quadrature_points_2d(
-        subdomain.center, subdomain.radius_s, n_r=n_r, n_theta=n_theta
+        subdomain.center,
+        subdomain.radius_s,
+        n_r=n_r,
+        n_theta=n_theta,
+        domain_bounds=getattr(subdomain, 'domain_bounds', None)
     )
 
     stencil = subdomain.stencil_nodes
@@ -298,7 +315,13 @@ def assemble_mlpg_matrices_2d(
                     data_m.append(m_loc[a, b])
             if source_func is not None:
                 # 6-vector source contribution: integral J_s . N_a dA
-                pts, wts = get_disk_quadrature_points_2d(sub.center, sub.radius_s, n_r=n_r, n_theta=n_theta)
+                pts, wts = get_disk_quadrature_points_2d(
+                    sub.center,
+                    sub.radius_s,
+                    n_r=n_r,
+                    n_theta=n_theta,
+                    domain_bounds=getattr(sub, 'domain_bounds', None)
+                )
                 N_all = sub.eval_shape_functions(pts)
                 J_vals = np.asarray(source_func(pts), dtype=float)
                 if J_vals.ndim == 1:

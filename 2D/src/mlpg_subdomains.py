@@ -139,6 +139,113 @@ def eval_test_function_div_2d(
     return div_W if np.ndim(points) == 2 else div_W[0]
 
 
+def compute_disk_box_intersection_geometry(
+    center: np.ndarray,
+    radius_s: float,
+    bounds: Tuple[float, float, float, float]
+) -> Tuple[float, float]:
+    r"""
+    Computes the exact active area and area fraction of a disk of radius radius_s
+    centered at center intersecting the Cartesian box [xmin, xmax] x [ymin, ymax]
+    using rigorous closed-form analytical formulas for all geometric configurations:
+      - Case 1: Strictly interior nodes (uncut disk, eta = 1.0)
+      - Case 2: Interior nodes intersecting 1 wall (circular cap subtraction)
+      - Case 2B: Interior nodes near corners intersecting 2 walls (with overlap correction)
+      - Case 3: Boundary nodes on flat walls (half disk, eta = 0.5)
+      - Case 3B: Boundary nodes on walls near corners (half-cap subtraction, eta in (0.25, 0.50))
+      - Case 3 (vertex): Boundary nodes at 90-degree corners (quarter disk, eta = 0.25)
+
+    Returns:
+    - area_active: Active area of Omega_s \cap Omega.
+    - area_fraction: Ratio area_active / (pi * radius_s^2) in (0, 1].
+    """
+    xmin, xmax, ymin, ymax = bounds
+    xc, yc = float(center[0]), float(center[1])
+    r_s = float(radius_s)
+    full_area = np.pi * (r_s ** 2)
+
+    # Distances to the 4 walls
+    dx_left = xc - xmin
+    dx_right = xmax - xc
+    dy_bot = yc - ymin
+    dy_top = ymax - yc
+
+    # Case 1: Strictly interior far from all walls
+    if dx_left >= r_s and dx_right >= r_s and dy_bot >= r_s and dy_top >= r_s:
+        return full_area, 1.0
+
+    # Minimum distances to horizontal and vertical boundaries
+    dx = min(dx_left, dx_right)
+    dy = min(dy_bot, dy_top)
+
+    tol = 1e-12
+    is_on_x_wall = abs(dx) < tol
+    is_on_y_wall = abs(dy) < tol
+
+    def cap_area(d: float) -> float:
+        """Area of a circular cap cut off by a chord at distance d in [-r_s, r_s]."""
+        if d >= r_s:
+            return 0.0
+        if d <= -r_s:
+            return full_area
+        d_clamped = max(-1.0, min(1.0, d / r_s))
+        th = np.arccos(d_clamped)
+        return (r_s ** 2) * (th - np.sin(th) * np.cos(th))
+
+    def disk_corner_overlap(d_1: float, d_2: float) -> float:
+        """Closed-form analytical area of the corner cap overlap in the exterior corner quadrant."""
+        if d_1 ** 2 + d_2 ** 2 >= r_s ** 2:
+            return 0.0
+        x1 = d_1 - np.sqrt(r_s ** 2 - d_2 ** 2)
+        y1 = d_2 - np.sqrt(r_s ** 2 - d_1 ** 2)
+        th_x = np.arctan2(-d_2, x1 - d_1)
+        th_y = np.arctan2(y1 - d_2, -d_1)
+        if th_x < 0:
+            th_x += 2.0 * np.pi
+        if th_y < 0:
+            th_y += 2.0 * np.pi
+        if th_y < th_x:
+            th_x, th_y = th_y, th_x
+        area_arc = 0.5 * (r_s ** 2) * (th_y - th_x) + 0.5 * r_s * (
+            d_1 * (np.sin(th_y) - np.sin(th_x)) - d_2 * (np.cos(th_y) - np.cos(th_x))
+        )
+        return abs(area_arc)
+
+    # 1. Exact corner node (Case 3 at vertex)
+    if is_on_x_wall and is_on_y_wall:
+        return 0.25 * full_area, 0.25
+
+    # 2. Boundary node on a wall near a corner (Case 3B): area is strictly less than 0.5
+    if is_on_x_wall and dy < r_s:
+        a_act = 0.5 * (full_area - cap_area(dy))
+        return a_act, a_act / full_area
+    if is_on_y_wall and dx < r_s:
+        a_act = 0.5 * (full_area - cap_area(dx))
+        return a_act, a_act / full_area
+
+    # 3. Flat boundary node far from any corner (Case 3): exact half disk
+    if is_on_x_wall and dy >= r_s:
+        return 0.5 * full_area, 0.5
+    if is_on_y_wall and dx >= r_s:
+        return 0.5 * full_area, 0.5
+
+    # 4. Interior node intersecting single wall (Case 2)
+    cross_x = dx < r_s
+    cross_y = dy < r_s
+
+    if cross_x and not cross_y:
+        a_act = full_area - cap_area(dx)
+        return a_act, a_act / full_area
+    if cross_y and not cross_x:
+        a_act = full_area - cap_area(dy)
+        return a_act, a_act / full_area
+
+    # 5. Interior node near corner intersecting BOTH walls (Case 2B)
+    a_over = disk_corner_overlap(dx, dy)
+    a_act = full_area - cap_area(dx) - cap_area(dy) + a_over
+    return a_act, float(np.clip(a_act / full_area, 0.0, 1.0))
+
+
 @dataclass
 class MLPGSubdomain2D:
     """
@@ -156,6 +263,14 @@ class MLPGSubdomain2D:
     det_a: float
     is_boundary: bool = False
     is_pec: bool = False
+    area_active: float = 0.0
+    area_fraction: float = 1.0
+    domain_bounds: Optional[Tuple[float, float, float, float]] = None
+
+    def __post_init__(self):
+        if self.area_active <= 0.0:
+            self.area_active = np.pi * (self.radius_s ** 2)
+            self.area_fraction = 1.0
 
     def contains_point(self, point: np.ndarray) -> bool:
         """Returns True if point is inside Omega_s^I."""
@@ -234,9 +349,11 @@ def build_mlpg_subdomains_2d(
     search_tree: Optional[KDTree] = None,
     K: int = 12,
     step_K: int = 4,
-    K_max: Optional[int] = None
+    K_max: Optional[int] = None,
+    domain_bounds: Optional[Tuple[float, float, float, float]] = None,
+    truncate_subdomains: bool = True
 ) -> List[MLPGSubdomain2D]:
-    """
+    r"""
     Constructs the collection of MLPG local subdomains Omega_s^I for all nodes in the cloud.
 
     Mathematical Formulation:
@@ -251,6 +368,9 @@ def build_mlpg_subdomains_2d(
         * Collocation matrix A_I is inverted to precompute beta_I = inv(A_I).
         * Interpolation radius: r_u^I = max_{k in stencil} ||x_k - x_I||.
         * Guaranteed property: r_u^I > r_s^I across all subdomains.
+        * Truncated Subdomain Geometry: If truncate_subdomains is True, evaluates exact
+          active intersection area A_active = Area(Omega_s^I \cap Omega) and area fraction
+          eta_I = A_active / (pi * (r_s^I)^2) for boundary (Case 3) and truncated interior (Case 2) nodes.
 
     Parameters:
     - coords: Array (N, 2) of global nodal coordinates.
@@ -266,6 +386,8 @@ def build_mlpg_subdomains_2d(
     - K: Initial nearest neighbor candidate pool for support selection (default: 12).
     - step_K: Neighbor expansion step (default: 4).
     - K_max: Maximum neighbor expansion limit.
+    - domain_bounds: Tuple (xmin, xmax, ymin, ymax) of domain bounding box. Inferred if None.
+    - truncate_subdomains: If True, calculates exact active area inside domain.
 
     Returns:
     - subdomains: List of MLPGSubdomain2D objects of length N.
@@ -281,6 +403,20 @@ def build_mlpg_subdomains_2d(
 
     if search_tree is None:
         search_tree = KDTree(coords)
+
+    # Automatically infer bounding box from boundary coordinates if not explicitly provided
+    if truncate_subdomains and domain_bounds is None:
+        if np.any(is_boundary):
+            bnd_c = coords[is_boundary]
+            domain_bounds = (
+                float(np.min(bnd_c[:, 0])), float(np.max(bnd_c[:, 0])),
+                float(np.min(bnd_c[:, 1])), float(np.max(bnd_c[:, 1]))
+            )
+        else:
+            domain_bounds = (
+                float(np.min(coords[:, 0])), float(np.max(coords[:, 0])),
+                float(np.min(coords[:, 1])), float(np.max(coords[:, 1]))
+            )
 
     # Compute distances to nearest neighbor (k=2: index 0 is self, index 1 is closest neighbor)
     nn_dists, _ = search_tree.query(coords, k=2)
@@ -334,6 +470,13 @@ def build_mlpg_subdomains_2d(
         dists_to_stencil = np.linalg.norm(stencil_coords - center_i, axis=1)
         r_u = float(np.max(dists_to_stencil))
 
+        # Truncated active area calculation (Case 1, Case 2, and Case 3)
+        if truncate_subdomains and domain_bounds is not None:
+            a_act, a_frac = compute_disk_box_intersection_geometry(center_i, float(r_s), domain_bounds)
+        else:
+            a_act = np.pi * (float(r_s) ** 2)
+            a_frac = 1.0
+
         subdomain = MLPGSubdomain2D(
             node_idx=i,
             center=center_i,
@@ -345,7 +488,10 @@ def build_mlpg_subdomains_2d(
             beta=beta_i,
             det_a=float(best_det),
             is_boundary=bnd_i,
-            is_pec=bnd_i
+            is_pec=bnd_i,
+            area_active=a_act,
+            area_fraction=a_frac,
+            domain_bounds=domain_bounds
         )
         subdomains.append(subdomain)
 

@@ -130,7 +130,7 @@ def assemble_mlpg_patch_test_system(
             )
             curls = sub.eval_shape_curl()
             divs = sub.eval_shape_div()
-            area = np.pi * (sub.radius_s ** 2)
+            area = getattr(sub, 'area_active', np.pi * (sub.radius_s ** 2))
             f_loc = (
                 (1.0 / mu_r) * rot_exact * curls +
                 (s_div / mu_r) * div_exact * divs
@@ -169,7 +169,7 @@ def assemble_mlpg_patch_test_system(
             i0 = np.where(stencil == sub.node_idx)[0][0]
             curls = sub.eval_shape_curl()
             divs = sub.eval_shape_div()
-            area = np.pi * (sub.radius_s ** 2)
+            area = getattr(sub, 'area_active', np.pi * (sub.radius_s ** 2))
 
             F[i] = (
                 (1.0 / mu_r) * rot_exact * curls[i0] +

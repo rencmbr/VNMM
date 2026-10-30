@@ -167,6 +167,36 @@ class TestMLPGSubdomains2D(unittest.TestCase):
         # Ratio should be 1.0 (100% of domain points covered)
         self.assertGreaterEqual(ratio, 0.99)
 
+    def test_truncated_subdomain_area_calculation(self):
+        """Verifies active area and area fraction for Case 1, Case 2, and Case 3 subdomains."""
+        from src.mlpg_subdomains import compute_disk_box_intersection_geometry
+        bounds = (0.0, np.pi, 0.0, np.pi)
+        r_s = 0.2
+
+        # Case 1: Strictly interior node
+        a_int, f_int = compute_disk_box_intersection_geometry(np.array([1.5, 1.5]), r_s, bounds)
+        self.assertAlmostEqual(f_int, 1.0, places=12)
+        self.assertAlmostEqual(a_int, np.pi * (r_s ** 2), places=12)
+
+        # Case 3: Flat wall boundary node (half disk)
+        a_wall, f_wall = compute_disk_box_intersection_geometry(np.array([0.0, 1.5]), r_s, bounds)
+        self.assertAlmostEqual(f_wall, 0.5, places=12)
+        self.assertAlmostEqual(a_wall, 0.5 * np.pi * (r_s ** 2), places=12)
+
+        # Case 3: 90-degree corner node (quarter disk)
+        a_cor, f_cor = compute_disk_box_intersection_geometry(np.array([0.0, 0.0]), r_s, bounds)
+        self.assertAlmostEqual(f_cor, 0.25, places=12)
+        self.assertAlmostEqual(a_cor, 0.25 * np.pi * (r_s ** 2), places=12)
+
+        # Case 2: Near-wall interior node intersecting boundary (d = 0.5 * r_s)
+        d = 0.5 * r_s
+        a_near, f_near = compute_disk_box_intersection_geometry(np.array([d, 1.5]), r_s, bounds)
+        th = np.arccos(0.5)  # pi / 3
+        expected_cap = (r_s ** 2) * (th - np.sin(th) * np.cos(th))
+        expected_area = np.pi * (r_s ** 2) - expected_cap
+        self.assertAlmostEqual(a_near, expected_area, places=10)
+        self.assertAlmostEqual(f_near, expected_area / (np.pi * (r_s ** 2)), places=10)
+
 
 if __name__ == "__main__":
     unittest.main()

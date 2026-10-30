@@ -110,7 +110,10 @@ def assemble_and_solve_mlpg_mms(
             # Consistent source load vector via disk quadrature:
             # F_curl_a = curls[a] * integral (curl E*) dA
             # F_mass_a = kappa * integral (E* . N_a) dA
-            pts, wts = get_disk_quadrature_points_2d(sub.center, sub.radius_s, n_r=n_r, n_theta=n_theta)
+            pts, wts = get_disk_quadrature_points_2d(
+                sub.center, sub.radius_s, n_r=n_r, n_theta=n_theta,
+                domain_bounds=getattr(sub, 'domain_bounds', None)
+            )
             curls = sub.eval_shape_curl()
             curls_ex = np.array([exact_curl_mms(px, py) for px, py in pts])
             f_curl = curls * float(np.sum(wts * curls_ex))
@@ -156,7 +159,10 @@ def assemble_and_solve_mlpg_mms(
                 data_k.append(k_loc[k_idx])
                 data_m.append(kappa * m_loc[k_idx])
 
-            pts, wts = get_disk_quadrature_points_2d(sub.center, sub.radius_s, n_r=n_r, n_theta=n_theta)
+            pts, wts = get_disk_quadrature_points_2d(
+                sub.center, sub.radius_s, n_r=n_r, n_theta=n_theta,
+                domain_bounds=getattr(sub, 'domain_bounds', None)
+            )
             curls = sub.eval_shape_curl()
             stencil = sub.stencil_nodes
             i0 = np.where(stencil == sub.node_idx)[0][0]
@@ -223,7 +229,10 @@ def assemble_and_solve_mlpg_mms(
     total_integrated_area = 0.0
 
     for sub in subdomains:
-        pts, wts = get_disk_quadrature_points_2d(sub.center, sub.radius_s, n_r=4, n_theta=12)
+        pts, wts = get_disk_quadrature_points_2d(
+            sub.center, sub.radius_s, n_r=4, n_theta=12,
+            domain_bounds=getattr(sub, 'domain_bounds', None)
+        )
         N_all = sub.eval_shape_functions(pts)
         e_st = e_sol[sub.stencil_nodes]
         E_h = np.einsum("mqk,k->mq", N_all, e_st)

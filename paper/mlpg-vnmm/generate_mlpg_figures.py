@@ -147,11 +147,11 @@ def plot_fig1_schematic():
                 bbox=dict(boxstyle='round,pad=0.25', facecolor='#ebf5fb', edgecolor='#1f77b4', alpha=0.92))
 
     ax.annotate(r'$\mathbf{Case\ 2:\ Truncated\ Interior}$' + '\n' + r'Subdomain $\Omega_s^{I_2} \cap \Omega$' + '\n' + r'Stencil $\Omega_u^{I_2}$ (6 nodes)',
-                xy=(c2[0] + 0.22, c2[1]),
-                xytext=(c2[0] + 0.35, c2[1] + 0.40),
+                xy=(c2[0] + 0.25, c2[1] + 0.12),
+                xytext=(c2[0] + 0.42, c2[1] + 0.12),
                 arrowprops=dict(arrowstyle='->', color='#d35400', lw=1.2),
-                fontsize=8.0, color='#d35400',
-                bbox=dict(boxstyle='round,pad=0.25', facecolor='#fef5e7', edgecolor='#d35400', alpha=0.92))
+                fontsize=7.3, linespacing=1.1, color='#d35400',
+                bbox=dict(boxstyle='round,pad=0.18', facecolor='#fef5e7', edgecolor='#d35400', alpha=0.92))
 
     ax.annotate(r'$\mathbf{Case\ 3:\ Truncated\ Boundary}$' + '\n' + r'Subdomain $\Omega_s^B \cap \Omega$' + '\n' + r'Stencil $\Omega_u^B$ (6 nodes)',
                 xy=(c3[0] + 0.12, c3[1] + 0.22),
