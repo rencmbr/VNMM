@@ -70,6 +70,150 @@ def get_disk_quadrature_points_2d(
     return np.array(points, dtype=float), np.array(weights, dtype=float)
 
 
+def compute_subdomain_geometric_moments(
+    subdomain: MLPGSubdomain2D
+) -> Tuple[float, float, float, float, float, float]:
+    r"""
+    Computes the geometric moments of the active integration domain Omega_s^I \cap Omega
+    relative to the subdomain evaluation center x_I:
+        S_0  = \iint d\Omega = A_active
+        S_x  = \iint (x - x_I) d\Omega
+        S_y  = \iint (y - y_I) d\Omega
+        S_xx = \iint (x - x_I)^2 d\Omega
+        S_yy = \iint (y - y_I)^2 d\Omega
+        S_xy = \iint (x - x_I)(y - y_I) d\Omega
+    """
+    r_s = float(subdomain.radius_s)
+    xc, yc = float(subdomain.center[0]), float(subdomain.center[1])
+    full_area = np.pi * (r_s ** 2)
+    i2_full = 0.25 * np.pi * (r_s ** 4)
+
+    bounds = getattr(subdomain, 'domain_bounds', None)
+    if bounds is None:
+        return full_area, 0.0, 0.0, i2_full, i2_full, 0.0
+
+    xmin, xmax, ymin, ymax = bounds
+    dx_left = xc - xmin
+    dx_right = xmax - xc
+    dy_bot = yc - ymin
+    dy_top = ymax - yc
+
+    # Case 1: Uncut full circular disk
+    if (dx_left >= r_s - 1e-12 and dx_right >= r_s - 1e-12 and
+        dy_bot >= r_s - 1e-12 and dy_top >= r_s - 1e-12):
+        return full_area, 0.0, 0.0, i2_full, i2_full, 0.0
+
+    tol = 1e-11
+    is_left = abs(dx_left) < tol
+    is_right = abs(dx_right) < tol
+    is_bot = abs(dy_bot) < tol
+    is_top = abs(dy_top) < tol
+
+    # Case 3 at vertex (orthogonal corner quarter-disk, eta = 1/4)
+    if (is_left or is_right) and (is_bot or is_top):
+        sign_x = 1.0 if is_left else -1.0
+        sign_y = 1.0 if is_bot else -1.0
+        S0 = 0.25 * full_area
+        Sx = sign_x * (1.0 / 3.0) * (r_s ** 3)
+        Sy = sign_y * (1.0 / 3.0) * (r_s ** 3)
+        Sxx = 0.0625 * np.pi * (r_s ** 4)
+        Syy = Sxx
+        Sxy = sign_x * sign_y * 0.125 * (r_s ** 4)
+        return S0, Sx, Sy, Sxx, Syy, Sxy
+
+    # Case 3 on flat wall far from corners (exact half-disk, eta = 1/2)
+    if is_bot and dx_left >= r_s - 1e-12 and dx_right >= r_s - 1e-12:
+        return 0.5 * full_area, 0.0, (2.0 / 3.0) * (r_s ** 3), 0.125 * np.pi * (r_s ** 4), 0.125 * np.pi * (r_s ** 4), 0.0
+    if is_top and dx_left >= r_s - 1e-12 and dx_right >= r_s - 1e-12:
+        return 0.5 * full_area, 0.0, -(2.0 / 3.0) * (r_s ** 3), 0.125 * np.pi * (r_s ** 4), 0.125 * np.pi * (r_s ** 4), 0.0
+    if is_left and dy_bot >= r_s - 1e-12 and dy_top >= r_s - 1e-12:
+        return 0.5 * full_area, (2.0 / 3.0) * (r_s ** 3), 0.0, 0.125 * np.pi * (r_s ** 4), 0.125 * np.pi * (r_s ** 4), 0.0
+    if is_right and dy_bot >= r_s - 1e-12 and dy_top >= r_s - 1e-12:
+        return 0.5 * full_area, -(2.0 / 3.0) * (r_s ** 3), 0.0, 0.125 * np.pi * (r_s ** 4), 0.125 * np.pi * (r_s ** 4), 0.0
+
+    # Case 2: Interior node intersecting single boundary wall
+    cross_left = dx_left < r_s - tol and dx_right >= r_s and dy_bot >= r_s and dy_top >= r_s
+    cross_right = dx_right < r_s - tol and dx_left >= r_s and dy_bot >= r_s and dy_top >= r_s
+    cross_bot = dy_bot < r_s - tol and dy_top >= r_s and dx_left >= r_s and dx_right >= r_s
+    cross_top = dy_top < r_s - tol and dy_bot >= r_s and dx_left >= r_s and dx_right >= r_s
+
+    def cap_moments(d: float) -> Tuple[float, float]:
+        d_c = max(0.0, min(r_s, d))
+        th = np.arccos(d_c / r_s)
+        a_cap = (r_s ** 2) * (th - (d_c / r_s) * np.sqrt(max(0.0, 1.0 - (d_c / r_s) ** 2)))
+        x0 = np.sqrt(max(0.0, r_s ** 2 - d_c ** 2))
+        s1_cap = (2.0 / 3.0) * (x0 ** 3)
+        return a_cap, s1_cap
+
+    if cross_bot:
+        a_cap, s1_cap = cap_moments(dy_bot)
+        s0 = full_area - a_cap
+        eta = s0 / full_area
+        return s0, 0.0, s1_cap, eta * i2_full, eta * i2_full, 0.0
+    if cross_top:
+        a_cap, s1_cap = cap_moments(dy_top)
+        s0 = full_area - a_cap
+        eta = s0 / full_area
+        return s0, 0.0, -s1_cap, eta * i2_full, eta * i2_full, 0.0
+    if cross_left:
+        a_cap, s1_cap = cap_moments(dx_left)
+        s0 = full_area - a_cap
+        eta = s0 / full_area
+        return s0, s1_cap, 0.0, eta * i2_full, eta * i2_full, 0.0
+    if cross_right:
+        a_cap, s1_cap = cap_moments(dx_right)
+        s0 = full_area - a_cap
+        eta = s0 / full_area
+        return s0, -s1_cap, 0.0, eta * i2_full, eta * i2_full, 0.0
+
+    # General truncated subdomains (Case 3B, Case 2B near corners):
+    # Evaluated via Gauss-Legendre quadrature clipped to domain bounds
+    n_r = 16
+    n_th = 64
+    r_gl, w_r_gl = np.polynomial.legendre.leggauss(n_r)
+    r_pts = 0.5 * r_s * (r_gl + 1.0)
+    w_r = 0.5 * r_s * w_r_gl
+
+    th_gl, w_th_gl = np.polynomial.legendre.leggauss(n_th)
+    th_pts = np.pi * (th_gl + 1.0)
+    w_th = np.pi * w_th_gl
+
+    S0 = 0.0
+    Sx = 0.0
+    Sy = 0.0
+    Sxx = 0.0
+    Syy = 0.0
+    Sxy = 0.0
+
+    for r, wr in zip(r_pts, w_r):
+        w_circle = wr * r
+        for th, wt in zip(th_pts, w_th):
+            dx = r * np.cos(th)
+            dy = r * np.sin(th)
+            x = xc + dx
+            y = yc + dy
+            if (xmin - 1e-13 <= x <= xmax + 1e-13) and (ymin - 1e-13 <= y <= ymax + 1e-13):
+                w = w_circle * wt
+                S0 += w
+                Sx += w * dx
+                Sy += w * dy
+                Sxx += w * (dx ** 2)
+                Syy += w * (dy ** 2)
+                Sxy += w * (dx * dy)
+
+    a_act = getattr(subdomain, 'area_active', S0)
+    if S0 > 0 and a_act > 0:
+        scale = a_act / S0
+        S0 = a_act
+        Sx *= scale
+        Sy *= scale
+        Sxx *= scale
+        Syy *= scale
+        Sxy *= scale
+
+    return float(S0), float(Sx), float(Sy), float(Sxx), float(Syy), float(Sxy)
+
+
 def compute_subdomain_matrices_analytic(
     subdomain: MLPGSubdomain2D,
     mu_r: float = 1.0,
@@ -78,8 +222,8 @@ def compute_subdomain_matrices_analytic(
     matrix_format: str = "1x6"
 ) -> Tuple[np.ndarray, np.ndarray]:
     r"""
-    Computes local stiffness K_local and mass M_local using exact analytical integration
-    over the circular subdomain Omega_s^I (or truncated region Omega_s^I \cap Omega).
+    Computes local stiffness K_local and mass M_local using exact closed-form analytical
+    integration (including full moments for truncated subdomains) over Omega_s^I \cap Omega.
 
     Parameters:
     - subdomain: MLPGSubdomain2D instance.
@@ -91,12 +235,6 @@ def compute_subdomain_matrices_analytic(
     - K_local: Array shape (6,) if matrix_format='1x6', or (6, 6) if matrix_format='6x6'.
     - M_local: Array shape (6,) if matrix_format='1x6', or (6, 6) if matrix_format='6x6'.
     """
-    r_s = subdomain.radius_s
-    full_area = np.pi * (r_s ** 2)
-    area = getattr(subdomain, 'area_active', full_area)
-    eta = area / full_area
-    i2 = 0.25 * np.pi * (r_s ** 4) * eta
-
     stencil = subdomain.stencil_nodes
     matches = np.where(stencil == subdomain.node_idx)[0]
     if len(matches) == 0:
@@ -107,36 +245,42 @@ def compute_subdomain_matrices_analytic(
 
     beta = subdomain.beta
 
+    # Geometric moments of active domain Omega_s^I \cap Omega
+    S0, Sx, Sy, Sxx, Syy, Sxy = compute_subdomain_geometric_moments(subdomain)
+
     # Curl and Div vectors of all 6 shape functions (strictly constant on disk)
     curls = subdomain.eval_shape_curl()  # shape (6,)
     divs = subdomain.eval_shape_div()    # shape (6,)
 
+    # 6x6 local stiffness matrix
+    k_curl = (1.0 / mu_r) * np.outer(curls, curls) * S0
+    k_div = (s_div / mu_r) * np.outer(divs, divs) * S0
+    k_local_6x6 = k_curl + k_div
+
+    # 6x6 local mass matrix with full geometric moments
+    b0 = beta[0, :]
+    b1 = beta[1, :]
+    b2 = beta[2, :]
+    b3 = beta[3, :]
+    b4 = beta[4, :]
+    b5 = beta[5, :]
+
+    P0 = np.outer(b0, b0) + np.outer(b1, b1)
+    Px = np.outer(b0, b2) + np.outer(b2, b0) + np.outer(b1, b4) + np.outer(b4, b1)
+    Py = np.outer(b0, b3) + np.outer(b3, b0) + np.outer(b1, b5) + np.outer(b5, b1)
+    Pxx = np.outer(b2, b2) + np.outer(b4, b4)
+    Pyy = np.outer(b3, b3) + np.outer(b5, b5)
+    Pxy = np.outer(b2, b3) + np.outer(b3, b2) + np.outer(b4, b5) + np.outer(b5, b4)
+
+    m_local_6x6 = epsilon_r * (
+        P0 * S0 + Px * Sx + Py * Sy + Pxx * Sxx + Pyy * Syy + Pxy * Sxy
+    )
+
     if matrix_format == "6x6":
-        # Full 6x6 symmetric positive-semidefinite stiffness and mass matrices
-        k_curl = (1.0 / mu_r) * np.outer(curls, curls) * area
-        k_div = (s_div / mu_r) * np.outer(divs, divs) * area
-        k_local = k_curl + k_div
-
-        c0 = beta[0:2, :].T @ beta[0:2, :]
-        c1 = beta[2:6, :].T @ beta[2:6, :]
-        m_local = epsilon_r * (c0 * area + c1 * i2)
+        return k_local_6x6, m_local_6x6
     else:
-        # 1x6 row associated with central node test function W_I = N_{i0}^I
-        curl_i0 = curls[i0]
-        div_i0 = divs[i0]
-
-        k_curl = (1.0 / mu_r) * (curls * curl_i0) * area
-        k_div = (s_div / mu_r) * (divs * div_i0) * area
-        k_local = k_curl + k_div
-
-        c0 = beta[0, :] * beta[0, i0] + beta[1, :] * beta[1, i0]
-        c1 = (
-            beta[2, :] * beta[2, i0] + beta[3, :] * beta[3, i0] +
-            beta[4, :] * beta[4, i0] + beta[5, :] * beta[5, i0]
-        )
-        m_local = epsilon_r * (c0 * area + c1 * i2)
-
-    return k_local, m_local
+        # Row format associated with central node test function W_I = N_{i0}^I
+        return k_local_6x6[i0, :], m_local_6x6[i0, :]
 
 
 def compute_subdomain_matrices_numeric(

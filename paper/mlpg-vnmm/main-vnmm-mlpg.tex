@@ -51,6 +51,7 @@
 
     \author[ufmg]{Renato C. Mesquita\corref{cor1}}
     \ead{renato@ufmg.br}
+    \author[ufmg]{Williams L. de Nicomedes}
     \author[ifetcongonhas]{Bárbara M. F. Gonçalves}
     \author[ifmgsabara]{Luilly A. G. Ortiz}
 
@@ -116,7 +117,7 @@ Despite these substantial advances, the formulation reported in \cite{stable_vnm
 
 Several alternative domain integration strategies have been investigated in the broader meshfree literature \cite{hillman2018performance}, but each introduces severe complications when applied to unstructured vector problems:
 \begin{itemize}
-    \item \textbf{Direct Nodal Integration (DNI) and Rank Instabilities:} The simplest truly meshless strategy evaluates the global weak form directly at the nodes. However, as demonstrated by Babu{\v{s}}ka et al.~\cite{babuska2008quadrature} and Hillman and Chen~\cite{hillman2018performance}, DNI severely underestimates the strain energy of low-order modes, inducing severe rank deficiencies (sawtooth zero-energy modes) and degraded convergence rates without extensive ad-hoc stabilization.
+    \item \textbf{Direct Nodal Integration (DNI) and Rank Instabilities:} The simplest truly meshless strategy evaluates the global weak form directly at the nodes. However, as demonstrated by Babu{\v{s}}ka et al.~\cite{babuska2008quadrature} and Hillman and Chen~\cite{hillman2018performance}, DNI severely underestimates the electromagnetic stored energy of low-order modes, inducing severe rank deficiencies (sawtooth zero-energy modes) and degraded convergence rates without extensive ad-hoc stabilization.
     \item \textbf{Conforming vs. Non-Conforming Nodal Smoothing (SCNI and SNNI):} Stabilized Conforming Nodal Integration (SCNI) \cite{chen2001stabilized} restores stability and patch test exactness by computing smoothed gradients via boundary integrals over conforming Voronoi dual cells, preserving matrix symmetry \cite{hillman2018performance}. However, constructing Voronoi diagrams on irregular point clouds is geometrically brittle, sensitive to boundary slivers, and computationally demanding in 3D. While Stabilized Non-Conforming Nodal Integration (SNNI) dispenses with Voronoi meshing by using non-conforming local boxes \cite{hillman2018performance}, the loss of partition conformity fails the patch test, necessitating sophisticated Petrov--Galerkin variational consistency (VC) corrections \cite{chen2013arbitrary, hillman2018performance} that require auxiliary local equation solves.
     \item \textbf{Strong-Form Nodal Collocation:} Enforcing the governing PDE directly at the nodes completely avoids numerical quadrature \cite{hillman2018performance}. However, for second-order PDEs, collocation requires computing high-order derivatives of shape functions and demands at least quadratic polynomial completeness for convergence \cite{hillman2018performance}. More fundamentally, for vector electromagnetic problems governed by Maxwell's curl-curl equations, strong-form collocation lacks a discrete de Rham complex structure, triggering severe spectral corruption and unphysical gradient spurious modes \cite{bossavit1990spurious, boffi2006finite}.
     \item \textbf{Discontinuous Galerkin with Trace Jump Penalties:} One could view shifting stencils as non-conforming elements and introduce surface integrals penalizing tangential trace jumps, as in interior penalty discontinuous Galerkin (IPDG) formulations for electromagnetics \cite{houston2004mixed, hesthaven2004high}. However, in an arbitrary point cloud, the boundaries of local support domains form a dense web of overlapping circular and lens-shaped intersections. Computing line integrals along millions of curved internal segments is practically intractable in 2D and virtually impossible in 3D.
@@ -135,12 +136,12 @@ In this paper, we resolve these challenges by formulating, implementing, and val
     \item \textbf{Closed-Form Analytical Integration:} Exact closed-form integration of all local stiffness and mass matrices over circular disk subdomains, completely eliminating numerical quadrature error, while retaining simple, straightforward evaluations even when subdomains intersect physical boundaries.
     \item \textbf{Exact Symmetry and Positive-Semidefiniteness:} Testing over the complete local polynomial space on each disk guarantees strictly symmetric and positive-(semi)definite global operators $\mathbf{K}$ and $\mathbf{M}$, precluding spurious complex eigenvalues.
     \item \textbf{Direct Essential Dirichlet Collocation:} Due to the Kronecker-delta projection property of vector PIM, essential Dirichlet boundaries (PEC and inhomogeneous) are enforced directly at the nodal level, eliminating degrees of freedom and bypassing boundary integrals over truncated subdomains.
-    \item \textbf{Natural Neumann and 1D Robin Treatments:} Homogeneous Neumann conditions (PMC / symmetry planes) are strictly natural with identically vanishing traction, requiring no line integrals, while inhomogeneous Neumann and Robin (impedance/ABC) boundaries reduce to simple 1D line integrals along boundary segments.
+    \item \textbf{Natural Neumann and 1D Robin Treatments:} Homogeneous Neumann conditions (PMC / symmetry planes) are strictly natural with identically vanishing boundary flux, requiring no line integrals, while inhomogeneous Neumann and Robin (impedance/ABC) boundaries reduce to simple 1D line integrals along boundary segments.
     \item \textbf{Superior Computational Efficiency:} Assembly is $3.6\times$ faster and produces matrices that are $36\%$ sparser than cell-based VNMM-Gauss schemes.
     \item \textbf{Universal Parameter Standardization:} Analytical geometric limits on domain coverage ($\alpha_s \ge \sqrt{2}/2$) and support containment ($\alpha_s \le 1.15$), validated by parametric sweeps, establish $\alpha_s = 0.80$ as the single universal standard, harmonizing with the stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ and eliminating empirical tuning.
 \end{itemize}
 
-The remainder of this paper is structured as follows. Section~\ref{sec:formulation} details the mathematical formulation of VNMM-MLPG, proves the breakdown of classical weight test functions, derives the closed-form Local Galerkin (MLPG6) matrices, and contrasts row-by-row assembly against the symmetric Subdomain Galerkin assembly. Section~\ref{sec:validation_methodology} outlines the six-stage validation roadmap. Section~\ref{sec:results} presents the numerical results: closed-form elemental verification, patch test satisfaction, MMS asymptotic convergence rates, resonant cavity spectra, computational benchmarking, and the parametric determination of $\alpha_s$. Section~\ref{sec:discussion} discusses advantages, current limitations, and future directions. Section~\ref{sec:conclusions} concludes the paper.
+The remainder of this paper is structured as follows. Section~\ref{sec:formulation} details the mathematical formulation of VNMM-MLPG, proves the breakdown of classical weight test functions, derives the closed-form Local Galerkin (MLPG6) matrices, and contrasts row-by-row assembly against the symmetric Subdomain Galerkin assembly. Section~\ref{sec:results} presents the validation roadmap and numerical results across six comprehensive stages: closed-form elemental verification, patch test satisfaction, MMS asymptotic convergence rates, resonant cavity spectra, computational benchmarking, and the parametric determination of $\alpha_s$. Section~\ref{sec:discussion} discusses advantages, current limitations, and future directions. Section~\ref{sec:conclusions} concludes the paper.
 
 %% =========================================================================
 %% SECTION 2: THEORETICAL FORMULATION OF VNMM-MLPG
@@ -169,7 +170,7 @@ To establish a well-posed boundary-value problem, the physical boundary is parti
               \label{eq:pec_bc}
           \end{equation}
           When $g_D = 0$, this represents the homogeneous Dirichlet condition on perfectly conducting (PEC) electric walls ($\Gamma_{\mathrm{PEC}}$). When $g_D \ne 0$, it models inhomogeneous Dirichlet excitations, such as prescribed incident wave profiles or driven waveguide apertures.
-    \item \textbf{Neumann Boundary Conditions ($\Gamma_N$):} The tangential magnetic traction (surface curl) is specified:
+    \item \textbf{Neumann Boundary Conditions ($\Gamma_N$):} The natural boundary flux (tangential magnetic field / surface curl) is specified:
           \begin{equation}
               \frac{1}{\mu_r} \left(\vec{n} \times (\nabla \times \vec{E})\right) = \vec{g}_N \quad \text{on } \Gamma_N.
               \label{eq:neumann_bvp_pde}
@@ -336,66 +337,43 @@ the local nodal spacing $h_I \equiv h_{\mathrm{local}}(\mathbf{x}_I)$ (evaluated
 \paragraph{Efficiency in Cell-Free MLPG vs. Cell-Based VNMM-Gauss:}
 A major computational advantage of the MLPG formulation over the cell-based VNMM-Gauss in \cite{stable_vnmm2d_2026} is that support stencil selection is executed \textbf{strictly once per node} ($N$ total executions), rather than at every numerical quadrature point across a background cell grid ($N_g \approx 10 N_{\mathrm{DoF}}$). This eliminates tens of thousands of redundant $k$-d tree queries and combinatorial matrix evaluations, reducing stencil selection to a negligible fraction ($< 2\%$) of the overall solution pipeline.
 
-\subsection{Local Weak Form and the Vector Test Function Paradox}
+\subsection{Local Weak Form via Subdomain Galerkin / LPIM}
 \label{subsec:local_weak_form}
 
-Multiplying \eqref{eq:helmholtz_pde} by an arbitrary vector test function $\vec{W}_I(\mathbf{x})$ supported on the local subdomain $\Omega_s^I$ and integrating over $\Omega_s^I$ yields the local variational Petrov--Galerkin equation:
+In computational electromagnetics and variational field theory, weak formulations on arbitrary local subdomains can be formulated directly through the \textbf{Local Principle of Virtual Work} (the virtual field / reaction principle) following the Local Point Interpolation Method (LPIM) and Subdomain Galerkin frameworks pioneered by Liu and Gu \cite{liu2001point, liu2005introduction, jin2014finite}. Over each autonomous local integration subdomain $\Omega_s^I \subset \Omega$ centered at node $P_I$, the local variational governing equation is expressed directly as:
 \begin{equation}
     \begin{aligned}
-        \iint_{\Omega_s^I} \bigg[ \frac{1}{\mu_r} (\nabla \times \vec{W}_I)_z (\nabla \times \vec{E})_z & + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{W}_I) (\nabla \cdot \vec{E})                                                              \\
-                                                                                                        & - k_0^2 \epsilon_r \vec{W}_I \cdot \vec{E} \bigg] d\Omega + B_{\partial\Omega_s^I} = \iint_{\Omega_s^I} \vec{W}_I \cdot \vec{J}_s \, d\Omega,
+        \iint_{\Omega_s^I} \bigg[ \frac{1}{\mu_r} (\nabla \times \vec{W}_I)_z (\nabla \times \vec{E})_z & + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{W}_I) (\nabla \cdot \vec{E}) - k_0^2 \epsilon_r \vec{W}_I \cdot \vec{E} \bigg] d\Omega \\
+        & = \iint_{\Omega_s^I} \vec{W}_I \cdot \vec{J}_s \, d\Omega + \int_{\Gamma_s^I} \vec{W}_I \cdot \vec{\tau}_{\mathrm{ext}} \, ds,
     \end{aligned}
     \label{eq:local_weak_form}
 \end{equation}
-where the boundary flux term $B_{\partial\Omega_s^I}$ incorporates integration-by-parts boundary fluxes along $\partial\Omega_s^I$:
+where $\vec{W}_I(\mathbf{x})$ is an admissible vector test function, $\vec{J}_s$ is the volumetric source current density, and $\Gamma_s^I = \Omega_s^I \cap \partial\Omega$ denotes the intersection with the physical domain boundary, carrying prescribed natural boundary fluxes $\vec{\tau}_{\mathrm{ext}}$ (e.g., surface magnetic current densities on PMC walls or Robin radiation impedances, as detailed in Section~\ref{subsec:boundary_treatment}).
+
+For an interior node whose subdomain is fully embedded in the domain ($\Omega_s^I \subset \Omega$), the intersection with the physical boundary is empty ($\Gamma_s^I = \emptyset$). In this case, the circular contour $\partial\Omega_s^I$ represents a fictitious internal interface in a continuous, source-free medium across which Maxwell's interface conditions enforce field continuity ($[\vec{\tau}] = \mathbf{0}$), so no line integral exists. Consequently, the local weak form for all interior subdomains is governed strictly by the volume energy bilinear form:
 \begin{equation}
-    B_{\partial\Omega_s^I} = -\oint_{\partial\Omega_s^I} \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) \cdot \vec{W}_I \, ds - \oint_{\partial\Omega_s^I} \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}) (\vec{n} \cdot \vec{W}_I) \, ds.
-    \label{eq:boundary_flux}
+    \begin{aligned}
+        \iint_{\Omega_s^I} \bigg[ \frac{1}{\mu_r} (\nabla \times \vec{W}_I)_z (\nabla \times \vec{E})_z & + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{W}_I) (\nabla \cdot \vec{E}) \\
+                                                                                                        & - k_0^2 \epsilon_r \vec{W}_I \cdot \vec{E} \bigg] d\Omega = \iint_{\Omega_s^I} \vec{W}_I \cdot \vec{J}_s \, d\Omega.
+    \end{aligned}
+    \label{eq:volume_energy_form}
 \end{equation}
 
-In scalar MLPG formulations (such as MLPG1 \cite{atluri1998new, atluri2002meshless}), the test function is chosen as a smooth radial weight function $w_I(r)$ that vanishes continuously on the boundary of the local subdomain ($w_I(r_s^I) = 0$). This choice is particularly attractive because it causes the boundary flux term $B_{\partial\Omega_s^I}$ in \eqref{eq:boundary_flux} to vanish identically, avoiding the evaluation of line integrals along $\partial\Omega_s^I$.
-
-To emulate this strategy in vector electromagnetics, one might attempt to define a vector test function $\vec{W}_I(\mathbf{x})$ that vanishes continuously on $\partial\Omega_s^I$ ($\vec{W}_I|_{\partial\Omega_s^I} = \mathbf{0}$)---for instance, by choosing $\vec{W}_I(\mathbf{x}) = w_I(r) \vec{t}_I$ along a constant nodal director, or via vector fields with spatially varying directions (such as azimuthal vortex fields or radial expansions modulated by $w_I(r)$).
-
-However, a fundamental mathematical obstruction prevents the use of any such vanishing vector test function when combined with first-order polynomial shape functions. Recall that for any complete linear vector trial field $\vec{E} \in \mathcal{P}^1 = \mathcal{P}_1 \times \mathcal{P}_1$, both the curl and the divergence are spatially constant within the local subdomain $\Omega_s^I$ (Eqs.~\eqref{eq:field_curl_constant}--\eqref{eq:field_div_constant}):
-\begin{equation}
-    (\nabla \times \vec{E})_z = c_{\mathrm{curl}}^I \in \mathbb{R}, \qquad \nabla \cdot \vec{E} = c_{\mathrm{div}}^I \in \mathbb{R}.
-\end{equation}
-Factoring these constants out of the stiffness bilinear forms and applying Stokes' circulation theorem and Gauss' divergence theorem on the disk $\Omega_s^I$ yields:
-\begin{align}
-    \iint_{\Omega_s^I} (\nabla \times \vec{W}_I)_z (\nabla \times \vec{E})_z \, d\Omega & = c_{\mathrm{curl}}^I \iint_{\Omega_s^I} (\nabla \times \vec{W}_I)_z \, d\Omega = c_{\mathrm{curl}}^I \oint_{\partial\Omega_s^I} \vec{W}_I \cdot d\vec{\ell}, \label{eq:curl_zero} \\
-    \iint_{\Omega_s^I} (\nabla \cdot \vec{W}_I) (\nabla \cdot \vec{E}) \, d\Omega       & = c_{\mathrm{div}}^I \iint_{\Omega_s^I} (\nabla \cdot \vec{W}_I) \, d\Omega = c_{\mathrm{div}}^I \oint_{\partial\Omega_s^I} \vec{W}_I \cdot \vec{n} \, ds. \label{eq:div_zero}
-\end{align}
-Because $\vec{W}_I = \mathbf{0}$ everywhere on the boundary $\partial\Omega_s^I$, both line integrals vanish identically:
-\begin{equation}
-    \oint_{\partial\Omega_s^I} \vec{W}_I \cdot d\vec{\ell} \equiv 0, \qquad \oint_{\partial\Omega_s^I} \vec{W}_I \cdot \vec{n} \, ds \equiv 0.
-\end{equation}
-Consequently, \textbf{the entire stiffness bilinear form vanishes identically} ($\mathbf{K} \equiv \mathbf{0}$): neither the physical curl-curl operator nor the divergence regularization can transmit any stiffness to the discrete system. Crucially, this topological cancellation holds for \textit{any} vector test function that vanishes on $\partial\Omega_s^I$, regardless of whether its directional orientation is constant or spatially varying.
-
-This paradox reveals that standard MLPG1 weight-based testing is fundamentally incompatible with first-order vector nodal meshless approximations. To obtain non-trivial, non-singular discrete operators, one must employ test functions that do not vanish on $\partial\Omega_s^I$, naturally leading to the examination of alternative MLPG variants.
-
-\subsection{Justification and Selection of MLPG6 (Local Galerkin)}
+\subsection{Selection of the MLPG6 (Local Galerkin) Test Space}
 \label{subsec:mlpg6_selection}
 
-To establish a mathematically consistent vector formulation, we examine the six MLPG variants classified by Atluri and Shen \cite{atluri2002meshless}:
-\begin{itemize}
-    \item \textbf{MLPG1 (Weight function as test):} Collapses identically for linear fields due to the vanishing boundary flux cancellation \eqref{eq:curl_zero}--\eqref{eq:div_zero}.
-    \item \textbf{MLPG2 (Point collocation):} $\vec{W}_I = \delta(\mathbf{x} - \mathbf{x}_I) \vec{t}_I$. Evaluates strong-form PDEs directly at nodes, requiring second-order spatial derivatives and suffering from numerical instability on irregular clouds.
-    \item \textbf{MLPG3 (Discrete least squares):} Minimizes PDE residuals, but squares the matrix condition number ($\mathrm{cond}(\mathbf{K}) \sim \mathcal{O}(h^{-4})$), creating severe algebraic conditioning challenges.
-    \item \textbf{MLPG4 (Local Boundary Integral Equation, LBIE):} Employs the fundamental solution (Green's function) of the differential operator as the test function \cite{atluri2002meshless, atluri2004meshless}. In vector electromagnetics, the singular dyadic Green's function introduces severe logarithmic and hypersingular integrals over local subdomains $\Omega_s^I$ \cite{tai1994dyadic, chew1995waves}.
-    \item \textbf{MLPG5 (Heaviside step function as test):} Employs a constant test field ($\vec{W}_I = \vec{v}_0$ inside $\Omega_s^I$). While it eliminates domain stiffness integrals, it requires evaluating line integrals of normal and tangential field derivatives along $\partial\Omega_s^I$, which are highly sensitive to inter-stencil trace jumps in non-conforming meshless spaces.
-    \item \textbf{MLPG6 (Local Galerkin Method):} The vector test functions are chosen from the space of \textbf{trial shape functions themselves} within each local subdomain $\Omega_s^I$:
-          \begin{equation}
-              \vec{W}_a^I(\mathbf{x}) = \vec{N}_a^I(\mathbf{x}) \quad \forall \mathbf{x} \in \Omega_s^I, \quad a = 1, \dots, 6.
-              \label{eq:mlpg6_choice}
-          \end{equation}
-\end{itemize}
+A decisive question in local meshless methods concerns the choice of the vector test space $\vec{W}_I$. In scalar meshless methods, MLPG1 \cite{atluri1998new, atluri2002meshless} commonly adopts localized radial weight functions that vanish continuously on the subdomain boundary ($w_I(r_s^I) = 0$). In the present vector setting, however, attempting to use vanishing test functions ($\vec{W}_I|_{\partial\Omega_s^I} = \mathbf{0}$) triggers a fundamental mathematical breakdown. Because the curl and divergence of linear vector trial fields ($\mathcal{P}^1$) are spatially constant within $\Omega_s^I$ (Eqs.~\eqref{eq:field_curl_constant}--\eqref{eq:field_div_constant}), Stokes' circulation theorem and Gauss' divergence theorem convert both volume stiffness integrals directly into closed contour integrals of the test function along $\partial\Omega_s^I$. Since $\vec{W}_I$ vanishes on the boundary, both integrals vanish identically, causing the entire stiffness matrix to collapse to zero ($\mathbf{K} \equiv \mathbf{0}$). This vector test function paradox conclusively rules out weight-based MLPG1 testing for first-order vector approximations.
 
-The Local Galerkin choice (MLPG6) possesses decisive mathematical advantages for VNMM:
+To resolve this limitation and preserve the mathematical structure of the continuous Maxwell operators, we adopt the \textbf{MLPG6 (Local Bubnov--Galerkin)} framework \cite{atluri2002meshless}, choosing the vector test functions directly from the space of \textbf{trial shape functions themselves} within each local subdomain $\Omega_s^I$:
+\begin{equation}
+    \vec{W}_a^I(\mathbf{x}) = \vec{N}_a^I(\mathbf{x}) \quad \forall \mathbf{x} \in \Omega_s^I, \quad a = 1, \dots, 6.
+    \label{eq:mlpg6_choice}
+\end{equation}
+This Local Galerkin choice confers three decisive advantages:
 \begin{enumerate}
-    \item \textbf{Non-Trivial Consistency:} Since $(\nabla \times \vec{N}_a^I)_z$ and $\nabla \cdot \vec{N}_a^I$ are non-zero constants, their inner products against themselves are strictly positive.
-    \item \textbf{Exact Closed-Form Integration:} The polynomial integrands on circular disks can be evaluated analytically in closed form, completely eliminating numerical quadrature errors.
-    \item \textbf{Versatility in Matrix Assembly:} As detailed in Sections~\ref{subsubsec:row_mlpg_symmetry} and~\ref{subsubsec:symmetric_assembly}, MLPG6 naturally accommodates both classical \textit{row-by-row} testing (for deterministic source boundary-value problems) and \textit{symmetric subdomain assembly} (for conservative eigenvalue problems).
+    \item \textbf{Exact Symmetry and Positive-Definiteness:} Testing with the trial basis ($\vec{W}_a^I = \vec{N}_a^I$) ensures that the local stiffness matrix $\mathbf{K}_I^{\mathrm{local}}$ and mass matrix $\mathbf{M}_I^{\mathrm{local}}$ are formed by inner products of the basis functions with themselves. This guarantees that every local matrix is strictly symmetric and positive-(semi)definite, naturally preserving the self-adjointness of the vector curl-curl operator and preventing unphysical complex eigenvalues.
+    \item \textbf{Non-Trivial Stiffness Transmission:} Because $(\nabla \times \vec{N}_a^I)_z$ and $\nabla \cdot \vec{N}_a^I$ are non-zero constants, their inner products against themselves are strictly positive, completely resolving the null-stiffness collapse of MLPG1.
+    \item \textbf{Exact Closed-Form Integration:} Integrands reduce to low-order Cartesian polynomials, enabling exact closed-form analytical integration over both circular and truncated subdomains without numerical quadrature errors (derived in Section~\ref{subsec:analytic_formulas} and \ref{app:truncated_geometry}).
 \end{enumerate}
 
 \subsection{Closed-Form Analytical Discretization Formulas}
@@ -414,7 +392,7 @@ All odd moments vanish identically by radial symmetry:
     \iint_{\Omega_s^I} (x - x_I) \, d\Omega = \iint_{\Omega_s^I} (y - y_I) \, d\Omega = \iint_{\Omega_s^I} (x - x_I)(y - y_I) \, d\Omega \equiv 0.
 \end{equation}
 
-Within each subdomain $\Omega_s^I$, the complete local trial basis consists of the 6 vector shape functions $\vec{N}_a^I(\mathbf{x})$ ($a=1,\dots,6$). Substituting \eqref{eq:shape_functions} into the local weak form, the local stiffness matrix $\mathbf{K}_I^{\mathrm{local}} \in \mathbb{R}^{6 \times 6}$ is partitioned into curl and divergence contributions:
+Within each subdomain $\Omega_s^I$, the complete local trial basis consists of the 6 vector shape functions $\vec{N}_a^I(\mathbf{x})$ ($a=1,\dots,6$). Substituting \eqref{eq:shape_functions} into the local weak form \eqref{eq:local_weak_form}, the local stiffness matrix $\mathbf{K}_I^{\mathrm{local}} \in \mathbb{R}^{6 \times 6}$ is partitioned into curl and divergence contributions:
 \begin{equation}
     \mathbf{K}_I^{\mathrm{local}} = \mathbf{K}_{I, \mathrm{curl}}^{\mathrm{local}} + s_{\mathrm{div}} \mathbf{K}_{I, \mathrm{div}}^{\mathrm{local}},
 \end{equation}
@@ -469,62 +447,37 @@ where $A_{\mathrm{active}}^I = \iint_{\Omega_s^I \cap \Omega} d\Omega$ denotes t
     \mathbf{K}_I^{\mathrm{trunc}} = \eta_I \mathbf{K}_I^{\mathrm{full}}.
     \label{eq:k_truncated_scaled}
 \end{equation}
-For piecewise planar boundaries (such as polygonal cavities and rectangular domains), let $A_{\mathrm{cap}}(d, r_s)$ denote the area of a circular segment cut off by a chord at distance $d \in [0, r_s]$ from the center of a disk of radius $r_s$:
-\begin{equation}
-    A_{\mathrm{cap}}(d, r_s) = r_s^2 \left[ \arccos\left(\frac{d}{r_s}\right) - \frac{d}{r_s} \sqrt{1 - \left(\frac{d}{r_s}\right)^2} \right].
-    \label{eq:cap_area_formula}
-\end{equation}
-The active physical area $A_{\mathrm{active}}^I$ and area fraction $\eta_I$ are then evaluated in closed form for all geometric configurations:
+In meshless literature and computational practice, three distinct strategies can be pursued to handle such truncated integration domains:
 \begin{enumerate}
-    \item \textbf{Case 3 on a Flat Boundary Wall Far from Corners:} For a node $\mathbf{x}_B$ lying on a straight boundary segment at distance greater than $r_s^B$ from any adjacent corner, $\Omega_s^B \cap \Omega$ is an exact half-disk:
+    \item \textbf{Adaptive Radius Truncation for Near-Boundary Nodes:}
+          In classical scalar and vector MLPG formulations (e.g., Atluri and Shen \cite{atluri2002meshless}), a widely used strategy for interior nodes close to $\partial\Omega$ is to locally shrink the subdomain radius $r_s^I$ such that the disk is strictly tangent to the boundary:
           \begin{equation}
-              \eta_B = \frac{1}{2}, \qquad A_{\mathrm{active}}^B = \frac{1}{2} \pi (r_s^B)^2.
-              \label{eq:eta_half_disk}
+              r_s^I = \min\left(r_{s, 0}^I, \, \mathrm{dist}(\mathbf{x}_I, \partial\Omega)\right),
+              \label{eq:radius_shrink_tangent}
           \end{equation}
-    \item \textbf{Case 3 at an Orthogonal Convex Corner Vertex:} For a node situated directly at a $90^\circ$ convex corner vertex, $\Omega_s^B \cap \Omega$ is an exact quarter-disk:
-          \begin{equation}
-              \eta_B = \frac{1}{4}, \qquad A_{\mathrm{active}}^B = \frac{1}{4} \pi (r_s^B)^2.
-              \label{eq:eta_quarter_disk}
-          \end{equation}
-    \item \textbf{Case 3B for a Boundary Node on a Wall Near a Corner:} When a boundary node $\mathbf{x}_B$ lies on a wall at distance $d_{\parallel} < r_s^B$ from an adjacent perpendicular wall, the subdomain is truncated not only by the host wall (which halves the disk) but also by the transverse wall. Because the center lies on the boundary line, the chord at distance $d_{\parallel}$ cuts the full disk symmetrically, removing an exterior circular cap $A_{\mathrm{cap}}(d_{\parallel}, r_s^B)$, exactly half of which lies inside the half-plane of the domain. Consequently, the active area suffers an additional reduction, falling strictly below a half-disk:
-          \begin{equation}
-              \eta_B(d_{\parallel}) = \frac{1}{2} \left( 1 - \frac{A_{\mathrm{cap}}(d_{\parallel}, r_s^B)}{\pi (r_s^B)^2} \right) \in \left[ \frac{1}{4}, \frac{1}{2} \right),
-              \label{eq:eta_boundary_near_corner}
-          \end{equation}
-          with $A_{\mathrm{active}}^B = \eta_B(d_{\parallel}) \pi (r_s^B)^2$. Equation~\eqref{eq:eta_boundary_near_corner} provides a continuous, exact transition between the interior-wall half-disk ($\eta \to 1/2$ as $d_{\parallel} \to r_s^B$) and the corner vertex quarter-disk ($\eta \to 1/4$ as $d_{\parallel} \to 0$).
-    \item \textbf{Case 2 for an Interior Node Crossing a Single Wall:} For an interior node $\mathbf{x}_{I_2}$ at distance $d_I = \mathrm{dist}(\mathbf{x}_{I_2}, \partial\Omega) < r_s^{I_2}$ from a single boundary segment, subtracting the cut-off cap yields:
-          \begin{equation}
-              \eta_{I_2} = 1 - \frac{A_{\mathrm{cap}}(d_I, r_s^{I_2})}{\pi (r_s^{I_2})^2} \in \left( \frac{1}{2}, 1 \right).
-              \label{eq:eta_circular_cap}
-          \end{equation}
-          As $d_I \to r_s^{I_2}$, $\eta_{I_2} \to 1$ smoothly recovering the uncut disk (Case~1), whereas as $d_I \to 0$, $\eta_{I_2} \to 1/2$ smoothly matching the flat boundary limit (Case~3).
-    \item \textbf{Case 2B for an Interior Node Near a Corner Crossing Two Walls:} When an interior node $\mathbf{x}_I$ is located close to a domain corner such that its distance to both perpendicular walls satisfies $d_x < r_s^I$ and $d_y < r_s^I$, the disk intersects both boundaries simultaneously. Two geometric regimes arise:
-          \begin{itemize}
-              \item If the corner vertex lies outside the disk ($d_x^2 + d_y^2 \ge (r_s^I)^2$), the two cut-off circular segments in the exterior half-planes are mutually disjoint, yielding:
-                    \begin{equation}
-                        A_{\mathrm{active}}^I = \pi (r_s^I)^2 - A_{\mathrm{cap}}(d_x, r_s^I) - A_{\mathrm{cap}}(d_y, r_s^I).
-                        \label{eq:eta_interior_corner_disjoint}
-                    \end{equation}
-              \item If the corner vertex lies inside the disk ($d_x^2 + d_y^2 < (r_s^I)^2$), the two exterior half-planes overlap in the exterior corner quadrant. By inclusion-exclusion:
-                    \begin{equation}
-                        A_{\mathrm{active}}^I = \pi (r_s^I)^2 - A_{\mathrm{cap}}(d_x, r_s^I) - A_{\mathrm{cap}}(d_y, r_s^I) + A_{\mathrm{overlap}}^I,
-                        \label{eq:eta_interior_corner_overlap}
-                    \end{equation}
-                    where the overlap area $A_{\mathrm{overlap}}^I$ is computed in exact closed form via Green's circulation theorem:
-                    \begin{align}
-                        A_{\mathrm{overlap}}^I & = \frac{1}{2} (r_s^I)^2 (\theta_y - \theta_x) \nonumber                              \\
-                                               & \quad + \frac{1}{2} r_s^I \left[ d_x (\sin\theta_y - \sin\theta_x) \right. \nonumber \\
-                                               & \qquad \qquad \left. - d_y (\cos\theta_y - \cos\theta_x) \right].
-                    \end{align}
-          \end{itemize}
+          where $r_{s, 0}^I$ is the nominal subdomain radius. While this ensures $\Omega_s^I \subset \bar{\Omega}$ and eliminates Case~2 truncations altogether for interior nodes, it creates non-uniform, node-dependent integration sizes, can lead to vanishingly small subdomains for nodes arbitrarily close to $\partial\Omega$, and still leaves boundary nodes (Case~3) truncated.
+
+    \item \textbf{Numerical Quadrature and Coordinate Mapping over Truncated Intersections:}
+          A second alternative in the literature is to evaluate the local integrals over $\Omega_s^I \cap \Omega$ numerically. While crude filtering of polar Gauss points through boundary bounding boxes exhibits slow $\mathcal{O}(h_{\mathrm{quad}})$ convergence across chord discontinuities, Atluri \cite{atluri2004meshless} demonstrated that this limitation can be resolved by mapping the truncated circular domains onto a regular reference domain, such as a unit circle or standard parent domain, via coordinate transformations. Standard Gauss quadrature can then be applied smoothly on the mapped domain without boundary clipping errors or background cells, although evaluating the coordinate transformation and its associated Jacobian determinant for various chord angles and corner intersections introduces non-trivial algorithmic complexity.
+
+    \item \textbf{Exact Closed-Form Active Area Scaling (Present Formulation):}
+          A remarkable mathematical consequence of employing the complete polynomial space $\mathcal{P}^1$ in VNMM is that both numerical integration and coordinate mappings are completely bypassed. As established in Eqs.~\eqref{eq:k_curl_truncated}--\eqref{eq:k_truncated_scaled}, the stiffness integrand factors completely outside the domain integral, allowing the exact stiffness matrix on any truncated domain to be computed by directly scaling the full-disk analytical matrix by the active area fraction $\eta_I$.
+          For piecewise planar boundaries (such as polygonal and rectangular cavities), the active area $A_{\mathrm{active}}^I$ and fraction $\eta_I$ for all boundary configurations---including flat walls ($\eta = 1/2$), corner vertices ($\eta = 1/4$), boundary nodes near corners ($\eta \in [1/4, 1/2)$), and interior nodes intersecting one or two walls---are evaluated in exact closed analytical form as detailed in \ref{app:truncated_geometry}.
 \end{enumerate}
 
-For the local mass matrix $\mathbf{M}_I^{\mathrm{local}}$:
+For the local mass matrix $\mathbf{M}_I^{\mathrm{local}}$, substituting the complete $\mathcal{P}^1$ shape function expansion yields the exact moment-based integration over any truncated subdomain:
 \begin{equation}
-    \mathbf{M}_I^{\mathrm{trunc}} = \epsilon_r \iint_{\Omega_s^I \cap \Omega} (\vec{N}_a^I \cdot \vec{N}_b^I) \, d\Omega = \eta_I \mathbf{M}_I^{\mathrm{full}} + \mathcal{O}(h^3).
-    \label{eq:m_truncated_scaling}
+    \mathbf{M}_I^{\mathrm{trunc}} = \epsilon_r \left( \mathbf{P}_0^I S_0^I + \mathbf{P}_x^I S_{1x}^I + \mathbf{P}_y^I S_{1y}^I + \mathbf{P}_{xx}^I S_{2xx}^I + \mathbf{P}_{yy}^I S_{2yy}^I + \mathbf{P}_{xy}^I S_{2xy}^I \right),
+    \label{eq:m_truncated_moments}
 \end{equation}
-The area-scaled term $\eta_I \mathbf{M}_I^{\mathrm{full}}$ accounts for $100\%$ of the dominant $\mathcal{O}(h^2)$ mass matrix contribution $\mathbf{C}_0^I A_{\mathrm{active}}^I$ and exactly captures the symmetric quadratic moment $\mathbf{C}_1^I \frac{A_{\mathrm{active}}^I (r_s^I)^2}{4}$. The residual asymmetric moment $\iint_{\Omega_s^I \cap \Omega} \Delta x_n \, d\Omega = \frac{2}{3}(r_s^I)^3$ scales as $\mathcal{O}(h^3)$ along the outward normal $\vec{n}$, and can either be evaluated analytically or integrated directly via polar Gauss quadrature over $\Omega_s^I \cap \Omega$.
+where $\mathbf{P}_0^I, \dots, \mathbf{P}_{xy}^I \in \mathbb{R}^{6 \times 6}$ are the constant coefficient matrices formed by outer products of the placement matrix rows $\boldsymbol{\beta}^I$ (obtained from the expansion \eqref{eq:P1_shape_function_expansion_mlpg}), and $S_0^I, \dots, S_{2xy}^I$ are the geometric moments of $\Omega_s^I \cap \Omega$ relative to $\mathbf{x}_I$:
+\begin{align}
+    S_0^I    & = A_{\mathrm{active}}^I = \iint_{\Omega_s^I \cap \Omega} d\Omega,                                            \\
+    S_{1x}^I & = \iint_{\Omega_s^I \cap \Omega} (x - x_I) \, d\Omega, \quad S_{1y}^I = \iint_{\Omega_s^I \cap \Omega} (y - y_I) \, d\Omega, \\
+    S_{2xx}^I & = \iint_{\Omega_s^I \cap \Omega} (x - x_I)^2 \, d\Omega, \quad S_{2yy}^I = \iint_{\Omega_s^I \cap \Omega} (y - y_I)^2 \, d\Omega, \\
+    S_{2xy}^I & = \iint_{\Omega_s^I \cap \Omega} (x - x_I)(y - y_I) \, d\Omega.
+\end{align}
+On an uncut full disk, reflection symmetry ensures $S_{1x}^I = S_{1y}^I = S_{2xy}^I = 0$ and $S_{2xx}^I = S_{2yy}^I = \frac{\pi}{4}(r_s^I)^4$, recovering \eqref{eq:m_local_analytic}. On truncated subdomains, normal reflection symmetry is broken, introducing non-vanishing linear moments (e.g., $S_{1y}^I = \frac{2}{3}(r_s^I)^3$ on flat walls and $S_{1x}^I = S_{1y}^I = \frac{1}{3}(r_s^I)^3$ on corner vertices). In our implementation, these moments are evaluated in closed form (as derived in \ref{app:truncated_geometry}), ensuring that all numerical tests and assemblies across full and truncated domains employ the exact mass matrix integration.
 
 \subsubsection{Classical Row-by-Row MLPG Assembly and Matrix Symmetry Analysis}
 \label{subsubsec:row_mlpg_symmetry}
@@ -546,15 +499,22 @@ where the non-zero row coefficients are given analytically by:
 
 \begin{remark}[Inherent Matrix Unsymmetry in Classical MLPG and LPIM]
     A fundamental property of classical MLPG \cite{atluri2002meshless} and the Local Point Interpolation Method (LPIM) \cite{liu2001local, liu2005introduction} that warrants careful mathematical emphasis is that \textbf{the global stiffness matrix $\mathbf{K}$ and mass matrix $\mathbf{M}$ assembled row-by-row are intrinsically unsymmetric} ($K_{Ij} \ne K_{Ji}$).
-    Indeed, the matrix element $K_{Ij}$ in row $I$ is evaluated by integrating over the local subdomain $\Omega_s^I$ centered at node $\mathbf{x}_I$:
-    \begin{equation}
-        K_{Ij} = \iint_{\Omega_s^I} \left[ \frac{1}{\mu_r} (\nabla \times \vec{W}_I)_z (\nabla \times \vec{N}_j^I)_z + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{W}_I) (\nabla \cdot \vec{N}_j^I) \right] d\Omega,
-    \end{equation}
-    whereas the transposed element $K_{Ji}$ in row $J$ originates from the weak form of node $J$ and is integrated over the distinct subdomain $\Omega_s^J$ centered at node $\mathbf{x}_J$:
-    \begin{equation}
-        K_{Ji} = \iint_{\Omega_s^J} \left[ \frac{1}{\mu_r} (\nabla \times \vec{W}_J)_z (\nabla \times \vec{N}_i^J)_z + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{W}_J) (\nabla \cdot \vec{N}_i^J) \right] d\Omega.
-    \end{equation}
-    Because $\Omega_s^I \ne \Omega_s^J$ (having different centers $\mathbf{x}_I \ne \mathbf{x}_J$ and potentially distinct radii $r_s^I \ne r_s^J$), the integration domains differ entirely. Consequently, $K_{Ij} \ne K_{Ji}$ in general, rendering the global system matrix non-Hermitian \cite{atluri2002meshless, liu2001local}. In solid mechanics literature, this asymmetry has historically been handled either by employing unsymmetric solvers or through ad-hoc algebraic averaging $\frac{1}{2}(\mathbf{K} + \mathbf{K}^T)$, which lacks variational consistency.
+    This unsymmetry stems from two compounding sources:
+    \begin{enumerate}
+        \item \textbf{Geometric Disparity of Integration Subdomains ($\Omega_s^I \ne \Omega_s^J$):}
+              The matrix element $K_{Ij}$ in row $I$ is evaluated by integrating over the local subdomain $\Omega_s^I$ centered at node $\mathbf{x}_I$:
+              \begin{equation}
+                  K_{Ij} = \iint_{\Omega_s^I} \left[ \frac{1}{\mu_r} (\nabla \times \vec{W}_I)_z (\nabla \times \vec{N}_j^I)_z + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{W}_I) (\nabla \cdot \vec{N}_j^I) \right] d\Omega,
+              \end{equation}
+              whereas the transposed element $K_{Ji}$ in row $J$ originates from the weak form of node $J$ and is integrated over the distinct subdomain $\Omega_s^J$ centered at node $\mathbf{x}_J$:
+              \begin{equation}
+                  K_{Ji} = \iint_{\Omega_s^J} \left[ \frac{1}{\mu_r} (\nabla \times \vec{W}_J)_z (\nabla \times \vec{N}_i^J)_z + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{W}_J) (\nabla \cdot \vec{N}_i^J) \right] d\Omega.
+              \end{equation}
+              Because $\Omega_s^I \ne \Omega_s^J$ (having different centers $\mathbf{x}_I \ne \mathbf{x}_J$ and potentially distinct radii $r_s^I \ne r_s^J$), the integration domains differ entirely.
+        \item \textbf{Disparity of Support Stencils and Shape Function Expressions ($\Omega_u^I \ne \Omega_u^J$):}
+              Crucially, the support stencil $\Omega_u^I$ selected for node $P_I$ through the scale-invariant qualification algorithm (Section~\ref{subsec:stencil_selection}) does not coincide with the stencil $\Omega_u^J$ selected for node $P_J$ ($\Omega_u^I \ne \Omega_u^J$). Consequently, the local placement matrices differ ($\mathbf{A}_I \ne \mathbf{A}_J$), resulting in distinct polynomial coefficient matrices $\boldsymbol{\beta}^I \ne \boldsymbol{\beta}^J$ in \eqref{eq:beta_matrix_inversion}. Even within the overlapping spatial region $\Omega_s^I \cap \Omega_s^J$, the shape function $\vec{N}_j^I(\mathbf{x})$ defined over stencil $\Omega_u^I$ and the shape function $\vec{N}_i^J(\mathbf{x})$ defined over stencil $\Omega_u^J$ possess completely different polynomial coefficient vectors and analytical expressions.
+    \end{enumerate}
+    Consequently, $K_{Ij} \ne K_{Ji}$ in general, rendering the global system matrix non-Hermitian \cite{atluri2002meshless, liu2001local}. In solid mechanics literature, this asymmetry has historically been handled either by employing unsymmetric solvers or through ad-hoc algebraic averaging $\frac{1}{2}(\mathbf{K} + \mathbf{K}^T)$, which lacks variational consistency.
 
     For affine polynomial fields (such as the Galerkin Patch Test in Section~\ref{subsec:stage2_patch_test}), this unsymmetric assembly is completely consistent: because affine fields belong identically to $\mathcal{P}^1$, the local residual vanishes on every disk, and the condensed system $\mathbf{K}_{\mathrm{int}, \mathrm{int}} \mathbf{e}_{\mathrm{int}} = \mathbf{F}_{\mathrm{int}} - \mathbf{K}_{\mathrm{int}, \mathrm{bnd}} \mathbf{e}_{\mathrm{bnd}}$ reproduces the exact field to machine precision. However, for general non-polynomial fields with truncation error (as demonstrated under the MMS in Section~\ref{subsubsec:mms_assembly_comparison}) as well as conservative eigenvalue problems, testing with only one test function per disk fails to maintain discrete inf-sup coercivity and breaks operator self-adjointness, making the symmetric Subdomain Galerkin assembly developed next indispensable.
 \end{remark}
@@ -589,25 +549,25 @@ Both assembly modes (the classical row-by-row testing of Section~\ref{subsubsec:
 \subsection{Analysis and Treatment of Boundary Conditions}
 \label{subsec:boundary_treatment}
 
-A well-known challenge in meshless methods, particularly within the MLPG paradigm, is the enforcement of boundary conditions and the treatment of boundary subdomains $\Omega_s^B$ that intersect the physical domain boundary $\partial\Omega$ (Fig.~\ref{fig:schematic_mlpg}). In conventional scalar meshless methods based on Moving Least Squares (MLS) or radial basis functions (RBF), shape functions lack the Kronecker-delta property ($\phi_i(\mathbf{x}_j) \ne \delta_{ij}$), requiring complex external mechanisms such as Lagrange multipliers, penalty parameters, or boundary element coupling \cite{atluri2002meshless}.
+A well-known challenge in meshless methods, particularly within the MLPG paradigm, is the enforcement of boundary conditions. In conventional scalar meshless methods based on Moving Least Squares (MLS) or radial basis functions (RBF), shape functions lack the Kronecker-delta property ($\phi_i(\mathbf{x}_j) \ne \delta_{ij}$), requiring complex external mechanisms such as Lagrange multipliers, penalty parameters, or boundary element coupling \cite{atluri2002meshless}.
 
-In the VNMM-MLPG framework, the directional vector degree of freedom $e_k = \vec{E}(\mathbf{x}_k) \cdot \vec{t}_k$ combined with local weak-form integration yields an exceptionally clean, versatile structure for all standard electromagnetic boundary conditions. Consider a general partition of the physical boundary $\partial\Omega = \Gamma_D \cup \Gamma_N \cup \Gamma_R$, where $\Gamma_D$ denotes Dirichlet boundaries (electric walls / PEC), $\Gamma_N$ denotes Neumann boundaries (magnetic walls / PMC / surface current sheets), and $\Gamma_R$ denotes Robin boundaries (impedance / absorbing radiation).
+In the VNMM-MLPG framework, the directional vector degree of freedom $e_k = \vec{E}(\mathbf{x}_k) \cdot \vec{t}_k$ combined with the Subdomain Galerkin / LPIM weak form \eqref{eq:local_weak_form} yields an exceptionally clean, versatile structure for all standard electromagnetic boundary conditions. Consider a general partition of the physical boundary $\partial\Omega = \Gamma_D \cup \Gamma_N \cup \Gamma_R$, where $\Gamma_D$ denotes Dirichlet boundaries (electric walls / PEC), $\Gamma_N$ denotes Neumann boundaries (magnetic walls / PMC / surface current sheets), and $\Gamma_R$ denotes Robin boundaries (impedance / absorbing radiation).
 
-For any node $\mathbf{x}_I$ whose local subdomain $\Omega_s^I$ intersects the physical boundary $\partial\Omega$, the active integration domain is the truncated region $\Omega_s^I \cap \Omega$. Its boundary $\partial(\Omega_s^I \cap \Omega)$ splits into an interior circular arc $L_s^I = \partial\Omega_s^I \cap \Omega$ and a boundary intersection segment $\Gamma_s^I = \Omega_s^I \cap \partial\Omega$ (the 1D segment formed by the intersection of the 2D local disk $\Omega_s^I$ with the domain boundary $\partial\Omega$):
+For any node $\mathbf{x}_I$ whose local subdomain $\Omega_s^I$ intersects the physical boundary $\partial\Omega$, the active integration domain is the truncated region $\Omega_s^I \cap \Omega$, and the physical boundary intersection segment $\Gamma_s^I = \Omega_s^I \cap \partial\Omega$ partitions naturally according to the boundary types:
 \begin{equation}
-    \partial(\Omega_s^I \cap \Omega) = L_s^I \cup \Gamma_s^I, \qquad \Gamma_s^I = (\Omega_s^I \cap \Gamma_D) \cup (\Omega_s^I \cap \Gamma_N) \cup (\Omega_s^I \cap \Gamma_R).
+    \Gamma_s^I = (\Omega_s^I \cap \Gamma_D) \cup (\Omega_s^I \cap \Gamma_N) \cup (\Omega_s^I \cap \Gamma_R).
 \end{equation}
-Integration by parts in the local weak form \eqref{eq:local_weak_form} over $\Omega_s^I \cap \Omega$ yields the boundary flux line integral:
+In the local weak form \eqref{eq:local_weak_form}, physical boundary conditions enter exclusively through the natural boundary flux line integral along $\Gamma_s^I$:
 \begin{equation}
-    \oint_{\partial(\Omega_s^I \cap \Omega)} \vec{\tau} \cdot \vec{W}_I \, ds = \int_{L_s^I} \vec{\tau} \cdot \vec{W}_I \, ds + \int_{\Gamma_s^I} \vec{\tau} \cdot \vec{W}_I \, ds,
+    I_{\Gamma_s^I} = \int_{\Gamma_s^I} \vec{W}_I \cdot \vec{\tau}_{\mathrm{ext}} \, ds,
     \label{eq:boundary_flux_partition}
 \end{equation}
-where $\vec{\tau}$ is the generalized electromagnetic traction vector along outward normal $\vec{n}$:
+where $\vec{\tau}_{\mathrm{ext}}$ denotes the prescribed physical surface boundary flux corresponding to the natural electromagnetic flux vector along outward unit normal $\vec{n}$:
 \begin{equation}
     \vec{\tau} = \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}) \vec{n}.
     \label{eq:traction_vector}
 \end{equation}
-We now analyze each boundary condition type in detail.
+We now analyze the enforcement of each physical boundary condition along $\Gamma_s^I$ in detail.
 
 \subsubsection{Inhomogeneous and Homogeneous Dirichlet Boundary Conditions}
 \label{subsubsec:dirichlet_bc}
@@ -654,12 +614,12 @@ Because boundary DoFs are eliminated directly, evaluating boundary integrals alo
 \subsubsection{Homogeneous Neumann Boundary Conditions (Natural / PMC / Symmetry)}
 \label{subsubsec:neumann_homogeneous}
 
-On a homogeneous Neumann boundary $\Gamma_N$ (such as a perfect magnetic conductor, PMC, or a plane of electromagnetic geometric symmetry), the natural boundary condition requires the tangential magnetic field or surface curl traction to vanish:
+On a homogeneous Neumann boundary $\Gamma_N$ (such as a perfect magnetic conductor, PMC, or a plane of electromagnetic geometric symmetry), the natural boundary condition requires the tangential magnetic field (surface curl flux) to vanish:
 \begin{equation}
     \vec{n} \times (\nabla \times \vec{E}) = \mathbf{0} \quad \text{on } \Gamma_N.
     \label{eq:neumann_homogeneous_pde}
 \end{equation}
-Moreover, for physical solenoidal fields satisfying the divergence-free condition in source-free regions, $\nabla \cdot \vec{E} = 0$. Substituting these into the traction vector \eqref{eq:traction_vector} shows that:
+Moreover, for physical solenoidal fields satisfying the divergence-free condition in source-free regions, $\nabla \cdot \vec{E} = 0$. Substituting these into the boundary flux vector \eqref{eq:traction_vector} shows that:
 \begin{equation}
     \vec{\tau} \equiv \mathbf{0} \quad \text{on } \Gamma_N.
 \end{equation}
@@ -672,12 +632,12 @@ This establishes a crucial theoretical advantage of the VNMM-MLPG: \textbf{homog
 \subsubsection{Inhomogeneous Neumann Boundary Conditions (Surface Currents)}
 \label{subsubsec:neumann_inhomogeneous}
 
-When an inhomogeneous Neumann condition is prescribed on $\Gamma_N$, representing an impressed surface magnetic current density $\vec{M}_s$ or a non-zero magnetic tangential traction:
+When an inhomogeneous Neumann condition is prescribed on $\Gamma_N$, representing an impressed surface magnetic current density $\vec{M}_s$ or a non-zero natural tangential magnetic flux:
 \begin{equation}
     \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) = \vec{g}_N(\mathbf{x}) \quad \text{on } \Gamma_N,
     \label{eq:neumann_inhomogeneous_pde}
 \end{equation}
-the traction vector becomes $\vec{\tau} = \vec{g}_N(\mathbf{x})$ (under $\nabla \cdot \vec{E} = 0$). In the local weak form for any node whose subdomain intersects $\Gamma_N$, this boundary traction introduces a non-zero line integral over the intersection segment $\Gamma_s^I = \Omega_s^I \cap \Gamma_N$:
+the boundary flux vector becomes $\vec{\tau} = \vec{g}_N(\mathbf{x})$ (under $\nabla \cdot \vec{E} = 0$). In the local weak form for any node whose subdomain intersects $\Gamma_N$, this boundary flux introduces a non-zero line integral over the intersection segment $\Gamma_s^I = \Omega_s^I \cap \Gamma_N$:
 \begin{equation}
     F_a^{\mathrm{Neumann}, I} = \int_{\Gamma_s^I} \vec{g}_N(\mathbf{x}) \cdot \vec{W}_a^I(\mathbf{x}) \, ds = \int_{\Gamma_s^I} \vec{g}_N(\mathbf{x}) \cdot \vec{N}_a^I(\mathbf{x}) \, ds.
     \label{eq:neumann_load_integral}
@@ -699,7 +659,7 @@ where $\gamma = j k_0 \sqrt{\epsilon_r / \mu_r}$ represents the surface admittan
     C_{ab}^{\mathrm{Robin}, I} = \gamma \int_{\Omega_s^I \cap \Gamma_R} \left( \vec{N}_a^I(\mathbf{x}) \cdot \vec{t} \right) \left( \vec{N}_b^I(\mathbf{x}) \cdot \vec{t} \right) \, ds,
     \label{eq:robin_matrix}
 \end{equation}
-while the independent term $\vec{g}_R$ contributes to the right-hand load vector. Because $\Omega_s^I \cap \Gamma_R$ is a 1D straight or circular boundary segment, \eqref{eq:robin_matrix} is readily integrated using 1D Gauss quadrature without requiring background domain meshes.
+while the independent term $\vec{g}_R$ contributes to the right-hand load vector. Because $\Omega_s^I \cap \Gamma_R$ is a 1D boundary segment (e.g., a straight segment along planar walls), \eqref{eq:robin_matrix} can be evaluated either in exact closed analytical form---since the shape functions $\vec{N}_a^I$ are linear polynomials in Cartesian coordinates, yielding a quadratic integrand of degree at most 2---or via a standard 2-point 1D Gauss--Legendre quadrature, entirely avoiding background domain meshes.
 
 \subsection{Local Conformity vs. Global Non-Conformity}
 \label{subsec:conformity_discussion}
@@ -719,15 +679,16 @@ In earlier cell-based VNMM-Gauss, non-conformity caused instability: when Gauss 
 \end{enumerate}
 
 %% =========================================================================
-%% SECTION 3: VALIDATION METHODOLOGY
+%% SECTION 3: NUMERICAL VALIDATION AND RESULTS
 %% =========================================================================
-\section{Validation Methodology}
+\section{Numerical Validation and Results}
+\label{sec:results}
 \label{sec:validation_methodology}
 
-To establish the mathematical consistency, asymptotic convergence, physical fidelity, and computational efficiency of the VNMM-MLPG, we construct a six-stage verification roadmap:
+To establish the mathematical consistency, asymptotic convergence, physical fidelity, and computational efficiency of the VNMM-MLPG, we construct a comprehensive six-stage verification roadmap:
 
 \begin{enumerate}
-    \item \textbf{Stage 1: Element-Level Analytical Verification.} Verify that closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} match high-precision polar Gauss quadrature ($n_r = 6, n_\theta = 16$) to machine tolerance ($\le 10^{-10}$).
+    \item \textbf{Stage 1: Element-Level Analytical Verification.} Verify that closed-form analytical formulas for stiffness $\mathbf{K}$ and mass $\mathbf{M}$ match high-precision numerical quadrature to machine tolerance across both full circular disks and truncated subdomains (flat walls, corner vertices, and chord cuts), and demonstrate that 2-point Gauss quadrature evaluates 1D boundary terms (Neumann load vectors and Robin damping matrices) to machine precision.
     \item \textbf{Stage 2: Galerkin Patch Test for Linear Consistency.} Verify that under both the classical unsymmetric row-by-row MLPG assembly \eqref{eq:k_row_analytic} and the symmetric Subdomain Galerkin assembly \eqref{eq:global_assembly}, on both regular grids and irregular point clouds with $25\%$ stochastic position jitter, the discrete system reproduces all seven canonical affine vector states to machine precision:
           \begin{equation}
               \frac{\|\mathbf{e}_{\mathrm{int}} - \mathbf{e}^*\|_{\infty}}{\|\mathbf{e}^*\|_{\infty}} \le 10^{-11}.
@@ -746,21 +707,79 @@ To establish the mathematical consistency, asymptotic convergence, physical fide
     \item \textbf{Stage 6: Parametric Sensitivity and Determination of $\alpha_s$.} Investigate the sensitivity of domain integration coverage, polynomial support containment, boundary-value error, and eigenvalue accuracy across a wide sweep $\alpha_s \in [0.30, 2.00]$. Deduce theoretical geometric bounds and establish a single universal operating standard.
 \end{enumerate}
 
-%% =========================================================================
-%% SECTION 4: NUMERICAL RESULTS
-%% =========================================================================
-\section{Numerical Results}
-\label{sec:results}
-
 \subsection{Stage 1: Element-Level Closed-Form Verification}
 \label{subsec:stage1_results}
 
-The closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} were verified against polar numerical quadrature on a disk $\Omega_s$ ($r_s = 0.35$ m, $s_{\mathrm{div}} = 4.0$). Using $n_r = 6$ radial Gauss--Legendre points and $n_\theta = 16$ circumferential trapezoidal points, the relative differences between analytical and numerical evaluations satisfy:
+To establish the mathematical fidelity and cell-free precision of the local operators before undertaking global system assembly, the element-level stiffness matrix $\mathbf{K}_I^{\mathrm{local}}$, mass matrix $\mathbf{M}_I^{\mathrm{local}}$, and boundary terms were comprehensively verified by comparing closed-form analytical evaluations against high-order numerical quadratures. We investigate three distinct geometric regimes:
+\begin{enumerate}
+    \item Full interior circular disks ($\eta = 1.0$),
+    \item Truncated subdomains along or near physical boundaries ($\eta \in (0, 1)$),
+    \item 1D natural boundary integrals entering Neumann and Robin boundary conditions along $\Gamma_s^I = \Omega_s^I \cap \partial\Omega$.
+\end{enumerate}
+
+\begin{table}[!t]
+    \centering
+    \small
+    \caption{Element-level verification of stiffness $\mathbf{K}$, mass $\mathbf{M}$, and boundary terms across full and truncated integration domains, comparing analytical closed-form formulas against high-precision numerical quadrature.}
+    \label{tab:stage1_element_verification}
+
+    \vspace{0.4em}
+    \textbf{(a) 2D Subdomain Integrals: Stiffness $\mathbf{K}$ and Mass $\mathbf{M}$ on Full and Truncated Domains}
+    \vspace{0.2em}
+
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{llcccc}
+            \toprule
+            \textbf{Domain}    & \textbf{Geometric}      & \textbf{Fraction}     & \textbf{Stiffness Error}          & \textbf{Mass Error}                                & \textbf{Scaling Error}                                            \\
+            \textbf{Type}      & \textbf{Configuration}  & $\boldsymbol{\eta_I}$ & $\boldsymbol{\Delta \mathbf{K}}$  & $\boldsymbol{\Delta \mathbf{M}}$ \textbf{(Exact)}  & $\boldsymbol{\eta \mathbf{M}^{\mathrm{full}}}$ \textbf{vs.~Exact} \\
+            \midrule
+            Full Circular Disk & Interior node           & $1.0$                 & $2.14 \times 10^{-14}$            & $1.87 \times 10^{-14}$                             & $0.00$                                                            \\
+            Flat Boundary Wall & Half-disk ($\eta=1/2$)  & $1/2$                 & $6.91 \times 10^{-17}$            & $2.93 \times 10^{-15}$                             & $1.56 \times 10^{0}$                                              \\
+            Corner Vertex      & Quarter-disk ($\eta=1/4$) & $1/4$               & $1.85 \times 10^{-16}$            & $3.70 \times 10^{-16}$                             & $4.22 \times 10^{-1}$                                             \\
+            Near-Wall Cut      & Chord ($d = 0.5 r_s$)   & $0.8045$              & $2.09 \times 10^{-7}$             & $1.69 \times 10^{-7}$                              & $1.55 \times 10^{-1}$                                             \\
+            \bottomrule
+        \end{tabular}
+    }
+
+    \vspace{0.8em}
+    \textbf{(b) 1D Natural Boundary Line Integrals along $\Gamma_s^I = \Omega_s^I \cap \partial\Omega$}
+    \vspace{0.2em}
+
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{llccc}
+            \toprule
+            \textbf{Boundary}                          & \textbf{Intersection}         & \textbf{1-Point Gauss} & \textbf{2-Point Gauss} & \textbf{3-Point Gauss} \\
+            \textbf{Term}                              & \textbf{Segment $\Gamma_s^I$} & \textbf{Error}         & \textbf{Error}         & \textbf{Error}         \\
+            \midrule
+            Inhomogeneous Neumann $F_a^{\mathrm{Neumann}, I}$ & Straight wall $[-r_s, r_s]$   & $1.01 \times 10^{-1}$  & $1.92 \times 10^{-16}$ & $4.81 \times 10^{-17}$ \\
+            Robin Damping Matrix $C_{ab}^{\mathrm{Robin}, I}$  & Straight wall $[-r_s, r_s]$   & $1.76 \times 10^{-1}$  & $1.09 \times 10^{-16}$ & $2.18 \times 10^{-16}$ \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}
+
+\subsubsection{Full Circular Disks (Interior Subdomains)}
+For an uncut circular disk $\Omega_s^I$ ($r_s = 0.35$ m, $s_{\mathrm{div}} = 4.0$), polar Gauss--Legendre quadrature was executed with $n_r = 6$ radial points and $n_\theta = 16$ circumferential points. Because the trial shape functions are linear polynomials in Cartesian coordinates ($\mathcal{P}^1$), the stiffness integrand is strictly constant, while the mass integrand is a complete quadratic polynomial. As tabulated in Table~\ref{tab:stage1_element_verification}, the relative difference between the closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} and numerical quadrature satisfies:
 \begin{align}
     \frac{\|\mathbf{K}_{\mathrm{analytic}} - \mathbf{K}_{\mathrm{numeric}}\|_{\max}}{\|\mathbf{K}_{\mathrm{analytic}}\|_{\max}} & \le 2.14 \times 10^{-14}, \\
-    \frac{\|\mathbf{M}_{\mathrm{analytic}} - \mathbf{M}_{\mathrm{numeric}}\|_{\max}}{\|\mathbf{M}_{\mathrm{analytic}}\|_{\max}} & \le 1.87 \times 10^{-14}.
+    \frac{\|\mathbf{M}_{\mathrm{analytic}} - \mathbf{M}_{\mathrm{numeric}}\|_{\max}}{\|\mathbf{M}_{\mathrm{analytic}}\|_{\max}} & \le 1.87 \times 10^{-14},
 \end{align}
-This confirms that the analytical expressions evaluate the exact polynomial integrals on circular disks down to double-precision machine epsilon, eliminating numerical quadrature error from the MLPG formulation.
+confirming exact agreement down to double-precision machine epsilon.
+
+\subsubsection{Truncated Subdomains Near Boundaries}
+For the truncated boundary subdomains formulated in Section~\ref{subsubsec:truncated_subdomains_analytic} and \ref{app:truncated_geometry} (flat walls, corner vertices, and interior chord cuts), Table~\ref{tab:stage1_element_verification}(a) summarizes the numerical verification against high-order quadrature.
+
+For the stiffness matrix $\mathbf{K}_I^{\mathrm{trunc}}$, the analytical area scaling \eqref{eq:k_truncated_scaled} reproduces numerical integration to machine precision: $\Delta \mathbf{K} \le 6.91 \times 10^{-17}$ on flat walls and $\Delta \mathbf{K} \le 1.85 \times 10^{-16}$ on corners. The slight discrepancy observed for chord cuts ($\sim 2.09 \times 10^{-7}$) reflects the discretization error of Cartesian slice quadrature across curved chords, which is avoided by the exact analytical formula \eqref{eq:cap_area_formula}.
+
+For the mass matrix $\mathbf{M}_I^{\mathrm{trunc}}$, Table~\ref{tab:stage1_element_verification}(a) confirms the necessity of the moment-based formulation \eqref{eq:m_truncated_moments}: while simplified area scaling $\eta_I \mathbf{M}_I^{\mathrm{full}}$ incurs severe errors ($156\%$ on half-disks and $42\%$ on quarter-disks), evaluating the complete moment expansion recovers the quadrature results down to machine epsilon ($\Delta \mathbf{M} \le 2.93 \times 10^{-15}$ on flat walls and $\Delta \mathbf{M} \le 3.70 \times 10^{-16}$ on corners).
+
+\subsubsection{Boundary Condition Integrals (Neumann and Robin)}
+Finally, we verify the natural boundary line integrals along straight boundary segments $\Gamma_s^I = \Omega_s^I \cap \partial\Omega$ of length $2L$ ($L = r_s$):
+\begin{enumerate}[(a)]
+    \item \textit{Inhomogeneous Neumann load vector} $F_a^{\mathrm{Neumann}, I} = \int_{\Gamma_s^I} \vec{g}_N(s) \cdot \vec{N}_a^I(s) \, ds$ under an affine surface current $\vec{g}_N(s)$.
+    \item \textit{Robin boundary damping matrix} $C_{ab}^{\mathrm{Robin}, I} = \gamma \int_{\Gamma_s^I} (\vec{N}_a^I(s) \cdot \vec{t})(\vec{N}_b^I(s) \cdot \vec{t}) \, ds$.
+\end{enumerate}
+Because the shape functions $\vec{N}_a^I$ are linear in $s$, the Robin integrand is quadratic (degree 2), while the Neumann integrand with linear $\vec{g}_N$ is also of degree at most 2. Standard 1D Gauss--Legendre quadrature with $n$ points integrates polynomials up to degree $2n - 1$ exactly. As shown in Table~\ref{tab:stage1_element_verification}, a 1-point Gauss rule ($2n-1 = 1$) exhibits a truncation error of $10.1\%$ on $F^{\mathrm{Neumann}}$ and $17.6\%$ on $C^{\mathrm{Robin}}$. Conversely, a 2-point Gauss rule ($2n-1 = 3 \ge 2$) matches the closed-form analytical integrals to machine precision ($\Delta F^{\mathrm{Neumann}} \le 1.92 \times 10^{-16}$ and $\Delta C^{\mathrm{Robin}} \le 1.09 \times 10^{-16}$). Both analytical line formulas and 2-point Gauss quadrature are thus exact to floating-point precision, ensuring cell-free boundary imposition.
 
 \subsection{Stage 2: Galerkin Patch Test for Linear Consistency}
 \label{subsec:stage2_patch_test}
@@ -823,7 +842,7 @@ The regularized vector Helmholtz equation \eqref{eq:helmholtz_pde} was solved wi
 To systematically test the boundary formulation developed in Section~\ref{subsec:boundary_treatment}, two distinct boundary-value problem configurations were investigated:
 \begin{enumerate}
     \item \textbf{Case A (Pure Inhomogeneous Dirichlet):} On all four boundary walls $\partial\Omega$, the tangential trace is prescribed by the exact manufactured field $e_k = \vec{E}^*(\mathbf{x}_k) \cdot \vec{t}_k$, and boundary nodes are eliminated via condensed system \eqref{eq:dirichlet_condensed_system}.
-    \item \textbf{Case B (Mixed Dirichlet--Neumann / PMC):} Inhomogeneous Dirichlet conditions are imposed on the vertical walls $x \in \{0, \pi\}$, while the horizontal walls $y \in \{0, \pi\}$ are treated as homogeneous natural Neumann (PMC) boundaries. Because $(\nabla \times \vec{E}^*)_z = 2\sin(x)\sin(y)$ vanishes identically along $y=0$ and $y=\pi$, the exact electromagnetic traction satisfies $\vec{\tau} = \frac{1}{\mu_r} (\vec{n} \times (\nabla \times \vec{E}^*)) \equiv \mathbf{0}$. Therefore, the boundary nodes along $y \in \{0, \pi\}$ are retained as active, unconstrained degrees of freedom and determined directly by the global system.
+    \item \textbf{Case B (Mixed Dirichlet--Neumann / PMC):} Inhomogeneous Dirichlet conditions are imposed on the vertical walls $x \in \{0, \pi\}$, while the horizontal walls $y \in \{0, \pi\}$ are treated as homogeneous natural Neumann (PMC) boundaries. Because $(\nabla \times \vec{E}^*)_z = 2\sin(x)\sin(y)$ vanishes identically along $y=0$ and $y=\pi$, the exact electromagnetic boundary flux satisfies $\vec{\tau} = \frac{1}{\mu_r} (\vec{n} \times (\nabla \times \vec{E}^*)) \equiv \mathbf{0}$. Therefore, the boundary nodes along $y \in \{0, \pi\}$ are retained as active, unconstrained degrees of freedom and determined directly by the global system.
 \end{enumerate}
 
 \begin{table}[!t]
@@ -1146,6 +1165,65 @@ Future work will focus on: (1) extending the closed-form spherical formulation t
 %% =========================================================================
 \section*{Acknowledgments}
 This work was supported in part by the Brazilian National Council for Scientific and Technological Development (CNPq), the Minas Gerais State Research Foundation (FAPEMIG), and the Coordination for the Improvement of Higher Education Personnel (CAPES).
+
+%% =========================================================================
+%% APPENDIX
+%% =========================================================================
+\appendix
+\section{Closed-Form Geometry and Active Area Formulas for Truncated Subdomains}
+\label{app:truncated_geometry}
+
+This appendix provides the complete closed-form analytical formulas for evaluating the active physical area $A_{\mathrm{active}}^I = \mathrm{Area}(\Omega_s^I \cap \Omega)$ and active area fraction $\eta_I = A_{\mathrm{active}}^I / (\pi (r_s^I)^2)$ for the various intersection configurations of local subdomains (such as Cases~2 and 3 depicted in Fig.~\ref{fig:schematic_mlpg}, as well as their near-corner variants) across piecewise planar boundaries (Section~\ref{subsubsec:truncated_subdomains_analytic}).
+
+Let $A_{\mathrm{cap}}(d, r_s)$ denote the area of a circular segment cut off by a chord at normal distance $d \in [0, r_s]$ from the center of a circular disk of radius $r_s$:
+\begin{equation}
+    A_{\mathrm{cap}}(d, r_s) = r_s^2 \left[ \arccos\left(\frac{d}{r_s}\right) - \frac{d}{r_s} \sqrt{1 - \left(\frac{d}{r_s}\right)^2} \right].
+    \label{eq:cap_area_formula}
+\end{equation}
+The active physical area $A_{\mathrm{active}}^I$ and area fraction $\eta_I$ are then evaluated in closed form for all geometric configurations:
+\begin{enumerate}
+    \item \textbf{Case 3 on a Flat Boundary Wall Far from Corners (Case~3 in Fig.~\ref{fig:schematic_mlpg}):} For a node $\mathbf{x}_B \in \partial\Omega$ lying on a straight boundary segment at distance greater than $r_s^B$ from any adjacent corner, $\Omega_s^B \cap \Omega$ is an exact half-disk:
+          \begin{equation}
+              \eta_B = \frac{1}{2}, \qquad A_{\mathrm{active}}^B = \frac{1}{2} \pi (r_s^B)^2.
+              \label{eq:eta_half_disk}
+          \end{equation}
+    \item \textbf{Case 3 at an Orthogonal Convex Corner Vertex:} For a node situated directly at a $90^\circ$ convex corner vertex, $\Omega_s^B \cap \Omega$ is an exact quarter-disk:
+          \begin{equation}
+              \eta_B = \frac{1}{4}, \qquad A_{\mathrm{active}}^B = \frac{1}{4} \pi (r_s^B)^2.
+              \label{eq:eta_quarter_disk}
+          \end{equation}
+    \item \textbf{Case 3B for a Boundary Node on a Wall Near a Corner:} When a boundary node $\mathbf{x}_B$ lies on a wall at distance $d_{\parallel} < r_s^B$ from an adjacent perpendicular wall, the subdomain is truncated not only by the host wall (which halves the disk) but also by the transverse wall. Because the center lies on the boundary line, the chord at distance $d_{\parallel}$ cuts the full disk symmetrically, removing an exterior circular cap $A_{\mathrm{cap}}(d_{\parallel}, r_s^B)$, exactly half of which lies inside the half-plane of the domain. Consequently, the active area suffers an additional reduction, falling strictly below a half-disk:
+          \begin{equation}
+              \eta_B(d_{\parallel}) = \frac{1}{2} \left( 1 - \frac{A_{\mathrm{cap}}(d_{\parallel}, r_s^B)}{\pi (r_s^B)^2} \right) \in \left[ \frac{1}{4}, \frac{1}{2} \right),
+              \label{eq:eta_boundary_near_corner}
+          \end{equation}
+          with $A_{\mathrm{active}}^B = \eta_B(d_{\parallel}) \pi (r_s^B)^2$. Equation~\eqref{eq:eta_boundary_near_corner} provides a continuous, exact transition between the interior-wall half-disk ($\eta \to 1/2$ as $d_{\parallel} \to r_s^B$) and the corner vertex quarter-disk ($\eta \to 1/4$ as $d_{\parallel} \to 0$).
+    \item \textbf{Case 2 for an Interior Node Crossing a Single Wall (Case~2 in Fig.~\ref{fig:schematic_mlpg}):} For an interior node $\mathbf{x}_{I_2}$ at distance $d_I = \mathrm{dist}(\mathbf{x}_{I_2}, \partial\Omega) < r_s^{I_2}$ from a single boundary segment, subtracting the cut-off cap yields:
+          \begin{equation}
+              \eta_{I_2} = 1 - \frac{A_{\mathrm{cap}}(d_I, r_s^{I_2})}{\pi (r_s^{I_2})^2} \in \left( \frac{1}{2}, 1 \right).
+              \label{eq:eta_circular_cap}
+          \end{equation}
+          As $d_I \to r_s^{I_2}$, $\eta_{I_2} \to 1$ smoothly recovering the uncut disk (Case~1 in Fig.~\ref{fig:schematic_mlpg}), whereas as $d_I \to 0$, $\eta_{I_2} \to 1/2$ smoothly matching the flat boundary limit (Case~3).
+    \item \textbf{Case 2B for an Interior Node Near a Corner Crossing Two Walls:} When an interior node $\mathbf{x}_I$ is located close to a domain corner such that its distance to both perpendicular walls satisfies $d_x < r_s^I$ and $d_y < r_s^I$, the disk intersects both boundaries simultaneously. Two geometric regimes arise:
+          \begin{itemize}
+              \item If the corner vertex lies outside the disk ($d_x^2 + d_y^2 \ge (r_s^I)^2$), the two cut-off circular segments in the exterior half-planes are mutually disjoint, yielding:
+                    \begin{equation}
+                        A_{\mathrm{active}}^I = \pi (r_s^I)^2 - A_{\mathrm{cap}}(d_x, r_s^I) - A_{\mathrm{cap}}(d_y, r_s^I).
+                        \label{eq:eta_interior_corner_disjoint}
+                    \end{equation}
+              \item If the corner vertex lies inside the disk ($d_x^2 + d_y^2 < (r_s^I)^2$), the two exterior half-planes overlap in the exterior corner quadrant. By inclusion-exclusion:
+                    \begin{equation}
+                        A_{\mathrm{active}}^I = \pi (r_s^I)^2 - A_{\mathrm{cap}}(d_x, r_s^I) - A_{\mathrm{cap}}(d_y, r_s^I) + A_{\mathrm{overlap}}^I,
+                        \label{eq:eta_interior_corner_overlap}
+                    \end{equation}
+                    where the overlap area $A_{\mathrm{overlap}}^I$ is computed in exact closed form via Green's circulation theorem:
+                    \begin{align}
+                        A_{\mathrm{overlap}}^I & = \frac{1}{2} (r_s^I)^2 (\theta_y - \theta_x) \nonumber                              \\
+                                               & \quad + \frac{1}{2} r_s^I \left[ d_x (\sin\theta_y - \sin\theta_x) \right. \nonumber \\
+                                               & \qquad \qquad \left. - d_y (\cos\theta_y - \cos\theta_x) \right].
+                    \end{align}
+          \end{itemize}
+\end{enumerate}
 
 %% =========================================================================
 %% REFERENCES
