@@ -47,13 +47,15 @@ def solve_mlpg_cavity_eigenvalues(
     Lx: float = np.pi,
     Ly: float = np.pi,
     alpha_s: float = 0.80,
-    s_div: float = 15.0,
+    s_div: float = 6.0,
     num_eigenvalues: int = 10,
-    interior_type: str = "alternating",
+    interior_type: str = "random",
     jitter_frac: float = 0.0,
     seed: int = 42,
     assembly_mode: str = "subdomain_galerkin",
-    spur_threshold: float = 10.0
+    spur_threshold: float = 50.0,
+    s_div_scaling: Optional[str] = None,
+    h_ref: float = np.pi / 20.0
 ) -> Dict[str, Any]:
     """
     Resolve o problema espectral da cavidade ressonante retangular 2D com VNMM-MLPG.
@@ -121,8 +123,13 @@ def solve_mlpg_cavity_eigenvalues(
     K_curl_mat = K_curl_red.toarray()
     K_div_mat = K_div_red.toarray()
     M_mat = M_red.toarray()
+    if s_div_scaling == "h_inverse":
+        h_nom = max(Lx / (Nx - 1), Ly / (Ny - 1))
+        effective_s_div = s_div * (h_ref / h_nom)
+    else:
+        effective_s_div = s_div
 
-    K_mat = K_curl_mat + s_div * K_div_mat
+    K_mat = K_curl_mat + effective_s_div * K_div_mat
 
     # 4. Solucao do problema generalizado de autovalores
     t_start_sol = time.time()
@@ -190,7 +197,8 @@ def solve_mlpg_cavity_eigenvalues(
         'total_nodes': len(coords),
         'interior_dofs': len(int_indices),
         'boundary_nodes': int(np.sum(is_bnd)),
-        's_div': s_div,
+        's_div': effective_s_div,
+        's_div_base': s_div,
         'alpha_s': alpha_s,
         'time_mesh': t_mesh,
         'time_subdomains': t_sub,
@@ -220,17 +228,25 @@ def run_mlpg_s_div_sensitivity_study(
     Ny: int = 21,
     s_div_list: Optional[List[float]] = None,
     alpha_s: float = 0.80,
+    r_div_threshold: float = 50.0,
+    interior_type: str = "random",
+    seed: int = 42,
     verbose: bool = True
 ) -> List[Dict[str, Any]]:
     """
-    Executa uma varredura parametrica de s_div para avaliar a purificacao espectral
-    e a eliminacao de modos espurios no VNMM-MLPG.
+    Executa uma varredura parametrica de s_div para avaliar o deslocamento de modos espurios no VNMM-MLPG.
+    
+    Criterio de classificacao de modos espurios:
+    Modos verdadeiramente espurios oriundos do vazamento do nucleo discreto de rotacional (gradientes)
+    apresentam energia de divergencia dominante em relacao a energia de rotacional (R_div >> 1,
+    adotando-se o limiar R_div > r_div_threshold = 50.0% em consonancia com EABE).
+    Modos fisicos solenoidais apresentam R_div << 1 (tipicamente < 3% em s_div calibrado).
     """
     if s_div_list is None:
         s_div_list = [0.0, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0, 50.0]
 
     coords, vectors, is_bnd = generate_cavity_mesh(
-        Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi, interior_type="alternating"
+        Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi, interior_type=interior_type, seed=seed
     )
     subdomains = build_mlpg_subdomains_2d(
         coords=coords, vectors=vectors, is_boundary=is_bnd, alpha_s=alpha_s
@@ -256,8 +272,8 @@ def run_mlpg_s_div_sensitivity_study(
 
     if verbose:
         print(f"\n{'='*98}")
-        print(f"ESTUDO DE SENSIBILIDADE DO PARAMETRO s_div (PURIFICACAO ESPECTRAL VNMM-MLPG)")
-        print(f"Grade: {Nx}x{Ny} ({len(int_indices)} DoFs internos livres) | Subdominio alpha_s = {alpha_s}")
+        print(f"ESTUDO DE SENSIBILIDADE DO PARAMETRO s_div (VNMM-MLPG)")
+        print(f"Grade: {Nx}x{Ny} ({len(int_indices)} DoFs internos livres) | Subdominio alpha_s = {alpha_s} | Limiar Spur: R_div > {r_div_threshold}%")
         print(f"{'='*98}")
         print(f"{'s_div':>6} | {'Spur In Band':>12} | {'Lowest Spur':>12} | {'Mean Err kc (%)':>15} | {'Max Err kc (%)':>14} | {'cond(K_red)':>12} | {'Max R_div (%)':>13}")
         print("-" * 98)
@@ -271,13 +287,13 @@ def run_mlpg_s_div_sensitivity_study(
 
         spur_modes = []
         r_divs = []
-        for i in range(min(35, len(vals_pos))):
+        for i in range(len(vals_pos)):
             v = vecs_pos[:, i]
             e_c = v.T @ K_curl_mat @ v
             e_d = v.T @ K_div_mat @ v
             r = (e_d / e_c) * 100.0 if e_c > 1e-12 else 99999.0
             r_divs.append(r)
-            if r > 10.0:
+            if r > r_div_threshold:
                 spur_modes.append((i + 1, vals_pos[i]))
 
         spur_in_10 = sum(1 for m in spur_modes if m[0] <= 10)
@@ -287,15 +303,18 @@ def run_mlpg_s_div_sensitivity_study(
         kc_num = np.sqrt(first10)
         err_kc = np.abs(kc_num - analytical_kc) / analytical_kc * 100.0
 
+        r_10 = r_divs[:10]
+        max_band_r = max(r_10) if r_10 else 0.0
         phys_r_divs = [r_divs[i] for i in range(10) if r_divs[i] <= 10.0]
-        max_phys_r = max(phys_r_divs) if phys_r_divs else 0.0
+        max_phys_r = max(phys_r_divs) if phys_r_divs else None
 
         cond_K = np.linalg.cond(K_mat) if s > 0 else np.nan
         spur_str = f"{lowest_spur_val:.2f}" if lowest_spur_val is not None else "> 50"
         cond_str = f"{cond_K:.2e}" if not np.isnan(cond_K) else "Singular"
+        r_str = f"{max_band_r:.1f}" if max_band_r < 1e4 else "> 10^4"
 
         if verbose:
-            print(f"{s:6.1f} | {spur_in_10:12d} | {spur_str:>12} | {np.mean(err_kc):15.2f} | {np.max(err_kc):14.2f} | {cond_str:>12} | {max_phys_r:13.2f}")
+            print(f"{s:6.1f} | {spur_in_10:12d} | {spur_str:>12} | {np.mean(err_kc):15.2f} | {np.max(err_kc):14.2f} | {cond_str:>12} | {r_str:>13}")
 
         results.append({
             's_div': s,
@@ -305,7 +324,8 @@ def run_mlpg_s_div_sensitivity_study(
             'mean_err_kc': float(np.mean(err_kc)),
             'max_err_kc': float(np.max(err_kc)),
             'cond_K': cond_K,
-            'max_phys_r': max_phys_r
+            'max_band_r': max_band_r,
+            'max_phys_r': max_phys_r if max_phys_r is not None else 0.0
         })
 
     return results
@@ -315,6 +335,8 @@ def run_mlpg_vs_gauss_benchmark(
     Nx: int = 21,
     Ny: int = 21,
     s_div: float = 6.0,
+    interior_type: str = "random",
+    seed: int = 42,
     verbose: bool = True
 ) -> Dict[str, Any]:
     """
@@ -322,7 +344,7 @@ def run_mlpg_vs_gauss_benchmark(
     e VNMM-Gauss (celulas cartesianas de fundo).
     """
     coords, vectors, is_bnd = generate_cavity_mesh(
-        Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi, interior_type="alternating"
+        Nx=Nx, Ny=Ny, Lx=np.pi, Ly=np.pi, interior_type=interior_type, seed=seed
     )
 
     # 1. VNMM-Gauss (celulas de fundo 20x20, 3x3 pontos de Gauss)
@@ -390,16 +412,16 @@ def main():
     print("VNMM-MLPG 2D - FASE 5: VALIDACAO ESPECTRAL DA CAVIDADE RESSONANTE PEC 2D")
     print("=" * 85)
 
-    # 1. Caso Base: 21x21, s_div=15.0
+    # 1. Caso Base: 21x21, s_div=6.0
     res = solve_mlpg_cavity_eigenvalues(
         Nx=21,
         Ny=21,
-        s_div=15.0,
+        s_div=6.0,
         alpha_s=0.80,
         num_eigenvalues=10
     )
 
-    print(f"\nResultados do Caso Base (Nx=Ny=21, s_div=15.0, alpha_s=0.80):")
+    print(f"\nResultados do Caso Base (Nx=Ny=21, s_div=6.0, alpha_s=0.80):")
     print(f"DoFs Internos Ativos: {res['interior_dofs']}")
     print(f"Tempo Total:          {res['total_time']:.4f} s (Montagem: {res['time_assembly']:.4f} s, Solucao: {res['time_solve']:.4f} s)")
     print(f"Condicionamento K:    {res['cond_K']:.2e}")
@@ -427,6 +449,62 @@ def main():
 
     # 3. Benchmarking de Desempenho
     run_mlpg_vs_gauss_benchmark(Nx=21, Ny=21, s_div=6.0, verbose=True)
+
+
+def run_mlpg_cavity_convergence_study(
+    grid_sizes: Optional[List[int]] = None,
+    s_div_base: float = 6.0,
+    s_div_scaling: Optional[str] = None,
+    alpha_s: float = 0.80,
+    interior_type: str = "random",
+    seed: int = 42,
+    verbose: bool = True
+) -> Dict[str, Any]:
+    """
+    Executa estudo de convergencia dos autovalores da cavidade PEC através de uma sequencia de malhas.
+    Permite avaliar tanto s_div fixo (padrao) quanto s_div com escalonamento assintotico h_inverse.
+    """
+    if grid_sizes is None:
+        grid_sizes = [15, 21, 29, 36, 43]
+
+    results = []
+    if verbose:
+        print("\n" + "=" * 90)
+        print("ESTUDO DE CONVERGENCIA ESPECTRAL DA CAVIDADE (VNMM-MLPG)")
+        print(f"s_div base = {s_div_base} | Scaling = {s_div_scaling} | alpha_s = {alpha_s} | Diretores: {interior_type}")
+        print("=" * 90)
+        print(f"{'Mesh':>8} | {'h [m]':>8} | {'s_div':>7} | {'Mean Err kc (%)':>16} | {'Max Err kc (%)':>15} | {'Spur in band':>13}")
+        print("-" * 90)
+
+    for N in grid_sizes:
+        h = np.pi / (N - 1)
+        res = solve_mlpg_cavity_eigenvalues(
+            Nx=N, Ny=N,
+            s_div=s_div_base,
+            s_div_scaling=s_div_scaling,
+            alpha_s=alpha_s,
+            interior_type=interior_type,
+            seed=seed
+        )
+        mean_err = res['mean_error_kc_pct']
+        max_err = res['max_error_kc_pct']
+        s_used = res['s_div']
+        spur = res['spur_in_band']
+        grid_str = f"{N}x{N}"
+        if verbose:
+            print(f"{grid_str:>8} | {h:8.4f} | {s_used:7.1f} | {mean_err:16.2f} | {max_err:15.2f} | {spur:13d}")
+
+        results.append({
+            'N': N,
+            'h': h,
+            's_div': s_used,
+            'mean_error_kc': mean_err,
+            'max_error_kc': max_err,
+            'spur_in_band': spur,
+            'res': res
+        })
+
+    return {'grid_sizes': grid_sizes, 'results': results}
 
 
 if __name__ == "__main__":

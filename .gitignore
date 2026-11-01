@@ -72,3 +72,7 @@ reports/**/*.pdf
 reports/*.pdf
 reports/**/*.png
 reports/*.png
+
+# Data and JSON caches
+*.json
+

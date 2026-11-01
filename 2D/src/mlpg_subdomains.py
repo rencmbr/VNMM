@@ -454,7 +454,8 @@ def build_mlpg_subdomains_2d(
             Tol_det=tol_det_effective,
             adaptive=True,
             step_K=step_K,
-            K_max=K_max
+            K_max=K_max,
+            center_node_idx=i
         )
 
         if best_sextet is None or best_A is None:

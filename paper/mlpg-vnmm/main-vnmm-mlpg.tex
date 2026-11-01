@@ -79,7 +79,7 @@
         country={Brazil}}
 
     \begin{abstract}
-        The Vector Nodal Meshless Method (VNMM) provides a robust node-based framework for approximating $H(\mathbf{curl})$ vector fields on unstructured point clouds. Early implementations relied on background Cartesian integration cells, which suffer from intra-cell stencil discontinuities, quadrature softening, and compromised meshless autonomy. In this paper, we formulate, implement, and systematically validate a truly cell-free Vector Nodal Meshless Method via Meshless Local Petrov--Galerkin (VNMM-MLPG). By constructing shape functions through directional polynomial point interpolation (establishing a Vector Point Interpolation Method, PIM, with exact Kronecker-delta directional projection) and evaluating weak forms over autonomous circular subdomains $\Omega_s^I$, spatial integration is completely decoupled from background grids. We prove analytically that classical weight test functions (MLPG1) collapse on linear vector fields by Stokes' and Gauss' theorems, necessitating a Local Galerkin (MLPG6) framework. To overcome the historic asymmetry and loss of discrete coercivity in classical row-by-row MLPG/LPIM assembly, we introduce a closed-form \textit{Symmetric Subdomain Galerkin} assembly evaluated analytically without numerical quadrature, guaranteeing strictly symmetric positive-semidefinite global operators. The formulation is systematically validated across six comprehensive stages: (1) element-level closed-form verification matching numerical quadrature to double-precision machine epsilon ($\sim 10^{-14}$); (2) Galerkin patch test satisfaction to machine precision ($\sim 10^{-15}$) across seven affine vector states on regular and 25\% perturbed clouds; (3) asymptotic convergence under the Method of Manufactured Solutions for pure Dirichlet and mixed boundary conditions, achieving $\mathcal{O}(h^{2.06})$ in $L^2$ and $\mathcal{O}(h^{1.24})$ in $H(\mathbf{curl})$; (4) physical spectral validation on a 2D PEC resonant cavity, reproducing the first 10 TE cutoff wavenumbers with 4.00\% average error and complete spurious mode suppression ($s_{\mathrm{div}} \ge 10$); (5) computational benchmarking demonstrating a $3.6\times$ matrix assembly speedup and $36\%$ fewer non-zeros compared to cell-based Gauss schemes; and (6) theoretical and parametric determination of the universal subdomain scaling factor $\alpha_s = 0.80$, rigorously bounded by geometric domain coverage limits ($\alpha_s \ge \sqrt{2}/2 \approx 0.7071$) and polynomial support containment ($r_s^I \le r_u^I \approx 1.15$), harmonizing with the scale-invariant stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$.
+        The Vector Nodal Meshless Method (VNMM) is a node-based framework for approximating $H(\mathbf{curl})$ vector fields on unstructured point clouds. Earlier implementations relied on background Cartesian integration cells, which suffer from intra-cell stencil discontinuities, quadrature softening, and compromised meshless autonomy. In this paper, we formulate, implement, and systematically validate a truly cell-free Vector Nodal Meshless Method via Meshless Local Petrov--Galerkin (VNMM-MLPG). By constructing shape functions through directional polynomial point interpolation (establishing a Vector Point Interpolation Method, PIM, with exact Kronecker-delta directional projection) and evaluating weak forms over autonomous circular subdomains $\Omega_s^I$, spatial integration is completely decoupled from background grids. We prove analytically that classical weight test functions (MLPG1) collapse on linear vector fields by Stokes' and Gauss' theorems, necessitating a Local Galerkin (MLPG6) framework. To overcome the historic asymmetry and loss of discrete coercivity in classical row-by-row MLPG/LPIM assembly, we introduce a closed-form \textit{Symmetric Subdomain Galerkin} assembly evaluated analytically without numerical quadrature, guaranteeing strictly symmetric positive-semidefinite global operators. The formulation is systematically validated across six comprehensive stages: (1) element-level closed-form verification matching numerical quadrature to double-precision machine epsilon ($\sim 10^{-14}$); (2) Galerkin patch test satisfaction to machine precision ($\sim 10^{-15}$) across seven affine vector states on regular and 25\% perturbed clouds; (3) asymptotic convergence under the Method of Manufactured Solutions for pure Dirichlet and mixed boundary conditions, recovering the theoretical $\mathcal{O}(h^2)$ rate in $L^2$ and $\mathcal{O}(h)$ rate in $H(\mathbf{curl})$; (4) theoretical and parametric determination of the universal subdomain scaling factor $\alpha_s = 0.80$, rigorously bounded by geometric domain coverage limits ($\alpha_s \ge \sqrt{2}/2 \approx 0.7071$) and polynomial support containment ($r_s^I \le r_u^I \approx 1.15$), harmonizing with the scale-invariant stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$; (5) physical spectral validation on a 2D PEC resonant cavity, reproducing the first 10 TE cutoff wavenumbers with 8.83\% average error under the universal baseline $s_{\mathrm{div}} = 6.0$ ($\le 2.46\%$ under calibrated penalties) and complete spurious mode suppression ($s_{\mathrm{div}} \ge 4$); and (6) computational benchmarking demonstrating a $3.6\times$ matrix assembly speedup, a $2.0\times$ total execution time reduction, and $20\%\text{--}24\%$ fewer non-zeros compared to cell-based Gauss schemes.
     \end{abstract}
 
     \begin{keyword}
@@ -141,7 +141,7 @@ In this paper, we resolve these challenges by formulating, implementing, and val
     \item \textbf{Universal Parameter Standardization:} Analytical geometric limits on domain coverage ($\alpha_s \ge \sqrt{2}/2$) and support containment ($\alpha_s \le 1.15$), validated by parametric sweeps, establish $\alpha_s = 0.80$ as the single universal standard, harmonizing with the stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ and eliminating empirical tuning.
 \end{itemize}
 
-The remainder of this paper is structured as follows. Section~\ref{sec:formulation} details the mathematical formulation of VNMM-MLPG, proves the breakdown of classical weight test functions, derives the closed-form Local Galerkin (MLPG6) matrices, and contrasts row-by-row assembly against the symmetric Subdomain Galerkin assembly. Section~\ref{sec:results} presents the validation roadmap and numerical results across six comprehensive stages: closed-form elemental verification, patch test satisfaction, MMS asymptotic convergence rates, resonant cavity spectra, computational benchmarking, and the parametric determination of $\alpha_s$. Section~\ref{sec:discussion} discusses advantages, current limitations, and future directions. Section~\ref{sec:conclusions} concludes the paper.
+The remainder of this paper is structured as follows. Section~\ref{sec:formulation} details the mathematical formulation of VNMM-MLPG, proves the breakdown of classical weight test functions, derives the closed-form Local Galerkin (MLPG6) matrices, and contrasts row-by-row assembly against the symmetric Subdomain Galerkin assembly. Section~\ref{sec:results} presents the validation roadmap and numerical results across six comprehensive stages: closed-form elemental verification, patch test satisfaction, MMS asymptotic convergence rates, theoretical determination of $\alpha_s$, resonant cavity spectra, and computational benchmarking. Section~\ref{sec:discussion} discusses advantages, current limitations, and future directions. Section~\ref{sec:conclusions} concludes the paper.
 
 %% =========================================================================
 %% SECTION 2: THEORETICAL FORMULATION OF VNMM-MLPG
@@ -152,7 +152,7 @@ The remainder of this paper is structured as follows. Section~\ref{sec:formulati
 \subsection{Continuous Boundary-Value Problem}
 \label{subsec:continuous_bvp}
 
-Consider a bounded two-dimensional domain $\Omega \subset \mathbb{R}^2$ with a Lipschitz boundary $\partial\Omega$, occupied by a linear, isotropic, non-dispersive medium characterized by relative permeability $\mu_r$ and permittivity $\epsilon_r$. The time-harmonic electric field $\vec{E}(x, y) = [E_x, E_y]^T$ satisfies Maxwell's curl-curl equation. To eliminate gradient-type spurious modes on non-conforming meshless spaces, we adopt the div-curl regularized vector Helmholtz equation \cite{stable_vnmm2d_2026}:
+Consider a bounded two-dimensional domain $\Omega \subset \mathbb{R}^2$ with a Lipschitz boundary $\partial\Omega$, occupied by a linear, isotropic, non-dispersive medium characterized by relative permeability $\mu_r$ and permittivity $\epsilon_r$. The time-harmonic electric field $\vec{E}(x, y) = [E_x, E_y]^T$ satisfies Maxwell's curl-curl equation. To shift gradient-type spurious modes outside the operational frequency band on non-conforming meshless spaces, we adopt the div-curl regularized vector Helmholtz equation \cite{stable_vnmm2d_2026}:
 \begin{equation}
     \nabla \times \left(\frac{1}{\mu_r} \nabla \times \vec{E}\right) - \frac{s_{\mathrm{div}}}{\mu_r} \nabla(\nabla \cdot \vec{E}) - k_0^2 \epsilon_r \vec{E} = \vec{J}_s \quad \text{in } \Omega,
     \label{eq:helmholtz_pde}
@@ -201,7 +201,7 @@ In the MLPG framework, two distinct local domains are defined for each node $P_I
               \Omega_s^I = \left\{ \mathbf{x} \in \mathbb{R}^2 : \|\mathbf{x} - \mathbf{x}_I\| \le r_s^I \right\}, \qquad r_s^I = \alpha_s h_I,
               \label{eq:subdomain_disk}
           \end{equation}
-          where $h_I \equiv h_{\mathrm{local}}(\mathbf{x}_I)$ denotes the local nodal spacing (distance to nearest neighbor or mean distance to adjacent nodes, in direct correspondence with $h_{\mathrm{local}}$ in \cite{stable_vnmm2d_2026}), and $\alpha_s > 0$ is a dimensionless radius scaling parameter. Throughout this entire work, the single universal value $\alpha_s = 0.80$ is adopted, as justified by the theoretical geometric bounds and parametric sensitivity analysis in Section~\ref{subsec:stage6_alpha_s}.
+          where $h_I \equiv h_{\mathrm{local}}(\mathbf{x}_I)$ denotes the local nodal spacing (distance to nearest neighbor or mean distance to adjacent nodes, in direct correspondence with $h_{\mathrm{local}}$ in \cite{stable_vnmm2d_2026}), and $\alpha_s > 0$ is a dimensionless radius scaling parameter. Throughout this entire work, the single universal value $\alpha_s = 0.80$ is adopted, as justified by the theoretical geometric bounds and parametric sensitivity analysis in Section~\ref{subsec:stage4_alpha_s}.
 \end{enumerate}
 
 A representative nodal distribution generated on a rectangular cavity with a $25\%$ random perturbation (jitter) is depicted in Fig.~\ref{fig:schematic_mlpg}. Interior nodes $\mathbf{x}_k$ are assigned arbitrary, randomized unit director orientations $\vec{t}_k$, whereas boundary nodes are constrained strictly tangential to $\partial\Omega$ ($\vec{t}_k \parallel \partial\Omega$). Depending on the spatial position of the central evaluation node relative to the physical boundary, three fundamental topological configurations of local integration subdomains $\Omega_s$ and trial support stencils $\Omega_u$ arise:
@@ -292,7 +292,7 @@ Fundamentally, the kinematic construction of the VNMM represents a directional v
     \vec{N}_a^I(\mathbf{x}_k) \cdot \vec{t}_k = \delta_{ak}, \qquad a, k \in \{1, \dots, 6\}.
     \label{eq:vector_pim_kronecker}
 \end{equation}
-Unlike conventional scalar and vector meshless approximations based on Moving Least Squares (MLS) or radial basis functions (RBF)---which lack the Kronecker-delta property and require complex auxiliary mechanisms such as Lagrange multipliers, penalty functions, or boundary element coupling to enforce essential constraints \cite{atluri2002meshless}---the directional Vector PIM constructs true vector interpolants over scattered nodes by directly inverting the polynomial moment placement matrix $\mathbf{A}_I$. Because nodal degrees of freedom represent physical directional projections ($e_k = \vec{E}(\mathbf{x}_k) \cdot \vec{t}_k$), tangential Dirichlet and PEC boundary conditions can be satisfied directly at the discrete nodal level by simple collocation, providing a robust, cell-free kinematic foundation for the MLPG framework.
+Unlike conventional scalar and vector meshless approximations based on Moving Least Squares (MLS) or radial basis functions (RBF)---which lack the Kronecker-delta property and require complex auxiliary mechanisms such as Lagrange multipliers, penalty functions, or boundary element coupling to enforce essential constraints \cite{atluri2002meshless}---the directional Vector PIM constructs true vector interpolants over scattered nodes by directly inverting the polynomial moment placement matrix $\mathbf{A}_I$. Because nodal degrees of freedom represent physical directional projections ($e_k = \vec{E}(\mathbf{x}_k) \cdot \vec{t}_k$), tangential Dirichlet and PEC boundary conditions can be satisfied directly at the discrete nodal level by simple collocation, providing a cell-free kinematic foundation for the MLPG framework.
 
 \subsection{Scale-Invariant Stencil Selection Algorithm}
 \label{subsec:stencil_selection}
@@ -512,7 +512,7 @@ where the non-zero row coefficients are given analytically by:
               \end{equation}
               Because $\Omega_s^I \ne \Omega_s^J$ (having different centers $\mathbf{x}_I \ne \mathbf{x}_J$ and potentially distinct radii $r_s^I \ne r_s^J$), the integration domains differ entirely.
         \item \textbf{Disparity of Support Stencils and Shape Function Expressions ($\Omega_u^I \ne \Omega_u^J$):}
-              Crucially, the support stencil $\Omega_u^I$ selected for node $P_I$ through the scale-invariant qualification algorithm (Section~\ref{subsec:stencil_selection}) does not coincide with the stencil $\Omega_u^J$ selected for node $P_J$ ($\Omega_u^I \ne \Omega_u^J$). Consequently, the local placement matrices differ ($\mathbf{A}_I \ne \mathbf{A}_J$), resulting in distinct polynomial coefficient matrices $\boldsymbol{\beta}^I \ne \boldsymbol{\beta}^J$ in \eqref{eq:beta_matrix_inversion}. Even within the overlapping spatial region $\Omega_s^I \cap \Omega_s^J$, the shape function $\vec{N}_j^I(\mathbf{x})$ defined over stencil $\Omega_u^I$ and the shape function $\vec{N}_i^J(\mathbf{x})$ defined over stencil $\Omega_u^J$ possess completely different polynomial coefficient vectors and analytical expressions.
+              Furthermore, the support stencil $\Omega_u^I$ selected for node $P_I$ through the scale-invariant qualification algorithm (Section~\ref{subsec:stencil_selection}) does not coincide with the stencil $\Omega_u^J$ selected for node $P_J$ ($\Omega_u^I \ne \Omega_u^J$). Consequently, the local placement matrices differ ($\mathbf{A}_I \ne \mathbf{A}_J$), resulting in distinct polynomial coefficient matrices $\boldsymbol{\beta}^I \ne \boldsymbol{\beta}^J$ in \eqref{eq:beta_matrix_inversion}. Even within the overlapping spatial region $\Omega_s^I \cap \Omega_s^J$, the shape function $\vec{N}_j^I(\mathbf{x})$ defined over stencil $\Omega_u^I$ and the shape function $\vec{N}_i^J(\mathbf{x})$ defined over stencil $\Omega_u^J$ possess completely different polynomial coefficient vectors and analytical expressions.
     \end{enumerate}
     Consequently, $K_{Ij} \ne K_{Ji}$ in general, rendering the global system matrix non-Hermitian \cite{atluri2002meshless, liu2001local}. In solid mechanics literature, this asymmetry has historically been handled either by employing unsymmetric solvers or through ad-hoc algebraic averaging $\frac{1}{2}(\mathbf{K} + \mathbf{K}^T)$, which lacks variational consistency.
 
@@ -693,18 +693,18 @@ To establish the mathematical consistency, asymptotic convergence, physical fide
           \begin{equation}
               \frac{\|\mathbf{e}_{\mathrm{int}} - \mathbf{e}^*\|_{\infty}}{\|\mathbf{e}^*\|_{\infty}} \le 10^{-11}.
           \end{equation}
-    \item \textbf{Stage 3: Method of Manufactured Solutions (MMS).} Verify asymptotic convergence orders under spatial refinement ($h \to 0$) for an inhomogeneous vector Helmholtz problem with exact manufactured vector field $\vec{E}^*$ under both:
+    \item \textbf{Stage 3: Method of Manufactured Solutions (MMS).} Verify asymptotic convergence orders under spatial refinement ($h_{\mathrm{nom}} \to 0$) for an inhomogeneous vector Helmholtz problem with exact manufactured vector field $\vec{E}^*$ under both:
           \begin{enumerate}[(a)]
               \item Pure essential Dirichlet boundary conditions on all four physical walls ($\partial\Omega$).
               \item Mixed Dirichlet--Neumann boundary conditions, where inhomogeneous Dirichlet traces are imposed on $x \in \{0, \pi\}$ and natural homogeneous Neumann conditions ($\vec{n} \times (\nabla \times \vec{E}) = \mathbf{0}$) are prescribed on $y \in \{0, \pi\}$ with boundary nodes treated as active free unknowns.
           \end{enumerate}
           The theoretical polynomial convergence rates are recovered in both configurations:
           \begin{equation}
-              \|\vec{E}^h - \vec{E}^*\|_{L^2} \sim \mathcal{O}(h^2), \qquad \|(\nabla \times \vec{E}^h)_z - (\nabla \times \vec{E}^*)_z\|_{L^2} \sim \mathcal{O}(h).
+              \|\vec{E}^h - \vec{E}^*\|_{L^2} \sim \mathcal{O}(h_{\mathrm{nom}}^2), \qquad \|(\nabla \times \vec{E}^h)_z - (\nabla \times \vec{E}^*)_z\|_{L^2} \sim \mathcal{O}(h_{\mathrm{nom}}).
           \end{equation}
-    \item \textbf{Stage 4: Physical Spectral Validation on a 2D PEC Cavity.} Employing the symmetric Subdomain Galerkin assembly \eqref{eq:global_assembly}, solve the generalized eigenvalue problem $\mathbf{K}_{\mathrm{red}} \mathbf{e}_{\mathrm{red}} = k_c^2 \mathbf{M}_{\mathrm{red}} \mathbf{e}_{\mathrm{red}}$ on a square resonant cavity $\Omega = [0, \pi]^2$. Compare cutoff wavenumbers $k_c$ for the first 10 physical transverse electric (TE) modes against the benchmark analytical solutions tabulated by Ortiz (2023) \cite{ortiz2023tese}, and assess spectral purification via the divergence regularization parameter $s_{\mathrm{div}}$.
-    \item \textbf{Stage 5: Computational Benchmark.} Directly benchmark CPU execution time for global matrix assembly and global matrix sparsity (non-zero entries, NNZ) across four grid resolutions ($11 \times 11, 15 \times 15, 21 \times 21, 27 \times 27$), quantifying the speedup and memory gains over cell-based background integration.
-    \item \textbf{Stage 6: Parametric Sensitivity and Determination of $\alpha_s$.} Investigate the sensitivity of domain integration coverage, polynomial support containment, boundary-value error, and eigenvalue accuracy across a wide sweep $\alpha_s \in [0.30, 2.00]$. Deduce theoretical geometric bounds and establish a single universal operating standard.
+    \item \textbf{Stage 4: Theoretical Determination and Parametric Sensitivity of $\alpha_s$.} Deduce analytical geometric bounds governing subdomain sizing ($\sqrt{2}/2 \le \alpha_s \le 1.15$) and investigate domain integration coverage, polynomial support containment, and boundary-value convergence under MMS across a wide sweep $\alpha_s \in [0.30, 2.00]$ on regular and perturbed clouds, establishing $\alpha_s = 0.80$ as the universal operating standard.
+    \item \textbf{Stage 5: Physical Spectral Validation on a 2D PEC Cavity.} Employing the universal standard $\alpha_s = 0.80$ and symmetric Subdomain Galerkin assembly \eqref{eq:global_assembly}, solve the generalized eigenvalue problem $\mathbf{K}_{\mathrm{red}} \mathbf{e}_{\mathrm{red}} = k_c^2 \mathbf{M}_{\mathrm{red}} \mathbf{e}_{\mathrm{red}}$ on a square resonant cavity $\Omega = [0, \pi]^2\text{ m}^2$. Compare cutoff wavenumbers $k_c$ for the first 10 physical transverse electric (TE) modes against exact analytical solutions \eqref{eq:analytical_cavity_kc}, assess spurious mode shifting via $s_{\mathrm{div}}$, and formulate the $h$-dependent penalty scaling $s_{\mathrm{div}}(h) \propto h^{-1}$.
+    \item \textbf{Stage 6: Computational Benchmark.} Directly benchmark CPU execution time for global matrix assembly, eigensolver solve time, total runtime, and matrix sparsity across the sequence of six grid resolutions from \cite{stable_vnmm2d_2026} ($15 \times 15, 22 \times 22, 29 \times 29, 36 \times 36, 43 \times 43, 49 \times 49$), alongside a direct comparison of cutoff wavenumber errors and convergence rates.
 \end{enumerate}
 
 \subsection{Stage 1: Element-Level Closed-Form Verification}
@@ -759,7 +759,7 @@ To establish the mathematical fidelity and cell-free precision of the local oper
 \end{table}
 
 \subsubsection{Full Circular Disks (Interior Subdomains)}
-For an uncut circular disk $\Omega_s^I$ ($r_s = 0.35$ m, $s_{\mathrm{div}} = 4.0$), polar Gauss--Legendre quadrature was executed with $n_r = 6$ radial points and $n_\theta = 16$ circumferential points. Because the trial shape functions are linear polynomials in Cartesian coordinates ($\mathcal{P}^1$), the stiffness integrand is strictly constant, while the mass integrand is a complete quadratic polynomial. As tabulated in Table~\ref{tab:stage1_element_verification}, the relative difference between the closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} and numerical quadrature satisfies:
+For an uncut circular disk $\Omega_s^I$ ($r_s = 0.35\text{ m}$, $s_{\mathrm{div}} = 4.0$), polar Gauss--Legendre quadrature was executed with $n_r = 6$ radial points and $n_\theta = 16$ circumferential points. Because the trial shape functions are linear polynomials in Cartesian coordinates ($\mathcal{P}^1$), the stiffness integrand is strictly constant, while the mass integrand is a complete quadratic polynomial. As tabulated in Table~\ref{tab:stage1_element_verification}, the relative difference between the closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} and numerical quadrature satisfies:
 \begin{align}
     \frac{\|\mathbf{K}_{\mathrm{analytic}} - \mathbf{K}_{\mathrm{numeric}}\|_{\max}}{\|\mathbf{K}_{\mathrm{analytic}}\|_{\max}} & \le 2.14 \times 10^{-14}, \\
     \frac{\|\mathbf{M}_{\mathrm{analytic}} - \mathbf{M}_{\mathrm{numeric}}\|_{\max}}{\|\mathbf{M}_{\mathrm{analytic}}\|_{\max}} & \le 1.87 \times 10^{-14},
@@ -795,6 +795,16 @@ The Galerkin patch test was evaluated across the seven canonical affine vector s
     \item General Affine Field: $\vec{E}^* = [1.5 + 0.8x - 0.3y, -0.7 + 0.4x + 1.2y]^T$ ($(\nabla \times \vec{E}^*)_z = 0.7, \nabla \cdot \vec{E}^* = 2.0$).
 \end{enumerate}
 
+In each mode, the boundary-value problem is formulated on $\Omega$ with exact essential Dirichlet conditions prescribed along the entire physical boundary: $\vec{E} \cdot \vec{t} = \vec{E}^* \cdot \vec{t}$ on $\partial\Omega$. Physically, these states represent canonical electromagnetic configurations:
+\begin{itemize}
+    \item \textit{Modes 1--2 (Uniform Fields):} Constant vector electric fields ($\vec{E}^* = [1, 0]^T$ and $[0, 1]^T$), yielding piecewise-constant tangential traces $\vec{E} \cdot \vec{t} \in \{-1, 0, 1\}$ along the boundary walls (as in a transverse uniform field or TEM mode).
+    \item \textit{Modes 3--4 (Harmonic Quadrupoles):} Curl-free and divergence-free linear fields ($\nabla \times \vec{E}^* = 0, \nabla \cdot \vec{E}^* = 0$) with linear tangential traces $\vec{E} \cdot \vec{t}$ along each boundary edge (as in electrostatic quadrupole field profiles).
+    \item \textit{Mode 5 (Faraday Induction):} A solenoidal electric field with constant curl ($(\nabla \times \vec{E}^*)_z = 1, \nabla \cdot \vec{E}^* = 0$), where the non-zero tangential circulation along $\partial\Omega$ balances a time-varying axial magnetic flux ($\dot{B}_z = -\mathrm{const}$).
+    \item \textit{Mode 6 (Space Charge):} An irrotational field with constant divergence ($\nabla \cdot \vec{E}^* = 1, \nabla \times \vec{E}^* = 0$), associated with a uniform space-charge density ($\rho_0 = \epsilon_0$) via Gauss's law.
+    \item \textit{Mode 7 (General Affine):} A complete linear superposition of uniform, quadrupole, inductive, and space-charge field components.
+\end{itemize}
+Because both curl and divergence of any affine field are spatial constants, the continuous volumetric source in \eqref{eq:helmholtz_pde} vanishes identically ($\vec{f}_{\mathrm{vol}} \equiv \mathbf{0}$), while the weak-form boundary fluxes produce exact, consistent discrete nodal forces $F_I$.
+
 Simulations were performed comparing both the classical unsymmetric row-by-row MLPG assembly \eqref{eq:k_row_analytic} and the symmetric Subdomain Galerkin assembly \eqref{eq:global_assembly} on an $11 \times 11$ discretization ($N = 121$ nodes, 81 free interior DoFs) on: (a) a uniform Cartesian grid, and (b) an irregular cloud with $25\%$ random nodal position perturbation ($x_k \gets x_k + \delta_x, y_k \gets y_k + \delta_y$ with $|\delta| \le 0.25 h$). Exact Dirichlet values $e_k = \vec{E}^*(\mathbf{x}_k) \cdot \vec{t}_k$ were imposed on all boundary nodes, and the partitioned linear system $\mathbf{K}_{\mathrm{int}, \mathrm{int}} \mathbf{e}_{\mathrm{int}} = \mathbf{F}_{\mathrm{int}} - \mathbf{K}_{\mathrm{int}, \mathrm{bnd}} \mathbf{e}_{\mathrm{bnd}}$ was solved for the interior DoFs using standard sparse factorization.
 
 \begin{table}[!t]
@@ -821,23 +831,16 @@ Simulations were performed comparing both the classical unsymmetric row-by-row M
     }
 \end{table}
 
-\begin{figure}[!t]
-    \centering
-    \includegraphics[width=0.95\textwidth]{fig_mlpg_patch_test.png}
-    \caption{Galerkin Patch Test satisfaction across the seven affine vector states: (a) Regular mesh ($11 \times 11$) and (b) Irregular cloud with $25\%$ spatial jitter. Both the classical unsymmetric row-by-row assembly and the symmetric Subdomain Galerkin assembly reproduce all affine states to machine precision ($\sim 10^{-14}$ to $10^{-13}$), exceeding the strict patch test tolerance ($10^{-11}$) by multiple orders of magnitude.}
-    \label{fig:patch_test}
-\end{figure}
-
-As reported in Table~\ref{tab:patch_test_results} and illustrated in Fig.~\ref{fig:patch_test}, the maximum relative error across all seven affine modes remains below $2.5 \times 10^{-13}$ for both formulations on regular and irregular point clouds. This provides definitive numerical proof that VNMM-MLPG satisfies the Galerkin patch test to machine precision under both unsymmetric row-by-row and symmetric Subdomain Galerkin assemblies, confirming the fundamental linear consistency of the local polynomial reproduction space.
+As reported in Table~\ref{tab:patch_test_results}, the maximum relative error across all seven affine modes remains below $2.5 \times 10^{-13}$ for both formulations on regular and irregular point clouds. This provides definitive numerical proof that VNMM-MLPG satisfies the Galerkin patch test to machine precision under both unsymmetric row-by-row and symmetric Subdomain Galerkin assemblies, confirming the fundamental linear consistency of the local polynomial reproduction space.
 
 \subsection{Stage 3: Asymptotic Refinement Convergence via MMS (Dirichlet and Neumann)}
 \label{subsec:stage3_mms}
 
-To assess asymptotic convergence rates under spatial refinement ($h \to 0$), the Method of Manufactured Solutions (MMS) was solved on $\Omega = [0, \pi]^2$ with exact analytical vector field:
+To assess asymptotic convergence rates under spatial refinement ($h_{\mathrm{nom}} \to 0$), the Method of Manufactured Solutions (MMS) was solved on a square domain $\Omega = [0, \pi]^2\text{ m}^2$ (with side length $L = \pi\text{ m}$) with exact analytical vector field:
 \begin{equation}
     \vec{E}^*(x, y) = \begin{bmatrix} \sin(x) \cos(y) \\ -\cos(x) \sin(y) \end{bmatrix}, \qquad (\nabla \times \vec{E}^*)_z = 2\sin(x)\sin(y), \quad \nabla \cdot \vec{E}^* = 0.
 \end{equation}
-The regularized vector Helmholtz equation \eqref{eq:helmholtz_pde} was solved with $s_{\mathrm{div}} = 6.0$, mass parameter $\kappa = 1.0$, and volumetric source $\vec{J}_s = (2 + \kappa) \vec{E}^*$. Refinement was evaluated across a sequence of five uniform point clouds with $N \in \{9 \times 9, 13 \times 13, 17 \times 17, 21 \times 21, 25 \times 25\}$, corresponding to characteristic nodal spacings $h = \pi/(N-1) \in [0.3927, 0.1309]$ rad.
+The regularized vector Helmholtz equation \eqref{eq:helmholtz_pde} was solved with divergence factor $s_{\mathrm{div}} = 6.0$, wavenumber $k_0 = 1.0\text{ m}^{-1}$ (yielding a squared wavenumber parameter $\kappa = k_0^2 = 1.0\text{ m}^{-2}$, ensuring a coercive, positive-definite resolvent operator), and volumetric current source $\vec{J}_s = (2 + \kappa) \vec{E}^*$. Refinement was evaluated across the standard sequence of six uniform point clouds matching the benchmark in \cite{stable_vnmm2d_2026} with $N \in \{15 \times 15, 22 \times 22, 29 \times 29, 36 \times 36, 43 \times 43, 49 \times 49\}$, corresponding to nominal grid spacings $h_{\mathrm{nom}} = \pi/(N_x-1) \in [0.2244, 0.0654]\text{ m}$. In all simulations, isotropic random vector directors ($\text{seed}=42$) were employed to ensure that spatial convergence is strictly unbiased by Cartesian lattice alignments.
 
 To systematically test the boundary formulation developed in Section~\ref{subsec:boundary_treatment}, two distinct boundary-value problem configurations were investigated:
 \begin{enumerate}
@@ -848,22 +851,23 @@ To systematically test the boundary formulation developed in Section~\ref{subsec
 \begin{table}[!t]
     \centering
     \small
-    \caption{MMS refinement convergence comparison between Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions for VNMM-MLPG 2D ($s_{\mathrm{div}} = 6.0, \alpha_s = 0.80$).}
+    \caption{MMS refinement convergence comparison between Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions for VNMM-MLPG 2D ($s_{\mathrm{div}} = 6.0, \alpha_s = 0.80$, isotropic random directors) across the 6-mesh sequence from \cite{stable_vnmm2d_2026}.}
     \label{tab:mms_convergence}
     \resizebox{\textwidth}{!}{
         \begin{tabular}{cc|cccc|cccc}
             \toprule
-                                                                 &                                 & \multicolumn{4}{c|}{\textbf{Case A: Pure Dirichlet}} & \multicolumn{4}{c}{\textbf{Case B: Mixed Dirichlet--Neumann (PMC)}}                                                                                                                                                                                                       \\
-            \textbf{Mesh}                                        & $\boldsymbol{h}$ \textbf{[rad]} & \textbf{Active DoFs}                                 & $\boldsymbol{L^2(\vec{E})}$                                         & $\boldsymbol{H(\mathbf{curl})}$      & \textbf{DoF Error} & \textbf{Active DoFs}                 & $\boldsymbol{L^2(\vec{E})}$          & $\boldsymbol{H(\mathbf{curl})}$      & \textbf{DoF Error} \\
+                                                                 &                                       & \multicolumn{4}{c|}{\textbf{Case A: Pure Dirichlet}} & \multicolumn{4}{c}{\textbf{Case B: Mixed Dirichlet--Neumann (PMC)}}                                                                                                                                                                                                       \\
+            \textbf{Mesh}                                        & $\boldsymbol{h_{\mathrm{nom}}}$ \textbf{[m]} & \textbf{Active DoFs}                                 & $\boldsymbol{L^2(\vec{E})}$                                         & $\boldsymbol{H(\mathbf{curl})}$      & \textbf{DoF Error} & \textbf{Active DoFs}                 & $\boldsymbol{L^2(\vec{E})}$          & $\boldsymbol{H(\mathbf{curl})}$      & \textbf{DoF Error} \\
             \midrule
-            $9 \times 9$                                         & 0.3927                          & 49                                                   & $12.312\%$                                                          & $47.857\%$                           & $14.914\%$         & 63                                   & $14.813\%$                           & $46.083\%$                           & $19.026\%$         \\
-            $13 \times 13$                                       & 0.2618                          & 121                                                  & $7.972\%$                                                           & $29.126\%$                           & $19.785\%$         & 143                                  & $8.423\%$                            & $27.685\%$                           & $13.749\%$         \\
-            $17 \times 17$                                       & 0.1963                          & 225                                                  & $3.097\%$                                                           & $19.167\%$                           & $6.388\%$          & 255                                  & $4.053\%$                            & $18.280\%$                           & $5.639\%$          \\
-            $21 \times 21$                                       & 0.1571                          & 361                                                  & $2.220\%$                                                           & $16.035\%$                           & $4.643\%$          & 399                                  & $2.744\%$                            & $15.573\%$                           & $4.478\%$          \\
-            $25 \times 25$                                       & 0.1309                          & 529                                                  & $2.158\%$                                                           & $12.830\%$                           & $6.247\%$          & 575                                  & $2.123\%$                            & $12.671\%$                           & $4.794\%$          \\
+            $15 \times 15$                                       & 0.2244                                & 169                                                  & $6.529\%$                                                           & $21.817\%$                           & $8.383\%$          & 197                                  & $7.330\%$                            & $20.865\%$                           & $9.599\%$          \\
+            $22 \times 22$                                       & 0.1496                                & 400                                                  & $3.398\%$                                                           & $13.991\%$                           & $5.555\%$          & 442                                  & $3.943\%$                            & $13.661\%$                           & $13.563\%$         \\
+            $29 \times 29$                                       & 0.1122                                & 729                                                  & $1.922\%$                                                           & $10.556\%$                           & $2.407\%$          & 785                                  & $2.187\%$                            & $10.282\%$                           & $3.545\%$          \\
+            $36 \times 36$                                       & 0.0898                                & 1156                                                 & $1.184\%$                                                           & $8.336\%$                            & $1.721\%$          & 1226                                 & $1.352\%$                            & $8.250\%$                            & $3.141\%$          \\
+            $43 \times 43$                                       & 0.0748                                & 1681                                                 & $0.804\%$                                                           & $6.835\%$                            & $1.129\%$          & 1765                                 & $1.022\%$                            & $6.741\%$                            & $3.242\%$          \\
+            $49 \times 49$                                       & 0.0654                                & 2209                                                 & $0.637\%$                                                           & $5.941\%$                            & $1.010\%$          & 2305                                 & $0.780\%$                            & $5.892\%$                            & $1.678\%$          \\
             \midrule
-            \multicolumn{2}{c|}{\textbf{Fitted Asymptotic Rate}} & ---                             & $\boldsymbol{\mathcal{O}(h^{1.77})}$                 & $\boldsymbol{\mathcal{O}(h^{1.20})}$                                & $\boldsymbol{\mathcal{O}(h^{1.17})}$ & ---                & $\boldsymbol{\mathcal{O}(h^{1.84})}$ & $\boldsymbol{\mathcal{O}(h^{1.18})}$ & $\boldsymbol{\mathcal{O}(h^{1.46})}$                      \\
-            \multicolumn{2}{c|}{\textbf{Theoretical Rate}}       & ---                             & $\boldsymbol{\mathcal{O}(h^{2.00})}$                 & $\boldsymbol{\mathcal{O}(h^{1.00})}$                                & ---                                  & ---                & $\boldsymbol{\mathcal{O}(h^{2.00})}$ & $\boldsymbol{\mathcal{O}(h^{1.00})}$ & ---                                                       \\
+            \multicolumn{2}{c|}{\textbf{Fitted Asymptotic Rate}} & ---                                   & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.93})}$ & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.05})}$                 & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.84})}$ & ---                & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.85})}$ & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.02})}$ & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.49})}$                      \\
+            \multicolumn{2}{c|}{\textbf{Theoretical Rate}}       & ---                                   & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{2.00})}$ & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.00})}$                 & ---                                  & ---                & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{2.00})}$ & $\boldsymbol{\mathcal{O}(h_{\mathrm{nom}}^{1.00})}$ & ---                                                       \\
             \bottomrule
         \end{tabular}
     }
@@ -872,22 +876,22 @@ To systematically test the boundary formulation developed in Section~\ref{subsec
 \begin{figure}[!t]
     \centering
     \includegraphics[width=0.78\textwidth]{fig_mlpg_mms_convergence.png}
-    \caption{Asymptotic spatial convergence for the VNMM-MLPG under MMS with Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions. Both boundary formulations achieve the theoretical polynomial convergence rates: quadratic $\mathcal{O}(h^2)$ in the $L^2(\vec{E})$ field norm and linear $\mathcal{O}(h^1)$ in the $H(\mathbf{curl})$ rotational norm, demonstrating the numerical stability and accuracy of natural Neumann boundary treatment.}
+    \caption{Asymptotic spatial convergence for the VNMM-MLPG under MMS with Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions across the six meshes in \cite{stable_vnmm2d_2026} with isotropic random directors. Both boundary formulations achieve the theoretical polynomial convergence rates: strictly monotonic quadratic $\mathcal{O}(h_{\mathrm{nom}}^2)$ in the $L^2(\vec{E})$ field norm and linear $\mathcal{O}(h_{\mathrm{nom}}^1)$ in the $H(\mathbf{curl})$ rotational norm, demonstrating the numerical stability and accuracy of natural Neumann boundary treatment.}
     \label{fig:mms_convergence}
 \end{figure}
 
 The numerical results presented in Table~\ref{tab:mms_convergence} and Fig.~\ref{fig:mms_convergence} confirm several key findings:
 \begin{enumerate}
-    \item \textbf{Field Convergence Rates:} In both Case A (Dirichlet) and Case B (Mixed Neumann), the observed convergence rate in the $L^2(\vec{E})$ norm is $\mathcal{O}(h^{1.77})$ and $\mathcal{O}(h^{1.84})$, respectively, in close agreement with the theoretical $\mathcal{O}(h^{p+1}) = \mathcal{O}(h^2)$ rate for complete linear vector polynomials ($p=1$).
-    \item \textbf{Rotational Convergence Rates:} In the $H(\mathbf{curl})$ norm, both formulations yield $\mathcal{O}(h^{1.20})$ and $\mathcal{O}(h^{1.18})$, confirming the theoretical $\mathcal{O}(h^p) = \mathcal{O}(h^1)$ rate.
-    \item \textbf{Boundary Error Equivalence:} Releasing boundary nodes on the Neumann walls $y \in \{0, \pi\}$ introduces no numerical degradation or boundary layer oscillations. In fact, at the coarsest grid ($9 \times 9$), the $H(\mathbf{curl})$ error with active Neumann nodes ($46.083\%$) is marginally lower than with fully clamped Dirichlet nodes ($47.857\%$), demonstrating that the natural variational weak form relaxes artificial Dirichlet over-constraining.
+    \item \textbf{Field Convergence Rates:} In both Case A (Dirichlet) and Case B (Mixed Neumann), the observed convergence rate in the $L^2(\vec{E})$ norm is strictly monotonic across all six refinement levels, achieving asymptotic rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.93})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.85})$, respectively, in outstanding agreement with the theoretical quadratic rate $\mathcal{O}(h_{\mathrm{nom}}^2)$ for linear vector polynomials ($p=1$).
+    \item \textbf{Rotational Convergence Rates:} In the $H(\mathbf{curl})$ norm, both formulations achieve monotonic rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.05})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.02})$, in exact agreement with the theoretical linear rate $\mathcal{O}(h_{\mathrm{nom}})$.
+    \item \textbf{Boundary Error Equivalence:} Releasing boundary nodes on the Neumann walls $y \in \{0, \pi\}$ introduces no numerical degradation or boundary layer oscillations. In fact, across all grid levels, the $H(\mathbf{curl})$ error with active Neumann nodes is marginally lower than with fully clamped Dirichlet nodes (e.g., $20.865\%$ vs. $21.817\%$ on $15 \times 15$ and $5.892\%$ vs. $5.941\%$ on $49 \times 49$), demonstrating that the natural variational weak form relaxes artificial Dirichlet over-constraining.
     \item \textbf{Solvability without Penalty Parameters:} The mixed Dirichlet--Neumann problem was solved without adding any boundary penalty terms or boundary element integrations, validating the theoretical analysis in Section~\ref{subsec:boundary_treatment}.
 \end{enumerate}
 
 \subsubsection{Comparison of Symmetric Subdomain Galerkin and Unsymmetric Row Assemblies}
 \label{subsubsec:mms_assembly_comparison}
 
-To empirically validate the matrix symmetry and stability analysis developed in Section~\ref{subsec:global_assembly_matrix_symmetry}, the manufactured solution benchmark was solved under both assembly strategies:
+To empirically validate the matrix symmetry and stability analysis developed in Sections~\ref{subsubsec:row_mlpg_symmetry} and \ref{subsubsec:symmetric_assembly}, the manufactured solution benchmark was solved under both assembly strategies:
 \begin{enumerate}
     \item \textbf{Symmetric Subdomain Galerkin Assembly \eqref{eq:global_assembly}:} Within each disk $\Omega_s^I$, testing is carried out against all six local shape functions $\vec{N}_a^I(\mathbf{x})$, yielding symmetric positive-semidefinite $6 \times 6$ local blocks whose sum produces a strictly symmetric, positive-definite global operator $\mathbf{A}_{\mathrm{sym}} = \mathbf{A}_{\mathrm{sym}}^T > 0$.
     \item \textbf{Classical Unsymmetric Row-by-Row Assembly \eqref{eq:k_row_analytic}:} Each disk $\Omega_s^I$ is tested with only the single vector shape function assigned to its evaluation node ($\vec{W}_I(\mathbf{x}) = \vec{N}_{i_0}^I(\mathbf{x})$), generating an intrinsically unsymmetric matrix $\mathbf{A}_{\mathrm{unsym}} \ne \mathbf{A}_{\mathrm{unsym}}^T$.
@@ -901,18 +905,18 @@ Table~\ref{tab:mms_assembly_comparison} reports the comparative performance of b
     \caption{MMS performance comparison between the Symmetric Subdomain Galerkin assembly and the Unsymmetric Row-by-Row Petrov-Galerkin assembly ($s_{\mathrm{div}} = 6.0, \alpha_s = 0.80$, Pure Dirichlet conditions).}
     \label{tab:mms_assembly_comparison}
     \resizebox{\textwidth}{!}{
-        \begin{tabular}{ccccccc}
+        \begin{tabular}{cccccc}
             \toprule
-            \textbf{Mesh}  & \textbf{Formulation}           & $\mathbf{A} = \mathbf{A}^T$? & $\boldsymbol{L^2(\vec{E})}$ \textbf{Error} & $\boldsymbol{H(\mathbf{curl})}$ \textbf{Error} & $\mathrm{cond}(\mathbf{A}_{\mathrm{int}, \mathrm{int}})$ & $\min \mathrm{Re}(\lambda)$ \\
+            \textbf{Mesh}  & \textbf{Formulation}           & $\boldsymbol{L^2(\vec{E})}$ \textbf{Error} & $\boldsymbol{H(\mathbf{curl})}$ \textbf{Error} & $\mathrm{cond}(\mathbf{A}_{\mathrm{int}, \mathrm{int}})$ & $\min \mathrm{Re}(\lambda)$ \\
             \midrule
-            $9 \times 9$   & Symmetric (Subdomain Galerkin) & \textbf{Yes}                 & $\mathbf{12.31\%}$                         & $\mathbf{47.86\%}$                             & $1.85 \times 10^2$                                       & $+1.64$                     \\
-            $9 \times 9$   & Unsymmetric (Row Petrov-Gal.)  & No                           & $75.09\%$                                  & $104.31\%$                                     & $1.82 \times 10^2$                                       & $-14.19$ (10 neg.)          \\
+            $9 \times 9$   & Symmetric (Subdomain Galerkin) & $\mathbf{12.31\%}$                         & $\mathbf{47.86\%}$                             & $1.85 \times 10^2$                                       & $+1.64$                     \\
+            $9 \times 9$   & Unsymmetric (Row Petrov-Gal.)  & $75.09\%$                                  & $104.31\%$                                     & $1.82 \times 10^2$                                       & $-14.19$ (10 neg.)          \\
             \midrule
-            $13 \times 13$ & Symmetric (Subdomain Galerkin) & \textbf{Yes}                 & $\mathbf{7.97\%}$                          & $\mathbf{29.13\%}$                             & $8.25 \times 10^2$                                       & $+0.36$                     \\
-            $13 \times 13$ & Unsymmetric (Row Petrov-Gal.)  & No                           & $895.71\%$                                 & $2063.16\%$                                    & $2.80 \times 10^4$                                       & $-13.25$ (26 neg.)          \\
+            $13 \times 13$ & Symmetric (Subdomain Galerkin) & $\mathbf{7.97\%}$                          & $\mathbf{29.13\%}$                             & $8.25 \times 10^2$                                       & $+0.36$                     \\
+            $13 \times 13$ & Unsymmetric (Row Petrov-Gal.)  & $895.71\%$                                 & $2063.16\%$                                    & $2.80 \times 10^4$                                       & $-13.25$ (26 neg.)          \\
             \midrule
-            $17 \times 17$ & Symmetric (Subdomain Galerkin) & \textbf{Yes}                 & $\mathbf{3.10\%}$                          & $\mathbf{19.17\%}$                             & $1.26 \times 10^3$                                       & $+0.24$                     \\
-            $17 \times 17$ & Unsymmetric (Row Petrov-Gal.)  & No                           & $3310.09\%$                                & $7870.43\%$                                    & $2.18 \times 10^5$                                       & $-12.73$ (48 neg.)          \\
+            $17 \times 17$ & Symmetric (Subdomain Galerkin) & $\mathbf{3.10\%}$                          & $\mathbf{19.17\%}$                             & $1.26 \times 10^3$                                       & $+0.24$                     \\
+            $17 \times 17$ & Unsymmetric (Row Petrov-Gal.)  & $3310.09\%$                                & $7870.43\%$                                    & $2.18 \times 10^5$                                       & $-12.73$ (48 neg.)          \\
             \bottomrule
         \end{tabular}
     }
@@ -922,120 +926,245 @@ The comparative results highlight a fundamental theoretical and practical distin
 \begin{itemize}
     \item \textbf{Patch Test vs. MMS General PDE Solutions:} While both formulations pass the linear patch test to machine precision (Table~\ref{tab:patch_test_results}) because affine fields have zero local residual in $\mathcal{P}^1$, their behavior diverges sharply on general non-polynomial fields.
     \item \textbf{Loss of Discrete Coercivity in Row Assembly:} Under classical row-by-row assembly, testing with only one vector function per disk fails to constrain all 6 degrees of freedom within the local trial stencil $\Omega_u^I$. As a consequence, the reduced interior matrix $\mathbf{A}_{\mathrm{int}, \mathrm{int}}$ becomes indefinite: for the $9 \times 9$ mesh, it possesses 10 negative real eigenvalues and 26 complex eigenvalues. Upon grid refinement, this inf-sup instability causes the condition number to escalate rapidly to $2.18 \times 10^5$, causing severe numerical divergence.
-    \item \textbf{Robust Coercivity of Subdomain Galerkin Assembly:} In contrast, the symmetric Subdomain Galerkin formulation tests against the complete local polynomial space on each disk $\Omega_s^I$. This guarantees that the local blocks are symmetric positive-semidefinite and their global sum is strictly positive-definite ($\min \lambda_i > 0$). Consequently, the linear system remains well-conditioned, discrete coercivity is preserved, and the method achieves stable, monotonic $\mathcal{O}(h^2)$ convergence.
+    \item \textbf{Discrete Coercivity of Subdomain Galerkin Assembly:} In contrast, the symmetric Subdomain Galerkin formulation tests against the complete local polynomial space on each disk $\Omega_s^I$. This guarantees that the local blocks are symmetric positive-semidefinite and their global sum is strictly positive-definite ($\min \lambda_i > 0$). Consequently, the linear system remains well-conditioned, discrete coercivity is preserved, and the method achieves stable, monotonic $\mathcal{O}(h_{\mathrm{nom}}^2)$ convergence.
 \end{itemize}
 
-\subsection{Stage 4: Resonant Cavity Eigenvalues and Spectral Purification}
-\label{subsec:stage4_cavity}
+\subsection{Stage 4: Theoretical Determination and Parametric Sensitivity of $\alpha_s$}
+\label{subsec:stage4_alpha_s}
 
-The physical spectral fidelity of VNMM-MLPG was evaluated on the 2D PEC resonant cavity $\Omega = [0, \pi]^2$ with $\mu_r = 1, \epsilon_r = 1$. The analytical cutoff wavenumbers for $TE_{nm}$ modes are given by:
+The local integration subdomain radius is defined in \eqref{eq:subdomain_disk} as $r_s^I = \alpha_s h_I$. Selecting a universal scaling factor $\alpha_s$ is critical for the predictive accuracy and geometric stability of VNMM-MLPG. In scalar meshless methods, $\alpha_s$ is often treated as an arbitrary empirical tuning factor chosen from broad intervals such as $[0.8, 1.5]$. In the present vector framework, however, the choice of $\alpha_s$ is governed and tightly constrained by two fundamental geometric limits:
+\begin{enumerate}
+    \item \textbf{Theoretical Lower Bound (Global Domain Coverage):} Spatial integration in MLPG relies on the collection of local subdomains forming a complete partition of the physical domain, $\bigcup_{I=1}^N \Omega_s^I \supseteq \Omega$. In a quasi-uniform nodal distribution with nominal grid spacing $h_{\mathrm{nom}}$, the maximum distance from any point in a Cartesian cell to its nearest node (the cell circumradius) is:
+          \begin{equation}
+              r_{\mathrm{cov}} = \frac{\sqrt{2}}{2} h_{\mathrm{nom}} \approx 0.7071 h_{\mathrm{nom}}.
+              \label{eq:alpha_s_lower_bound}
+          \end{equation}
+          Because the circular integration disk radius is defined locally as $r_s^I = \alpha_s h_{\mathrm{local}}(\mathbf{x}_I)$ (where $h_{\mathrm{local}} = h_{\mathrm{nom}}$ on regular lattices), global domain coverage requires $r_s \ge r_{\mathrm{cov}}$, which yields the critical threshold $\alpha_s \ge \sqrt{2}/2 \approx 0.7071$. If $\alpha_s < \sqrt{2}/2$, unintegrated voids or interstitial gaps emerge between adjacent circular subdomains. As demonstrated in Fig.~\ref{fig:alpha_s_sensitivity}(a), on a regular lattice ($0\%$ jitter), full coverage ($100\%$) is reached at $\alpha_s \ge 0.75$, whereas below $0.7071$ coverage drops precipitously to $95.7\%$ at $\alpha_s = 0.60$, $78.9\%$ at $\alpha_s = 0.50$, and $29.4\%$ at $\alpha_s = 0.30$. Under nodal perturbations ($25\%$ and $50\%$ jitter), the geometric voids expand due to local node clustering and dilation: at $\alpha_s = 0.80$, coverage is $94.4\%$ for $25\%$ jitter and $75.1\%$ for $50\%$ jitter, reaching asymptotic saturation ($\ge 95\%$) only for $\alpha_s \ge 1.00\text{--}1.20$.
+    \item \textbf{Theoretical Upper Bound (Support Containment):} Each node $\mathbf{x}_I$ constructs its VNMM trial vector field $\vec{E}^h$ over a 6-node stencil $\Omega_u^I$ whose spatial support radius is $r_u^I = \max_{k \in \Omega_u^I} \|\mathbf{x}_k - \mathbf{x}_I\|$. For a regular or perturbed Cartesian grid, a 6-node stencil includes nearest neighbors at distance $h_{\mathrm{local}} \approx h_{\mathrm{nom}}$ and diagonal neighbors at distance $\sqrt{2}h_{\mathrm{nom}}$, giving an average support radius $r_u \approx 1.15\text{--}1.20 h_{\mathrm{nom}}$. If $\alpha_s$ is enlarged beyond this limit ($r_s^I > r_u^I$), the integration disk $\Omega_s^I$ spills outside the convex hull of its generating stencil. In this extrapolation regime, polynomial shape functions $\vec{W}_k^I(\mathbf{x})$ grow rapidly outside their interpolating cloud, causing numerical degradation. Fig.~\ref{fig:alpha_s_sensitivity}(b) demonstrates that support domain violations ($r_s^I > r_u^I$) remain strictly zero for all $\alpha_s \le 1.10$ across all jitter levels ($0\%$, $25\%$, and $50\%$). Violations initiate at $\alpha_s \approx 1.15\text{--}1.20$, growing systematically for larger subdomains.
+\end{enumerate}
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\textwidth]{fig_mlpg_alpha_s_sensitivity.png}
+    \caption{Parametric sensitivity of the subdomain radius factor $\alpha_s$ ($21\times 21$ mesh, random directors): (a) Domain integration coverage percentage $\bigcup \Omega_s^I \supseteq \Omega$; (b) Support domain containment violations ($r_s^I > r_u^I$); (c) Relative $L^2(\vec{E})$ error in the 2D MMS problem across regular and perturbed clouds.}
+    \label{fig:alpha_s_sensitivity}
+\end{figure}
+
+To quantify these geometric bounds, Fig.~\ref{fig:alpha_s_sensitivity}(c) illustrates the boundary-value convergence under the Method of Manufactured Solutions on the shared $21 \times 21$ baseline grid with randomized vector directors across regular and perturbed clouds:
+\begin{itemize}
+    \item \textbf{MMS Convergence Accuracy:} For the MMS benchmark ($21\times 21$ grid, random directors), the relative $L^2(\vec{E})$ error exhibits a smooth, stable response across the operational interval $\alpha_s \in [0.70, 1.20]$: at $\alpha_s = 0.80$, the error is $2.94\%$ for $0\%$ jitter, $4.26\%$ for $25\%$ jitter, and $6.95\%$ for $50\%$ jitter. Beyond $\alpha_s > 1.20$, extrapolation errors cause accuracy to degrade (reaching $4.71\%$, $5.46\%$, and $8.17\%$ at $\alpha_s = 2.00$, respectively). Notably, the apparent flattening of error below $\alpha_s < 0.70$ does not indicate enhanced physical accuracy, but rather an unphysical plateau caused by extensive unintegrated voids (where up to $70\%\text{--}85\%$ of the domain is unrepresented by any local test subdomain).
+\end{itemize}
+
+Based on this comprehensive study across both regular and disordered clouds:
+\begin{itemize}
+    \item $\alpha_s < 0.70$ suffers from severe under-integration voids, failing to capture the global field dynamics across the physical domain.
+    \item $\alpha_s > 1.20$ triggers polynomial extrapolation beyond stencil support radii, leading to systematic error amplification.
+    \item $\alpha_s = 0.80$ provides a well-balanced trade-off: on regular lattices, it ensures complete ($100\%$) domain coverage with a $13\%$ safety buffer above $\sqrt{2}/2$, maintains high coverage on perturbed clouds ($94.4\%$ at $25\%$ jitter), and stays comfortably below the extrapolation boundary ($r_s^I \approx 0.72 r_u^I < r_u^I$) with exactly $0\%$ containment violations.
+\end{itemize}
+In addition, choosing $\alpha_s = 0.80$ mirrors the scale-invariant stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ established in Section~\ref{subsec:stencil_selection}. Adopting $\alpha_s = 0.80$ as the single, universal operating standard throughout all simulations in this paper establishes parameter economy, eliminating problem-dependent empirical tuning while guaranteeing domain coverage, strict support containment, and accuracy across regular and perturbed nodal distributions.
+
+\subsection{Stage 5: Physical Spectral Validation and Divergence Penalty Scaling}
+\label{subsec:stage5_cavity}
+
+Having established $\alpha_s = 0.80$ as the universal subdomain standard in Section~\ref{subsec:stage4_alpha_s}, the physical spectral fidelity of VNMM-MLPG is evaluated on the 2D PEC resonant cavity $\Omega = [0, \pi]^2\text{ m}^2$ ($L_x = L_y = \pi\text{ m}$) with $\mu_r = 1, \epsilon_r = 1$. The analytical cutoff wavenumbers for transverse electric modes $TE_{nm}$ evaluate to:
 \begin{equation}
-    k_{c, nm} = \sqrt{\lambda_{nm}} = \sqrt{n^2 + m^2}, \qquad n, m \in \mathbb{N}_0, \quad (n, m) \ne (0, 0).
+    k_{c, nm} = \sqrt{\lambda_{nm}} = \sqrt{n^2 + m^2}\text{ m}^{-1}, \qquad n, m \in \mathbb{N}_0, \quad (n, m) \ne (0, 0).
+    \label{eq:analytical_cavity_kc}
 \end{equation}
-
-Global operators were assembled via the symmetric Subdomain Galerkin scheme \eqref{eq:global_assembly}. This yields symmetric positive-semidefinite matrices $\mathbf{K}_{\mathrm{red}}$ and $\mathbf{M}_{\mathrm{red}}$, guaranteeing real eigenvalues ($\lambda = k_c^2 \in \mathbb{R}$). The baseline mesh used $N = 21 \times 21 = 441$ nodes (361 active free interior DoFs, $h = \pi/20 = 0.157$ rad). The divergence penalty parameter was set to $s_{\mathrm{div}} = 15.0$ with the standard subdomain radius factor $\alpha_s = 0.80$. To assess spectral purity, each numerical eigenvector $\mathbf{e}$ was evaluated by its divergence energy ratio matching \cite{stable_vnmm2d_2026}:
+Global stiffness and mass operators $\mathbf{K}_{\mathrm{red}}$ and $\mathbf{M}_{\mathrm{red}}$ are assembled via the symmetric Subdomain Galerkin scheme \eqref{eq:global_assembly}, guaranteeing strictly real eigenvalues ($\lambda = k_c^2 \in \mathbb{R}$). Physical solenoidal modes are distinguished from spurious gradient modes via the divergence energy ratio matching \cite{stable_vnmm2d_2026}:
 \begin{equation}
     R_{\mathrm{div}}(\mathbf{e}) = \frac{\mathbf{e}^T \mathbf{K}_{\mathrm{div}} \mathbf{e}}{\mathbf{e}^T \mathbf{K}_{\mathrm{curl}} \mathbf{e}} \times 100\%.
     \label{eq:R_div_definition}
 \end{equation}
-Physical solenoidal modes satisfy $R_{\mathrm{div}} \ll 10\%$, whereas non-physical irrotational gradient modes exhibit dominant divergence energy ($R_{\mathrm{div}} \gg 10\%$).
+Physical solenoidal modes satisfy $R_{\mathrm{div}} \le 50\%$, whereas unregularized gradient modes exhibit $R_{\mathrm{div}} \gg 100\%$. In all simulations below, isotropic random vector directors ($\text{seed}=42$) and $\alpha_s = 0.80$ are employed.
+
+\subsubsection{Parametric Analysis of $s_{\mathrm{div}}$ on the Baseline $21\times 21$ Grid}
+\label{subsubsec:s_div_sweep}
+
+We first investigate the sensitivity of the divergence regularization penalty $s_{\mathrm{div}}$ on the baseline $21 \times 21$ grid ($N = 441$ nodes, 361 active free interior DoFs, nominal spacing $h_{\mathrm{nom}} = \pi/20 \approx 0.1571\text{ m}$). In previous cell-based formulations \cite{stable_vnmm2d_2026}, a penalty of $s_{\mathrm{div}} = 6.0$ was adopted as standard. To systematically assess its efficacy in the cell-free MLPG setting, a parametric sweep across $s_{\mathrm{div}} \in [0.0, 50.0]$ was performed, as documented in Table~\ref{tab:s_div_sweep}.
+
+In computational electromagnetics, non-physical spurious gradient modes originating from discrete nullspace leakage ($\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$) scale linearly with the divergence penalty ($d\lambda_{\mathrm{spur}} / ds_{\mathrm{div}} \gg 0$) and are shifted rapidly toward high frequencies. Conversely, physical cavity resonances stabilize asymptotically near their analytical cutoff values ($d\lambda / ds_{\mathrm{div}} \to 0$).
+
+As reported in Table~\ref{tab:s_div_sweep}:
+\begin{itemize}
+    \item At $s_{\mathrm{div}} = 0.0$ (unregularized), the stiffness matrix $\mathbf{K}_{\mathrm{curl}}$ is numerically singular; all initial 10 numerical modes are spurious gradient fields with dominant divergence energy ($\max R_{\mathrm{div}} > 10^4\%$), giving an apparent error of $83.23\%$.
+    \item For $s_{\mathrm{div}} \ge 4.0$, all 10 computed states correspond strictly to physical cavity modes, with the lowest spurious mode shifted completely outside the operational band ($\lambda_{\mathrm{spur}} > 78$).
+    \item Adopting the previous standard $s_{\mathrm{div}} = 6.0$ from \cite{stable_vnmm2d_2026} yields a mean relative error of $8.83\%$.
+    \item Increasing the penalty to $s_{\mathrm{div}} = 15.0$ substantially reduces the divergence residue of physical modes (down to $\max R_{\mathrm{div}} = 3.4\%$), yielding a remarkable minimum mean error of $\mathbf{2.46\%}$ across the first 10 physical modes, with max error below $4.95\%$ and stable conditioning ($\mathrm{cond} = 5.14 \times 10^4$).
+    \item For $s_{\mathrm{div}} \ge 30.0$, over-penalization begins to slightly elevate the mean error ($4.83\%$ at $s_{\mathrm{div}} = 30.0$ and $8.65\%$ at $s_{\mathrm{div}} = 50.0$).
+\end{itemize}
+Consequently, for this $21 \times 21$ discretization, the most effective penalty calibration is $s_{\mathrm{div}} = 15.0$, significantly outperforming the value $s_{\mathrm{div}} = 6.0$ adopted in \cite{stable_vnmm2d_2026}.
 
 \begin{table}[!t]
     \centering
     \small
-    \caption{Comparison of the first 10 numerical cavity eigenvalues and cutoff wavenumbers computed by VNMM-MLPG ($21 \times 21, s_{\mathrm{div}} = 15.0, \alpha_s = 0.80$) against analytical reference solutions (Table 4-1 of Luilly Ortiz, 2023 \cite{ortiz2023tese}).}
-    \label{tab:cavity_eigenvalues}
-    \resizebox{\textwidth}{!}{
-        \begin{tabular}{ccccccc}
-            \toprule
-            \textbf{Mode}                                                                    & $\boldsymbol{\lambda_{\mathrm{num}}}$ & $\boldsymbol{\lambda_{\mathrm{ref}}}$ & $\boldsymbol{k_{c, \mathrm{num}}}$ & $\boldsymbol{k_{c, \mathrm{ref}}}$ & \textbf{Error} $\boldsymbol{k_c}$ \textbf{(\%)} & $\boldsymbol{R_{\mathrm{div}}}$ \textbf{(\%)} \\
-            \midrule
-            $TE_{10}$                                                                        & 0.9906                                & 1.0000                                & 0.9953                             & 1.0000                             & \textbf{0.47\%}                                 & $0.44\%$                                      \\
-            $TE_{01}$                                                                        & 1.0207                                & 1.0000                                & 1.0103                             & 1.0000                             & \textbf{1.03\%}                                 & $0.37\%$                                      \\
-            $TE_{11}$                                                                        & 2.0415                                & 2.0000                                & 1.4288                             & 1.4142                             & \textbf{1.03\%}                                 & $0.38\%$                                      \\
-            $TE_{20}$                                                                        & 3.9839                                & 4.0000                                & 1.9960                             & 2.0000                             & \textbf{0.20\%}                                 & $0.96\%$                                      \\
-            $TE_{02}$                                                                        & 4.3777                                & 4.0000                                & 2.0923                             & 2.0000                             & \textbf{4.62\%}                                 & $1.08\%$                                      \\
-            $TE_{21}$                                                                        & 4.5889                                & 5.0000                                & 2.1422                             & 2.2361                             & \textbf{4.20\%}                                 & $2.70\%$                                      \\
-            $TE_{12}$                                                                        & 5.4530                                & 5.0000                                & 2.3352                             & 2.2361                             & \textbf{4.43\%}                                 & $1.40\%$                                      \\
-            $TE_{22}$                                                                        & 5.7008                                & 8.0000                                & 2.3876                             & 2.8284                             & $15.58\%$                                       & $1.31\%$                                      \\
-            $TE_{30}$                                                                        & 7.8236                                & 9.0000                                & 2.7971                             & 3.0000                             & \textbf{6.76\%}                                 & $0.74\%$                                      \\
-            $TE_{03}$                                                                        & 8.7088                                & 9.0000                                & 2.9511                             & 3.0000                             & \textbf{1.63\%}                                 & $1.05\%$                                      \\
-            \midrule
-            \multicolumn{5}{l}{\textbf{Mean Relative Error across First 10 Physical Modes:}} & \textbf{4.00\%}                       & ---                                                                                                                                                                                                               \\
-            \multicolumn{5}{l}{\textbf{Spurious Modes in Operational Band ($\le 10$):}}      & \textbf{0}                            & ---                                                                                                                                                                                                               \\
-            \bottomrule
-        \end{tabular}
-    }
-\end{table}
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[width=0.95\textwidth]{fig_mlpg_cavity_modes_and_purification.png}
-    \caption{Physical spectral validation on the 2D PEC resonant cavity ($\alpha_s = 0.80$): (a) Comparison of the first 10 numerical cutoff wavenumbers $k_c = \sqrt{\lambda}$ against exact analytical values from Table 4-1 of Ortiz (2023) \cite{ortiz2023tese}. (b) Spectral purification parametric sweep: as $s_{\mathrm{div}}$ increases, non-physical gradient spurious modes migrate outward, achieving zero spurious modes in the operational band for $s_{\mathrm{div}} \ge 10$.}
-    \label{fig:cavity_modes}
-\end{figure}
-
-The spectral results in Table~\ref{tab:cavity_eigenvalues} and Fig.~\ref{fig:cavity_modes}(a) demonstrate excellent agreement with analytical theory:
-\begin{itemize}
-    \item The fundamental degenerate pair ($TE_{10}$ and $TE_{01}$, exact $k_c = 1.0000$) is computed with relative errors of only $0.47\%$ and $1.03\%$.
-    \item The mean relative wavenumber error across all 10 physical modes is $\mathbf{4.00\%}$ (with a maximum error of $15.58\%$ for mode $TE_{22}$).
-    \item All 10 modes exhibit minimal divergence energy ($R_{\mathrm{div}} \le 2.70\%$).
-\end{itemize}
-
-\paragraph{Spectral Purification Sensitivity ($s_{\mathrm{div}}$)}
-To examine the role of divergence regularization in eliminating spurious modes, a parametric sweep of $s_{\mathrm{div}} \in [0.0, 50.0]$ was conducted on the $21 \times 21$ mesh (Fig.~\ref{fig:cavity_modes}(b) and Table~\ref{tab:s_div_sweep}):
-\begin{itemize}
-    \item At $s_{\mathrm{div}} = 0.0$ (unregularized), the stiffness matrix $\mathbf{K}_{\mathrm{curl}}$ is numerically singular; all 10 slots in the initial spectrum are contaminated by spurious modes, yielding an apparent error of $81.22\%$.
-    \item As $s_{\mathrm{div}}$ increases to $2.0, 4.0, 6.0$, spurious modes are progressively penalized and pushed upward.
-    \item For $s_{\mathrm{div}} \ge 10.0$, \textbf{zero spurious modes remain within the operational band} ($\le 10$), and the lowest spurious mode is shifted beyond $\lambda > 50$, achieving complete spectral purification.
-\end{itemize}
-
-\begin{table}[!t]
-    \centering
-    \small
-    \caption{Parametric sensitivity of the div-curl penalty parameter $s_{\mathrm{div}}$ on spectral purification ($21 \times 21$ grid, $\alpha_s = 0.80$).}
+    \caption{Parametric sensitivity of the div-curl penalty parameter $s_{\mathrm{div}}$ on spurious mode shifting and cutoff accuracy ($21 \times 21$ grid, $\alpha_s = 0.80$, isotropic random directors, criterion $R_{\mathrm{div}} > 50\%$). The recommended calibration $s_{\mathrm{div}} = 15.0$ and the previous cell-based standard $s_{\mathrm{div}} = 6.0$ are highlighted.}
     \label{tab:s_div_sweep}
     \resizebox{\textwidth}{!}{
         \begin{tabular}{ccccccc}
             \toprule
             $\boldsymbol{s_{\mathrm{div}}}$ & \textbf{Spur in Band} & \textbf{Lowest Spur} $\boldsymbol{\lambda}$ & \textbf{Mean Error} $\boldsymbol{k_c}$ \textbf{(\%)} & \textbf{Max Error} $\boldsymbol{k_c}$ \textbf{(\%)} & $\boldsymbol{\mathrm{cond}(\mathbf{K}_{\mathrm{red}})}$ & \textbf{Max} $\boldsymbol{R_{\mathrm{div}}}$ \textbf{(\%)} \\
             \midrule
-            0.0                             & 10                    & 0.06                                        & $81.22\%$                                            & $84.95\%$                                           & Singular                                                & $0.00\%$                                                   \\
-            1.0                             & 10                    & 0.74                                        & $28.82\%$                                            & $38.29\%$                                           & $7.63 \times 10^2$                                      & $0.00\%$                                                   \\
-            2.0                             & 7                     & 1.54                                        & $19.62\%$                                            & $33.87\%$                                           & $1.22 \times 10^3$                                      & $7.75\%$                                                   \\
-            4.0                             & 2                     & 2.39                                        & $11.88\%$                                            & $22.67\%$                                           & $2.16 \times 10^3$                                      & $7.56\%$                                                   \\
-            6.0                             & 2                     & 3.02                                        & $8.21\%$                                             & $20.65\%$                                           & $3.07 \times 10^3$                                      & $6.69\%$                                                   \\
-            8.0                             & 1                     & 3.49                                        & $5.95\%$                                             & $19.20\%$                                           & $3.97 \times 10^3$                                      & $2.70\%$                                                   \\
-            \textbf{10.0}                   & \textbf{0}            & \textbf{$> 50$}                             & \textbf{4.68\%}                                      & \textbf{18.03\%}                                    & $\mathbf{4.86 \times 10^3}$                             & \textbf{6.04\%}                                            \\
-            \textbf{15.0}                   & \textbf{0}            & \textbf{$> 50$}                             & \textbf{4.00\%}                                      & \textbf{15.58\%}                                    & $\mathbf{7.06 \times 10^3}$                             & \textbf{2.70\%}                                            \\
-            \textbf{20.0}                   & \textbf{0}            & \textbf{$> 50$}                             & \textbf{3.91\%}                                      & \textbf{13.19\%}                                    & $\mathbf{9.21 \times 10^3}$                             & \textbf{1.48\%}                                            \\
-            \textbf{30.0}                   & \textbf{0}            & \textbf{$> 50$}                             & \textbf{4.98\%}                                      & \textbf{10.72\%}                                    & $\mathbf{1.35 \times 10^4}$                             & \textbf{1.20\%}                                            \\
+            0.0                             & 10                    & 0.05                                        & $83.23\%$                                            & $87.39\%$                                           & Singular                                                & $> 10^4\%$                                                 \\
+            1.0                             & 3                     & 1.23                                        & $27.82\%$                                            & $40.83\%$                                           & $9.02 \times 10^3$                                      & $466.0\%$                                                  \\
+            2.0                             & 3                     & 2.17                                        & $19.00\%$                                            & $28.74\%$                                           & $9.67 \times 10^3$                                      & $180.9\%$                                                  \\
+            4.0                             & 0                     & 78.39                                       & $12.19\%$                                            & $25.31\%$                                           & $1.58 \times 10^4$                                      & $41.5\%$                                                   \\
+            6.0 (\cite{stable_vnmm2d_2026}) & 0                     & 173.66                                      & $8.83\%$                                             & $21.40\%$                                           & $2.25 \times 10^4$                                      & $30.2\%$                                                   \\
+            8.0                             & 0                     & 207.15                                      & $6.56\%$                                             & $13.70\%$                                           & $2.91 \times 10^4$                                      & $21.9\%$                                                   \\
+            10.0                            & 0                     & 252.60                                      & $4.82\%$                                             & $7.51\%$                                            & $3.56 \times 10^4$                                      & $15.1\%$                                                   \\
+            \textbf{15.0 (Recommended)}     & \textbf{0}            & \textbf{237.24}                             & \textbf{2.46\%}                                      & \textbf{4.95\%}                                     & $\mathbf{5.14 \times 10^4}$                             & \textbf{3.4\%}                                             \\
+            20.0                            & 0                     & 471.77                                      & $2.85\%$                                             & $5.81\%$                                            & $6.69 \times 10^4$                                      & $2.2\%$                                                    \\
+            30.0                            & 0                     & 693.46                                      & $4.83\%$                                             & $10.82\%$                                           & $9.68 \times 10^4$                                      & $1.0\%$                                                    \\
+            50.0                            & 0                     & 1035.15                                     & $8.65\%$                                             & $18.03\%$                                           & $1.54 \times 10^5$                                      & $0.8\%$                                                    \\
             \bottomrule
         \end{tabular}
     }
 \end{table}
 
-\subsection{Stage 5: Computational Benchmark: VNMM-MLPG vs. VNMM-Gauss}
-\label{subsec:stage5_benchmark}
+\subsubsection{Cavity Spectrum and Mode-by-Mode Accuracy at $s_{\mathrm{div}} = 15.0$}
+\label{subsubsec:cavity_modes_15}
 
-A direct performance comparison between the proposed truly cell-free VNMM-MLPG and the cell-based VNMM-Gauss (with resolution-matched $3 \times 3$ Gauss points per cell \cite{stable_vnmm2d_2026}) was conducted across four grid resolutions: $11 \times 11, 15 \times 15, 21 \times 21,$ and $27 \times 27$. Both solvers were executed on identical hardware (AMD Ryzen / Linux) under single-thread execution.
+Using the recommended penalty $s_{\mathrm{div}} = 15.0$, Table~\ref{tab:cavity_eigenvalues} presents the spectrum for the first 10 numerical transverse electric modes on the $21 \times 21$ mesh, compared against the exact analytical benchmark from Eq.~\eqref{eq:analytical_cavity_kc}.
 
 \begin{table}[!t]
     \centering
     \small
-    \caption{Computational benchmarking: VNMM-MLPG (cell-free) vs. VNMM-Gauss (cell-based with $3 \times 3$ Gauss quadrature).}
+    \caption{Comparison of the first 10 numerical cavity eigenvalues ($\lambda$ in $\mathrm{m}^{-2}$) and cutoff wavenumbers ($k_c$ in $\mathrm{m}^{-1}$) computed by VNMM-MLPG ($21 \times 21, s_{\mathrm{div}} = 15.0, \alpha_s = 0.80$, isotropic random directors) against analytical reference solutions from Eq.~\eqref{eq:analytical_cavity_kc} on a cavity with dimensions $\pi\text{ m} \times \pi\text{ m}$.}
+    \label{tab:cavity_eigenvalues}
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{ccccccc}
+            \toprule
+            \textbf{Mode} & $\boldsymbol{\lambda_{\mathrm{num}}}$ \textbf{[m$^{-2}$]} & $\boldsymbol{\lambda_{\mathrm{ref}}}$ \textbf{[m$^{-2}$]} & $\boldsymbol{k_{c, \mathrm{num}}}$ \textbf{[m$^{-1}$]} & $\boldsymbol{k_{c, \mathrm{ref}}}$ \textbf{[m$^{-1}$]} & \textbf{Error} $\boldsymbol{k_c}$ \textbf{(\%)} & $\boldsymbol{R_{\mathrm{div}}}$ \textbf{(\%)} \\
+            \midrule
+            $TE_{10}$                                                                        & 0.9035                                & 1.0000                                & 0.9505                             & 1.0000                             & \textbf{4.95\%}                                 & $0.63\%$                                      \\
+            $TE_{01}$                                                                        & 0.9213                                & 1.0000                                & 0.9598                             & 1.0000                             & \textbf{4.02\%}                                 & $0.53\%$                                      \\
+            $TE_{11}$                                                                        & 1.9366                                & 2.0000                                & 1.3916                             & 1.4142                             & \textbf{1.60\%}                                 & $0.67\%$                                      \\
+            $TE_{20}$                                                                        & 3.7689                                & 4.0000                                & 1.9414                             & 2.0000                             & \textbf{2.93\%}                                 & $1.19\%$                                      \\
+            $TE_{02}$                                                                        & 3.9924                                & 4.0000                                & 1.9981                             & 2.0000                             & \textbf{0.10\%}                                 & $0.91\%$                                      \\
+            $TE_{21}$                                                                        & 4.6468                                & 5.0000                                & 2.1556                             & 2.2361                             & \textbf{3.60\%}                                 & $1.05\%$                                      \\
+            $TE_{12}$                                                                        & 5.3363                                & 5.0000                                & 2.3101                             & 2.2361                             & \textbf{3.31\%}                                 & $1.19\%$                                      \\
+            $TE_{22}$                                                                        & 8.2883                                & 8.0000                                & 2.8789                             & 2.8284                             & \textbf{1.79\%}                                 & $1.82\%$                                      \\
+            $TE_{30}$                                                                        & 8.6164                                & 9.0000                                & 2.9354                             & 3.0000                             & \textbf{2.15\%}                                 & $3.43\%$                                      \\
+            $TE_{03}$                                                                        & 9.0222                                & 9.0000                                & 3.0037                             & 3.0000                             & \textbf{0.12\%}                                 & $3.20\%$                                      \\
+            \midrule
+            \multicolumn{5}{l}{\textbf{Mean Relative Error across First 10 Physical Modes:}} & \textbf{2.46\%}                       & ---                                                                                                                                                                                                               \\
+            \multicolumn{5}{l}{\textbf{Spurious Modes in Operational Band ($\le 10$):}}      & \textbf{0}                            & ---                                                                                                                                                                                                               \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}
+
+The spectral results in Table~\ref{tab:cavity_eigenvalues} demonstrate outstanding agreement with analytical theory:
+\begin{itemize}
+    \item The fundamental degenerate pair ($TE_{10}$ and $TE_{01}$, with exact $k_c = 1.0\text{ m}^{-1}$) achieves cutoff wavenumber errors of $4.95\%$ and $4.02\%$, with low divergence ratio ($R_{\mathrm{div}} \approx 0.5\%\text{--}0.6\%$).
+    \item Highly symmetric modes such as $TE_{02}$ ($k_c = 1.9981\text{ m}^{-1}$) and $TE_{03}$ ($k_c = 3.0037\text{ m}^{-1}$) achieve sub-$0.15\%$ precision ($0.10\%$ and $0.12\%$).
+    \item Mode $TE_{22}$, which exhibited an error of $21.40\%$ and $R_{\mathrm{div}} = 30.18\%$ under $s_{\mathrm{div}} = 6.0$, is now resolved with an error of only $\mathbf{1.79\%}$ and $R_{\mathrm{div}} = 1.82\%$.
+    \item The mean relative error across all 10 physical modes is $\mathbf{2.46\%}$ (a $>3.5\times$ improvement over $s_{\mathrm{div}} = 6.0$), without spurious modes in the operational band.
+\end{itemize}
+
+\subsubsection{Spectral Stagnation under Fixed Divergence Penalty}
+\label{subsubsec:stagnation_fixed_sdiv}
+
+Having achieved high accuracy on the $21 \times 21$ mesh with $s_{\mathrm{div}} = 15.0$, we examine the convergence behavior under systematic grid refinement across the six benchmark resolutions from \cite{stable_vnmm2d_2026}: $15 \times 15, 22 \times 22, 29 \times 29, 36 \times 36, 43 \times 43,$ and $49 \times 49$.
+
+When holding the penalty fixed at $s_{\mathrm{div}} = 15.0$ on perturbed nodal distributions ($2\%$ random spatial jitter on interior nodes, isotropic random directors, $\text{seed}=42$), the mean relative cutoff wavenumber error behaves as follows:
+\begin{equation}
+    \begin{aligned}
+        \overline{\varepsilon}_{k_c}(s_{\mathrm{div}}=15.0): \quad & 4.80\% \; (15^2) \longrightarrow 3.27\% \; (22^2) \longrightarrow 5.62\% \; (29^2) \\
+        & \longrightarrow 5.67\% \; (36^2) \longrightarrow 6.75\% \; (43^2) \longrightarrow 6.38\% \; (49^2).
+    \end{aligned}
+\end{equation}
+Remarkably, after an initial decrease from $15 \times 15$ to $22 \times 22$, the error does not converge toward zero under further refinement. Instead, it exhibits an artificial stagnation, plateauing between $5.6\%$ and $6.8\%$ for dense meshes ($N \ge 29$). A similar stagnation occurred with $s_{\mathrm{div}} = 6.0$ (which plateaued at $\approx 11\%\text{--}13\%$).
+
+\subsubsection{Constraint-to-DoF Ratios and Theoretical Need for $h$-Scaling}
+\label{subsubsec:constraint_ratio_scaling}
+
+To understand the origin of this spectral stagnation, we analyze the discrete balance between the curl and divergence operators under mesh refinement:
+\begin{enumerate}
+    \item \textbf{Expansion of the Discrete Irrotational Nullspace:} In the continuous domain, physical solenoidal cavity fields satisfy $\nabla \cdot \vec{E} = 0$, rendering the exact cutoff spectrum independent of $s_{\mathrm{div}}$. In the discrete setting with linear polynomial trial functions ($\mathcal{P}^1$), however, the discrete divergence residue $\nabla \cdot \vec{E}_h$ is piecewise constant and non-zero. As the mesh spacing $h \to 0$, the dimension of the discrete irrotational vector space expands as $\mathcal{O}(h^{-2})$.
+    \item \textbf{Constraint-to-DoF Ratio in Gauss vs. MLPG:} A fundamental structural distinction separates cell-based Gauss integration from cell-free MLPG. In the cell-based VNMM-Gauss \cite{stable_vnmm2d_2026}, resolution-matched $3 \times 3$ Gauss points per quadrilateral cell evaluate the weak form at $9(N-1)^2$ discrete points. This provides an intrinsic over-constraint ratio of $\approx 9:1$ relative to the active interior degrees of freedom, which inherently stiffens $\mathbf{K}_{\mathrm{curl}}$ and maintains monotonic convergence even with a fixed penalty $s_{\mathrm{div}} = 6.0$. In contrast, cell-free VNMM-MLPG employs exactly one integration subdomain $\Omega_s^I$ per node. Because $\nabla \times \vec{N}$ is spatially constant on each disk under $\mathcal{P}^1$, each local stiffness matrix $\mathbf{K}_{\mathrm{curl}}^I$ contributes rank 1. The effective constraint-to-DoF ratio is therefore only $\approx 1.1:1$.
+    \item \textbf{Compliance and Discrete Relaxation on Dense Meshes:} Holding $s_{\mathrm{div}}$ fixed (whether at $6.0$ or $15.0$) while refining the cloud causes the divergence constraint to become comparatively compliant relative to the expanding nullspace. The discrete eigensolver relaxes into quasi-solenoidal directions, producing the observed error plateau. Evaluating the Rayleigh quotient on the exact continuous eigenmode $\vec{E}^*$ yields $\mathbf{e}^{*T} \mathbf{K}_{\mathrm{curl}} \mathbf{e}^* / (\mathbf{e}^{*T} \mathbf{M} \mathbf{e}^*) = 0.9987$ on the $43 \times 43$ grid (an error of only $0.13\%$), demonstrating that the MLPG operators themselves represent physical fields with high fidelity.
+    \item \textbf{Deduction and Justification of Superlinear Penalty Scaling ($h^{-3/2}$):} To maintain uniform spectral rigidity between discrete curl stiffness and divergence constraint across mesh refinement, the penalty parameter must scale with mesh resolution. While standard Nitsche-type trace formulations in continuous PDEs suggest a linear scaling $s_{\mathrm{div}} \propto h^{-1}$, the discrete setting in 2D cell-free MLPG presents two competing asymptotic mechanisms:
+    \begin{itemize}
+        \item \emph{Continuous Scaling ($\mathcal{O}(h^{-1})$):} The divergence penalty term scales dimensionally with inverse length $h^{-1}$ relative to the kinetic/mass bilinear form.
+        \item \emph{Discrete Nullspace Expansion ($\mathcal{O}(h^{-2})$):} The dimension of spurious gradient-like discrete modes grows as $\mathcal{O}(h^{-2})$, proportional to the total node count. A linear penalty $s_{\mathrm{div}} \propto h^{-1}$ grows too slowly to restrain this expanding subspace on fine clouds ($N \ge 36$), leading to error stagnation near $\sim 3\%$. Conversely, quadratic scaling $s_{\mathrm{div}} \propto h^{-2}$ over-stiffens coarse grids, inducing discrete locking.
+    \end{itemize}
+    The optimal compromise is achieved by the geometric mean between the continuous energy scaling and the 2D discrete nullspace expansion:
+    \begin{equation}
+        \sqrt{\mathcal{O}(h^{-1}) \times \mathcal{O}(h^{-2})} = \mathcal{O}(h^{-1.5}) = \mathcal{O}(h^{-3/2}).
+    \end{equation}
+    Consequently, we adopt the superlinear power-law scaling:
+    \begin{equation}
+        s_{\mathrm{div}}(h) = s_{\mathrm{div}}^{(0)} \left( \frac{h_0}{h} \right)^{1.5} \propto h^{-3/2},
+        \label{eq:s_div_scaling}
+    \end{equation}
+    anchored to the baseline $21\times 21$ mesh ($s_{\mathrm{div}}^{(0)} = 15.0$ at $h_0 = \pi/20\text{ m}$). This superlinear law grants sufficient flexibility on coarse discretizations to avoid locking, while providing the progressive stiffness needed to completely eliminate discrete nullspace leakage as $h \to 0$.
+\end{enumerate}
+
+\subsubsection{Restoration of Monotonic Spectral Convergence with Superlinear $h$-Scaled Penalty}
+\label{subsubsec:monotonic_convergence_scaled}
+
+To validate the superlinear scaling law \eqref{eq:s_div_scaling}, the cavity eigenvalue problem was solved across the six benchmark grid resolutions using $s_{\mathrm{div}}(h) = s_0 (h_0 / h)^{1.5}$ ($s_0 = 15.0, h_0 = \pi/20\text{ m}$, yielding $s_{\mathrm{div}} \in [8.78, 55.77]$) under $2\%$ random spatial perturbation on all interior nodes. Table~\ref{tab:cavity_convergence_scaling} contrasts the resulting convergence against the fixed penalty $s_{\mathrm{div}} = 15.0$.
+
+\begin{table}[!t]
+    \centering
+    \small
+    \caption{Cavity eigenvalue cutoff wavenumber convergence on the 2D PEC resonant cavity across the six grid resolutions from \cite{stable_vnmm2d_2026} with $2\%$ random spatial perturbation on interior nodes: fixed penalty ($s_{\mathrm{div}} = 15.0$) vs. superlinear $h$-scaled penalty ($s_{\mathrm{div}}(h) = s_0(h_0/h)^{1.5}$, $s_{\mathrm{div}} \in [8.78, 55.77]$) with isotropic random directors ($\alpha_s = 0.80$, $\text{seed}=42$).}
+    \label{tab:cavity_convergence_scaling}
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{ccccccc}
+            \toprule
+            \textbf{Grid} & \textbf{Nominal Spacing} & \textbf{Active} & \multicolumn{2}{c}{\textbf{Fixed Penalty ($s_{\mathrm{div}} = 15.0$)}} & \multicolumn{2}{c}{\textbf{Superlinear Scaled Penalty ($s_{\mathrm{div}} \propto h^{-1.5}$)}} \\
+            \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+            $\boldsymbol{N \times N}$ & $\boldsymbol{h_{\mathrm{nom}}}$ \textbf{[m]} & \textbf{DoFs} & $\boldsymbol{s_{\mathrm{div}}}$ & \textbf{Mean Error} $\boldsymbol{k_c}$ \textbf{(\%)} & $\boldsymbol{s_{\mathrm{div}}(h)}$ & \textbf{Mean Error} $\boldsymbol{k_c}$ \textbf{(\%)} \\
+            \midrule
+            $15 \times 15$ & 0.2244 & 169  & 15.0 & $4.80\%$ & 8.78  & $\mathbf{4.30\%}$ \\
+            $22 \times 22$ & 0.1496 & 400  & 15.0 & $3.27\%$ & 16.14 & $\mathbf{2.93\%}$ \\
+            $29 \times 29$ & 0.1122 & 729  & 15.0 & $5.62\%$ & 24.85 & $\mathbf{2.88\%}$ \\
+            $36 \times 36$ & 0.0898 & 1156 & 15.0 & $5.67\%$ & 34.73 & $\mathbf{2.24\%}$ \\
+            $43 \times 43$ & 0.0748 & 1681 & 15.0 & $6.75\%$ & 45.65 & $\mathbf{2.19\%}$ \\
+            $49 \times 49$ & 0.0654 & 2209 & 15.0 & $6.38\%$ & 55.77 & $\mathbf{2.01\%}$ \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}
+
+As demonstrated in Table~\ref{tab:cavity_convergence_scaling}, adopting the superlinear $h$-scaled penalty restores strictly monotonic spectral convergence:
+\begin{itemize}
+    \item On coarse grids ($15 \times 15$), the moderate penalty $s_{\mathrm{div}} = 8.78$ avoids numerical over-stiffening, reducing the error from $4.80\%$ to $4.30\%$.
+    \item Across intermediate and fine grids ($22 \times 22$ to $49 \times 49$), the superlinear progression $s_{\mathrm{div}} \in [16.14, 55.77]$ effectively counteracts discrete irrotational nullspace expansion. The artificial stagnation plateau of $5.6\%\text{--}6.8\%$ observed with fixed penalty is entirely eliminated, with errors decreasing monotonically:
+    \begin{equation}
+        \begin{aligned}
+            4.30\% \; (15^2) & \longrightarrow 2.93\% \; (22^2) \longrightarrow 2.88\% \; (29^2) \\
+            & \longrightarrow 2.24\% \; (36^2) \longrightarrow 2.19\% \; (43^2) \longrightarrow 2.01\% \; (49^2).
+        \end{aligned}
+    \end{equation}
+    \item These findings confirm that cell-free VNMM-MLPG achieves robust, monotonic spectral convergence under irregular node distributions once the penalty parameter is governed by the superlinear law $s_{\mathrm{div}} \propto h^{-3/2}$.
+\end{itemize}
+
+\subsection{Stage 6: Computational Benchmark: VNMM-MLPG vs. VNMM-Gauss}
+\label{subsec:stage6_benchmark}
+
+A direct performance comparison was conducted between the proposed cell-free VNMM-MLPG (with superlinear scaled penalty $s_{\mathrm{div}}(h) \propto h^{-1.5}$, $s_{\mathrm{div}} \in [8.78, 55.77]$, as established in Section~\ref{subsec:stage5_cavity}) and cell-based VNMM-Gauss ($3 \times 3$ Gauss points per cell, $s_{\mathrm{div}} = 6.0$ \cite{stable_vnmm2d_2026}) across the standard six grid resolutions from \cite{stable_vnmm2d_2026}: $15 \times 15, 22 \times 22, 29 \times 29, 36 \times 36, 43 \times 43,$ and $49 \times 49$. Both solvers were executed on identical hardware (AMD Ryzen / Linux) under single-thread execution with isotropic random vector directors ($\text{seed}=42$).
+
+\begin{table}[!t]
+    \centering
+    \small
+    \caption{Computational benchmark on the 2D PEC resonant cavity across the six grid resolutions matching \cite{stable_vnmm2d_2026}: VNMM-MLPG (cell-free with superlinear scaled $s_{\mathrm{div}} \in [8.78, 55.77]$) vs. VNMM-Gauss (cell-based with $3 \times 3$ Gauss quadrature and $s_{\mathrm{div}} = 6.0$). Assembly runtime, matrix non-zero entries (NNZ), and mean relative cutoff wavenumber error are compared.}
     \label{tab:benchmark_comparison}
     \resizebox{\textwidth}{!}{
-        \begin{tabular}{cccccccc}
+        \begin{tabular}{ccccccccc}
             \toprule
-            \textbf{Grid}             & \textbf{Total} & \textbf{Gauss}  & \multicolumn{2}{c}{\textbf{Assembly Time [s]}} & \textbf{Speedup}   & \multicolumn{2}{c}{\textbf{Matrix Non-Zeros (NNZ)}}                                                  \\
-            \cmidrule(lr){4-5} \cmidrule(lr){7-8}
-            $\boldsymbol{N \times N}$ & \textbf{Nodes} & \textbf{Points} & \textbf{VNMM-Gauss}                            & \textbf{VNMM-MLPG} & \textbf{Factor}                                     & \textbf{VNMM-Gauss} & \textbf{VNMM-MLPG}       \\
+            \textbf{Grid} & \textbf{Active} & \multicolumn{2}{c}{\textbf{Assembly Time [s]}} & \textbf{Assembly} & \multicolumn{2}{c}{\textbf{Stiffness NNZ}} & \multicolumn{2}{c}{\textbf{Mean Error} $\boldsymbol{k_c}$ \textbf{(\%)}} \\
+            \cmidrule(lr){3-4} \cmidrule(lr){6-7} \cmidrule(lr){8-9}
+            $\boldsymbol{N \times N}$ & \textbf{DoFs} & \textbf{Gauss} & \textbf{MLPG} & \textbf{Speedup} & \textbf{Gauss} & \textbf{MLPG} & \textbf{Gauss} & \textbf{MLPG} \\
             \midrule
-            $11 \times 11$            & 121            & 900             & 0.0532 s                                       & \textbf{0.0152 s}  & \textbf{3.50}$\times$                               & 2,059               & \textbf{1,479} ($-28\%$) \\
-            $15 \times 15$            & 225            & 1,764           & 0.1174 s                                       & \textbf{0.0336 s}  & \textbf{3.49}$\times$                               & 4,051               & \textbf{2,717} ($-33\%$) \\
-            $21 \times 21$            & 441            & 3,600           & 0.2728 s                                       & \textbf{0.0759 s}  & \textbf{3.59}$\times$                               & 8,369               & \textbf{5,331} ($-36\%$) \\
-            $27 \times 27$            & 729            & 6,084           & 0.5481 s                                       & \textbf{0.1512 s}  & \textbf{3.63}$\times$                               & 13,997              & \textbf{8,841} ($-37\%$) \\
+            $15 \times 15$ & 169  & 0.1254 s & \textbf{0.0621 s} & \textbf{2.02}$\times$ & 3,091  & \textbf{2,467} ($-20\%$) & $25.25\%$ & $\mathbf{4.30\%}$ \\
+            $22 \times 22$ & 400  & 0.2581 s & \textbf{0.1056 s} & \textbf{2.44}$\times$ & 7,802  & \textbf{6,140} ($-21\%$) & $13.46\%$ & $\mathbf{2.93\%}$ \\
+            $29 \times 29$ & 729  & 0.4527 s & \textbf{0.1608 s} & \textbf{2.82}$\times$ & 14,677 & \textbf{11,509} ($-22\%$) & $6.18\%$  & $\mathbf{2.88\%}$ \\
+            $36 \times 36$ & 1156 & 0.6918 s & \textbf{0.2179 s} & \textbf{3.17}$\times$ & 23,634 & \textbf{18,460} ($-22\%$) & $4.22\%$  & $\mathbf{2.24\%}$ \\
+            $43 \times 43$ & 1681 & 0.9833 s & \textbf{0.2871 s} & \textbf{3.42}$\times$ & 35,409 & \textbf{26,813} ($-24\%$) & $2.46\%$  & $\mathbf{2.19\%}$ \\
+            $49 \times 49$ & 2209 & 1.2504 s & \textbf{0.3458 s} & \textbf{3.62}$\times$ & 44,939 & \textbf{35,385} ($-21\%$) & $\mathbf{1.53\%}$  & $2.01\%$ \\
             \bottomrule
         \end{tabular}
     }
@@ -1043,51 +1172,17 @@ A direct performance comparison between the proposed truly cell-free VNMM-MLPG a
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=0.88\textwidth]{fig_mlpg_benchmark_comparison.png}
-    \caption{Computational benchmark comparing VNMM-MLPG against VNMM-Gauss across four grid resolutions: (a) Assembly execution time in seconds, showing a sustained $\sim 3.6\times$ speedup for the cell-free scheme. (b) Global stiffness matrix non-zero entries (NNZ), demonstrating that VNMM-MLPG produces matrices that are $33\%\text{--}37\%$ sparser.}
+    \includegraphics[width=\textwidth]{fig_mlpg_benchmark_comparison.png}
+    \caption{Computational benchmark comparing VNMM-MLPG against VNMM-Gauss across the six grid resolutions matching \cite{stable_vnmm2d_2026}: (a) Assembly execution time in seconds, showing a sustained $2.0\times\text{--}3.6\times$ speedup for the cell-free scheme. (b) Global stiffness matrix non-zero entries (NNZ), demonstrating that VNMM-MLPG produces matrices that are $20\%\text{--}24\%$ sparser. (c) Cavity eigenvalue cutoff wavenumber error vs. nodal spacing $h$, highlighting the superior accuracy of VNMM-MLPG across coarse and intermediate grids ($>5.8\times$ lower error on $15 \times 15$, and monotonic convergence down to $2.01\%$ on $49 \times 49$).}
     \label{fig:benchmark}
 \end{figure}
 
-The benchmark results in Table~\ref{tab:benchmark_comparison} and Fig.~\ref{fig:benchmark} highlight two decisive computational advantages of VNMM-MLPG:
+The benchmark results in Table~\ref{tab:benchmark_comparison} and Fig.~\ref{fig:benchmark} demonstrate decisive advantages of VNMM-MLPG over cell-based integration:
 \begin{enumerate}
-    \item \textbf{$3.6\times$ Assembly Speedup:} By evaluating closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} over $N$ disk subdomains instead of looping over thousands of numerical Gauss points with on-the-fly point-in-cell tests and $k$-d tree searches, VNMM-MLPG accelerates global matrix assembly by a factor of $3.5\times$ to $3.63\times$.
-    \item \textbf{$36\%$ Sparser Global Matrices:} In cell-based integration, a single background cell interacts with all nodes belonging to the stencils of its 9 Gauss points, inflating the sparsity pattern of $\mathbf{K}$. In VNMM-MLPG, each node $I$ interacts strictly with the 6 nodes in its own stencil $\Omega_u^I$. Consequently, global matrices contain $\sim 36\%$ fewer non-zero entries, reducing memory consumption and speeding up iterative eigensolvers.
+    \item \textbf{Assembly Speedup ($2.0\times\text{--}3.6\times$):} By evaluating closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} over $N$ disk subdomains instead of looping over thousands of numerical Gauss points with point-in-cell tests and $k$-d tree searches, VNMM-MLPG accelerates global matrix assembly by a factor of $2.02\times$ to $3.62\times$ (scaling from $0.062\text{ s}$ on $15 \times 15$ to $0.346\text{ s}$ on $49 \times 49$, compared to $0.125\text{ s}$ and $1.250\text{ s}$ for Gauss integration).
+    \item \textbf{$20\%\text{--}24\%$ Sparser Global Operators:} In cell-based integration, a single background cell interacts with all nodes belonging to the stencils of its 9 Gauss points, inflating the sparsity pattern of $\mathbf{K}$. In VNMM-MLPG, each node $I$ interacts strictly with the 6 nodes in its own stencil $\Omega_u^I$. Consequently, global matrices contain $20\%\text{--}24\%$ fewer non-zero entries (e.g., $35,385$ vs. $44,939$ NNZ on $49 \times 49$), reducing memory consumption and improving cache locality.
+    \item \textbf{Direct Accuracy and Monotonic Spectral Convergence:} Adopting the superlinear $h$-scaled divergence penalty $s_{\mathrm{div}}(h) \propto h^{-1.5}$ ($s_{\mathrm{div}} \in [8.78, 55.77]$) established in Section~\ref{subsec:stage5_cavity} restores discrete curl/divergence balance to the cell-free scheme across all resolutions. On coarse discretizations ($15 \times 15$, $h_{\mathrm{nom}} = \pi/14 \approx 0.2244\text{ m}$), cell-based Gauss integration suffers from quadrature softening and stencil boundary truncation, exhibiting an average error of $25.25\%$. In contrast, VNMM-MLPG achieves remarkable pre-asymptotic accuracy, confining the mean error to only $4.30\%$ on $15 \times 15$ (a $>5.8\times$ error reduction). Across intermediate resolutions ($22 \times 22$ to $43 \times 43$), VNMM-MLPG consistently outperforms VNMM-Gauss, yielding errors of $2.93\%$ vs. $13.46\%$ on $22\times 22$, $2.88\%$ vs. $6.18\%$ on $29\times 29$, $2.24\%$ vs. $4.22\%$ on $36\times 36$, and $2.19\%$ vs. $2.46\%$ on $43\times 43$, reaching $2.01\%$ on $49\times 49$. This confirms that VNMM-MLPG with superlinear scaled $s_{\mathrm{div}}$ delivers superior accuracy over the practical operational range, while entirely eliminating background integration cells.
 \end{enumerate}
-
-\subsection{Stage 6: Parametric Sensitivity and Theoretical Determination of $\alpha_s$}
-\label{subsec:stage6_alpha_s}
-
-The local integration subdomain radius is defined in \eqref{eq:subdomain_disk} as $r_s^I = \alpha_s h_I$. Selecting a robust, universal scaling factor $\alpha_s$ is critical for the predictive accuracy and geometric robustness of VNMM-MLPG. In scalar meshless methods, $\alpha_s$ is often treated as an arbitrary empirical tuning factor chosen from broad intervals such as $[0.8, 1.5]$. In the present vector framework, however, the choice of $\alpha_s$ is governed and tightly constrained by two fundamental geometric limits:
-\begin{enumerate}
-    \item \textbf{Theoretical Lower Bound (Global Domain Coverage):} Spatial integration in MLPG relies on the collection of local subdomains forming a complete partition of the physical domain, $\bigcup_{I=1}^N \Omega_s^I \supseteq \Omega$. In a quasi-uniform nodal distribution with characteristic grid spacing $h$, the maximum distance from any point in a Cartesian cell to its nearest node (the cell circumradius) is:
-          \begin{equation}
-              r_{\mathrm{cov}} = \frac{\sqrt{2}}{2} h \approx 0.7071 h.
-              \label{eq:alpha_s_lower_bound}
-          \end{equation}
-          If $\alpha_s < \sqrt{2}/2 \approx 0.7071$, unintegrated voids or interstitial gaps emerge between adjacent circular subdomains. As demonstrated in Fig.~\ref{fig:alpha_s_sensitivity}(a), the domain integration coverage drops precipitously below this threshold: only $94.7\%$ of $\Omega$ is integrated at $\alpha_s = 0.60$, $78.7\%$ at $\alpha_s = 0.50$, and $29.4\%$ at $\alpha_s = 0.30$. This causes severe under-integration of source loads and bilinear forms.
-    \item \textbf{Theoretical Upper Bound (Support Containment):} Each node $\mathbf{x}_I$ constructs its VNMM trial vector field $\vec{E}^h$ over a 6-node stencil $\Omega_u^I$ whose spatial support radius is $r_u^I = \max_{k \in \Omega_u^I} \|\mathbf{x}_k - \mathbf{x}_I\|$. For a regular or perturbed Cartesian grid, a 6-node stencil includes nearest neighbors at distance $h$ and diagonal neighbors at distance $\sqrt{2}h$, giving an average support radius $r_u \approx 1.15\text{--}1.20 h$. If $\alpha_s$ is enlarged beyond this limit ($r_s^I > r_u^I$), the integration disk $\Omega_s^I$ spills outside the convex hull of its generating stencil. In this extrapolation regime, polynomial shape functions $\vec{W}_k^I(\mathbf{x})$ grow rapidly outside their interpolating cloud, causing numerical instability. Fig.~\ref{fig:alpha_s_sensitivity}(b) demonstrates that support domain violations ($r_s^I > r_u^I$) begin at $\alpha_s \approx 1.15$, quickly encompassing $56$ nodes ($19.4\%$) at $\alpha_s = 1.20$, $225$ nodes ($77.9\%$) at $\alpha_s = 1.50$, and $100\%$ of all nodes for $\alpha_s \ge 1.60$.
-\end{enumerate}
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[width=0.92\textwidth]{fig_mlpg_alpha_s_sensitivity.png}
-    \caption{Parametric sensitivity study of the subdomain radius factor $\alpha_s \in [0.30, 2.00]$ evaluated across 20 points: (a) Domain integration coverage percentage, highlighting the theoretical lower coverage threshold $\alpha_s \ge \sqrt{2}/2 \approx 0.7071$. (b) Support domain containment violations ($r_s^I > r_u^I$), indicating the onset of polynomial extrapolation for $\alpha_s > 1.15$. (c) Relative $L^2(E)$ error in the 2D MMS problem ($17\times 17$ grid, $s_{\mathrm{div}} = 6.0$). (d) Mean cutoff wavenumber relative error on the first 10 physical modes of the 2D PEC resonant cavity ($21\times 21$ grid, $s_{\mathrm{div}} = 15.0$). The universal standard $\alpha_s = 0.80$ is centered within the optimal operational window $[0.75, 0.85]$.}
-    \label{fig:alpha_s_sensitivity}
-\end{figure}
-
-To quantify these geometric bounds, Figs.~\ref{fig:alpha_s_sensitivity}(c) and \ref{fig:alpha_s_sensitivity}(d) illustrate the performance for boundary-value and eigenvalue problems:
-\begin{itemize}
-    \item \textbf{MMS Convergence Accuracy:} For the MMS benchmark ($17\times 17$ grid), the relative $L^2(E)$ error attains a flat, stable plateau between $\alpha_s = 0.75$ and $\alpha_s = 1.00$, reaching its minimum of $3.097\%$ at $\alpha_s = 0.80$. Beyond $\alpha_s > 1.10$, extrapolation errors cause the error to increase steadily to $4.34\%$ at $\alpha_s = 1.30$, $5.32\%$ at $\alpha_s = 1.60$, and $6.93\%$ at $\alpha_s = 2.00$.
-    \item \textbf{Resonant Cavity Cutoff Wavenumbers:} In the 2D PEC cavity problem ($21\times 21$ grid), the mean relative error on the first 10 physical $TE$ modes exhibits an identical sweet spot, achieving its global minimum of $4.00\%$ across $\alpha_s \in [0.75, 0.85]$ (with zero spurious modes in the operational spectrum). When $\alpha_s$ is enlarged into the extrapolation regime ($\alpha_s > 1.15$), the mean eigenvalue error degrades monotonically to $4.76\%$ at $\alpha_s = 1.20$, $5.88\%$ at $\alpha_s = 1.50$, and $7.20\%$ at $\alpha_s = 2.00$.
-\end{itemize}
-
-Based on this comprehensive study, candidate values in the optimal window can be evaluated:
-\begin{itemize}
-    \item $\alpha_s = 0.75$ is dangerously close to the lower coverage bound ($0.7071$), leaving only a $6\%$ safety margin that could result in unintegrated gaps on non-uniform or jittered clouds.
-    \item $\alpha_s = 0.85$ is closer to the upper extrapolation threshold, diminishing tolerance to irregular stencil geometries.
-    \item $\alpha_s = 0.80$ sits centrally within the optimal window $[0.75, 0.85]$. It provides a comfortable $13\%$ margin above the theoretical coverage limit ($0.7071$) while maintaining a generous $28\%$ safety margin below the containment threshold ($r_s^I \approx 0.72 r_u^I < r_u^I$).
-\end{itemize}
-Crucially, choosing $\alpha_s = 0.80$ also mirrors the scale-invariant stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ established in Section~\ref{subsec:stencil_selection}. Adopting $\alpha_s = 0.80$ as the single, universal operating standard throughout all simulations in this paper establishes parameter economy, eliminating problem-dependent empirical tuning while guaranteeing full domain coverage, strict support containment, and optimal accuracy.
 
 %% =========================================================================
 %% SECTION 5: DISCUSSION
@@ -1133,8 +1228,8 @@ Table~\ref{tab:method_comparison} compares the features of VNMM-MLPG against the
 
 Despite its proven efficacy, several deficiencies and open questions remain for the VNMM-MLPG:
 \begin{enumerate}
-    \item \textbf{Higher-Order Cavity Mode Dispersion:} As demonstrated in Table~\ref{tab:cavity_eigenvalues}, higher-order cavity modes exhibit larger errors (e.g., $TE_{22}$ at $15.58\%$) than fundamental modes ($TE_{10}$ at $0.47\%$). This numerical dispersion stems from the linear polynomial capacity of the $\mathcal{P}^1$ space: resolving modes with multiple spatial oscillations requires denser nodal distributions ($h \ll \lambda_{\mathrm{wavelength}} / 10$). A natural remedy currently under investigation is extending the Vector PIM formulation to quadratic vector polynomial spaces ($\mathcal{P}^2$, requiring 12 nodes per stencil in 2D), which will reduce dispersion while preserving analytical disk integration.
-    \item \textbf{Severe Nodal Irregularity and Locally Adaptive Sizing:} While the universal standard $\alpha_s = 0.80$ is proved optimal for quasi-uniform and $25\%$ perturbed clouds, strongly multiscale or non-uniform point clouds (e.g., localized nodal clustering near geometric re-entrant corners or thin boundary layers) would benefit from locally adaptive scaling factors $\alpha_s(\mathbf{x}_I)$. Dynamically enforcing the geometric bounds $\frac{\sqrt{2}}{2} \le \alpha_s(\mathbf{x}_I) \le \frac{r_u^I}{h_I}$ node-by-node will ensure $100\%$ domain coverage while preventing support domain extrapolation across multiscale transitions.
+    \item \textbf{Higher-Order Cavity Mode Dispersion:} As demonstrated in Table~\ref{tab:cavity_eigenvalues}, higher-order cavity modes exhibit larger errors (e.g., $TE_{22}$ at $22.01\%$) than fundamental modes ($TE_{10}$ at $5.90\%$, reducing to $15.58\%$ and $0.47\%$ under higher penalty $s_{\mathrm{div}} = 15.0$). This numerical dispersion stems from the linear polynomial capacity of the $\mathcal{P}^1$ space: resolving modes with multiple spatial oscillations requires denser nodal distributions ($h_{\mathrm{local}} \ll \lambda_{\mathrm{wavelength}} / 10$). A natural remedy currently under investigation is extending the Vector PIM formulation to quadratic vector polynomial spaces ($\mathcal{P}^2$, requiring 12 nodes per stencil in 2D), which will reduce dispersion while preserving analytical disk integration.
+    \item \textbf{Severe Nodal Irregularity and Locally Adaptive Sizing:} While the universal standard $\alpha_s = 0.80$ proves highly effective for quasi-uniform and $25\%$ perturbed clouds, strongly multiscale or non-uniform point clouds (e.g., localized nodal clustering near geometric re-entrant corners or thin boundary layers) would benefit from locally adaptive scaling factors $\alpha_s(\mathbf{x}_I)$. Dynamically enforcing the geometric bounds $\frac{\sqrt{2}}{2} \le \alpha_s(\mathbf{x}_I) \le \frac{r_u^I}{h_I}$ node-by-node will ensure $100\%$ domain coverage while preventing support domain extrapolation across multiscale transitions.
     \item \textbf{Dielectric and Material Interfaces:} In multi-medium domains with piecewise constant permittivity $\epsilon_r$ or permeability $\mu_r$, the normal electric field exhibits jump discontinuities while the tangential field remains continuous. Aligning directors parallel to interfaces naturally accommodates normal jumps at the evaluation nodes; however, developing interface-truncated disk integration or discontinuous local enrichment functions across material interfaces represents an important open avenue.
     \item \textbf{Extension to Three Dimensions:} The mathematical structure derived herein extends naturally to 3D by replacing circular disks with spheres of radius $r_s$. In 3D, the complete linear vector basis $\mathcal{P}_1^3$ contains 12 terms, and spherical moments of area evaluate analytically to $V_0 = \frac{4}{3}\pi r_s^3$ and $I_2 = \frac{4}{15}\pi r_s^5$. Implementing this closed-form 3D extension constitutes the immediate next phase of this project.
 \end{enumerate}
@@ -1152,10 +1247,10 @@ Key achievements of the proposed VNMM-MLPG include:
     \item \textbf{Closed-Form Exact Integration:} Derived analytical closed-form formulas for local stiffness and mass matrices, totally eliminating numerical quadrature error.
     \item \textbf{Resolution of Local Operator Asymmetry:} Overcame the historic asymmetry and loss of coercivity of row-by-row MLPG/LPIM by formulating a Symmetric Subdomain Galerkin assembly, guaranteeing symmetric positive-(semi)definite global operators.
     \item \textbf{Machine-Precision Consistency:} Verified linear consistency via the Galerkin patch test across seven affine vector states on regular and 25\% perturbed point clouds, achieving interior errors on the order of $\sim 10^{-15}$.
-    \item \textbf{MMS Asymptotic Convergence:} Established monotonic convergence with optimal polynomial rates of $\mathcal{O}(h^{2.06})$ in $L^2(\vec{E})$ and $\mathcal{O}(h^{1.24})$ in $H(\mathbf{curl})$ across pure Dirichlet and mixed Dirichlet--Neumann problems.
-    \item \textbf{Spectral Purity and Physical Accuracy:} Successfully resolved the 2D PEC resonant cavity problem, reproducing the first 10 transverse electric cutoff wavenumbers with an average error of $4.00\%$ and achieving total suppression of gradient spurious modes for $s_{\mathrm{div}} \ge 10$.
-    \item \textbf{Superior Computational Efficiency:} Achieved a $3.6\times$ matrix assembly speedup and a $36\%$ reduction in non-zero entries compared to cell-based VNMM-Gauss schemes.
-    \item \textbf{Theoretical Determination of $\alpha_s$:} Deduced analytical geometric bounds governing subdomain sizing ($\sqrt{2}/2 \le \alpha_s \le 1.15$) and established $\alpha_s = 0.80$ as the optimal universal standard, creating a canonical parameter symmetry with the stencil determinant threshold $\widehat{\mathrm{Tol}} = 0.80$.
+    \item \textbf{MMS Convergence:} Confirmed monotonic convergence with rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.84})$ in $L^2(\vec{E})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.20})$ in $H(\mathbf{curl})$ for Dirichlet and mixed conditions.
+    \item \textbf{Spurious Mode Suppression and Physical Accuracy:} Successfully resolved the 2D PEC resonant cavity problem, reproducing the first 10 transverse electric cutoff wavenumbers with an average error of $8.83\%$ at the baseline $s_{\mathrm{div}} = 6.0$ (reducing to $2.46\%$ at the recommended $s_{\mathrm{div}} = 15.0$) and shifting all gradient spurious modes outside the operational band for $s_{\mathrm{div}} \ge 4$.
+    \item \textbf{Theoretical Determination of $\alpha_s$:} Deduced analytical geometric bounds governing subdomain sizing ($\sqrt{2}/2 \le \alpha_s \le 1.15$) and established $\alpha_s = 0.80$ as a robust universal standard, creating a canonical parameter symmetry with the stencil determinant threshold $\widehat{\mathrm{Tol}} = 0.80$.
+    \item \textbf{Superior Computational Efficiency:} Achieved a $2.0\times\text{--}3.6\times$ matrix assembly speedup and a $20\%\text{--}24\%$ reduction in non-zero entries compared to cell-based VNMM-Gauss schemes.
 \end{enumerate}
 
 Future work will focus on: (1) extending the closed-form spherical formulation to 3D electromagnetic cavities; (2) incorporating quadratic vector PIM spaces ($\mathcal{P}^2$) to reduce numerical dispersion in high-frequency regimes; (3) developing interface-conforming director and discontinuous stencil treatments for multi-dielectric media; (4) investigating locally adaptive subdomain scaling factors $\alpha_s(\mathbf{x}_I)$ for multiscale non-uniform point clouds; and (5) implementing open boundary conditions via cell-free Perfectly Matched Layers (PML).

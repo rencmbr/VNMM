@@ -12,6 +12,7 @@ def support_nodes_vnmm_2d_6_p1(
     adaptive=True, 
     step_K=4, 
     K_max=None,
+    center_node_idx=None,
     # Compatibility aliases
     arvore_busca=None,
     adaptativo=None,
@@ -87,9 +88,17 @@ def support_nodes_vnmm_2d_6_p1(
             
         # Phase 2: Combinatorial search with progressive anchor fixing
         # Gives geometric priority to nodes closest to point P
-        for local_anchor_idx in range(current_K - 5):
+        if center_node_idx is not None:
+            if center_node_idx in neighbor_indices:
+                neighbor_indices.remove(center_node_idx)
+            neighbor_indices.insert(0, center_node_idx)
+            anchor_range = range(1)
+        else:
+            anchor_range = range(current_K - 5)
+
+        for local_anchor_idx in anchor_range:
             global_anchor = neighbor_indices[local_anchor_idx]
-            remaining_indices = range(local_anchor_idx + 1, current_K)
+            remaining_indices = range(local_anchor_idx + 1, len(neighbor_indices))
             
             # 5-combinations among subsequent neighbors
             for comb in itertools.combinations(remaining_indices, 5):
