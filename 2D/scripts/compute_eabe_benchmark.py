@@ -65,9 +65,10 @@ for N in grids:
     err_kc_g = np.abs(kc_g - ref_kc[:len(kc_g)]) / ref_kc[:len(kc_g)] * 100.0
     mean_err_g = float(np.mean(err_kc_g))
     
-    # 2. VNMM-MLPG with h-scaled s_div
-    s_div_scaled_map = {15: 10.0, 22: 20.0, 29: 30.0, 36: 40.0, 43: 50.0, 49: 60.0}
-    s_div_m = s_div_scaled_map.get(N, 10.0 + 1.5 * (N - 15))
+    # 2. VNMM-MLPG with superlinear scaled s_div
+    h0 = np.pi / 20.0
+    h_nom = np.pi / (N - 1)
+    s_div_m = float(15.0 * (h0 / h_nom)**1.5)
     
     t0 = time.time()
     subs = build_mlpg_subdomains_2d(coords, vectors, is_bnd, alpha_s=0.80)

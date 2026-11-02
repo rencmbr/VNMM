@@ -76,3 +76,6 @@ reports/*.png
 # Data and JSON caches
 *.json
 
+# Scratch directories
+scratch/
+

@@ -367,45 +367,92 @@ def plot_fig4_cavity_modes():
     print(f"Saved: {out_path}")
 
 
-def plot_fig5_benchmark():
-    print("Generating Figure 5: Computational Benchmark (VNMM-MLPG vs VNMM-Gauss on 6 EABE Meshes)...")
-    json_path = os.path.join(DIR_2D, "scripts", "benchmark_eabe_6meshes.json")
+def plot_fig_cavity_jitter():
+    print("Generating Figure: MLPG Cavity Resonances Convergence under Jitter...")
+    json_path = os.path.join(DIR_2D, "scripts", "jitter_benchmark_results.json")
     if os.path.exists(json_path):
         with open(json_path) as f:
-            bench_data = json.load(f)['results']
-        grids = [d['N'] for d in bench_data]
-        t_asm_gauss = [d['t_asm_g'] for d in bench_data]
-        t_asm_mlpg = [d['t_asm_m'] for d in bench_data]
-        t_tot_gauss = [d['t_tot_g'] for d in bench_data]
-        t_tot_mlpg = [d['t_tot_m'] for d in bench_data]
-        nnz_gauss = [d['nnz_g'] for d in bench_data]
-        nnz_mlpg = [d['nnz_m'] for d in bench_data]
-        h_vals = [d['h'] for d in bench_data]
-        err_kc_gauss = [d['err_kc_g'] for d in bench_data]
-        err_kc_mlpg = [d['err_kc_m'] for d in bench_data]
+            data = json.load(f)
     else:
-        grids = [15, 22, 29, 36, 43, 49]
-        t_asm_gauss = [0.125, 0.258, 0.453, 0.692, 0.983, 1.250]
-        t_asm_mlpg = [0.062, 0.106, 0.161, 0.218, 0.287, 0.346]
-        t_tot_gauss = [0.130, 0.304, 0.720, 1.730, 4.140, 8.870]
-        t_tot_mlpg = [0.066, 0.153, 0.427, 1.258, 3.436, 7.879]
-        nnz_gauss = [3091, 7802, 14677, 23634, 35409, 44939]
-        nnz_mlpg = [2467, 6140, 11509, 18460, 26813, 35385]
-        h_vals = [np.pi / (N - 1) for N in grids]
-        err_kc_gauss = [25.25, 13.46, 6.18, 4.22, 2.46, 1.53]
-        err_kc_mlpg = [4.30, 2.93, 2.88, 2.24, 2.19, 2.01]
+        raise FileNotFoundError(f"Missing {json_path}")
+
+    grids = data['grids']
+    h_vals = np.array(data['h'])
+    rates = data['rates']
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.5), dpi=300)
+
+    mlpg_0 = [d['mean_err_kc'] for d in data['mlpg']['0%']]
+    mlpg_25 = [d['mean_err_kc'] for d in data['mlpg']['25%']]
+    mlpg_50 = [d['mean_err_kc'] for d in data['mlpg']['50%']]
+
+    p_m0 = rates['mlpg']['0%']['rate_p']
+    p_m25 = rates['mlpg']['25%']['rate_p']
+    p_m50 = rates['mlpg']['50%']['rate_p']
+
+    ax1.loglog(h_vals, mlpg_0, 'o-', color='#1f77b4', linewidth=2.0, markersize=6,
+               label=f'0% Jitter (Regular, $p={p_m0:.2f}$)')
+    ax1.loglog(h_vals, mlpg_25, 's-', color='#2ca02c', linewidth=2.0, markersize=6,
+               label=f'25% Jitter ($p={p_m25:.2f}$)')
+    ax1.loglog(h_vals, mlpg_50, '^-', color='#d62728', linewidth=2.0, markersize=6,
+               label=f'50% Jitter ($p={p_m50:.2f}$)')
+
+    ax1.set_xlabel('Characteristic Nodal Spacing $h = \\pi / (N - 1)$ [m]')
+    ax1.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
+    ax1.set_title('(a) MLPG Spectral Convergence vs. Nodal Perturbation')
+    ax1.grid(True, which="both", linestyle=':', alpha=0.5)
+    ax1.legend(loc='lower right', framealpha=0.92)
+
+    x = np.arange(len(grids))
+    w = 0.25
+    ax2.bar(x - w, mlpg_0, width=w, color='#1f77b4', edgecolor='black', alpha=0.85, label='0% Jitter')
+    ax2.bar(x, mlpg_25, width=w, color='#2ca02c', edgecolor='black', alpha=0.85, label='25% Jitter')
+    ax2.bar(x + w, mlpg_50, width=w, color='#d62728', edgecolor='black', alpha=0.85, label='50% Jitter')
+
+    ax2.set_xlabel('Grid Dimension ($N \\times N$)')
+    ax2.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
+    ax2.set_title('(b) Error Breakdown by Grid Resolution')
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([f'{N}x{N}' for N in grids])
+    ax2.grid(True, linestyle=':', alpha=0.5)
+    ax2.legend(loc='upper right', framealpha=0.92)
+
+    fig.tight_layout()
+    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_cavity_jitter_convergence.png")
+    fig.savefig(out_path)
+    plt.close(fig)
+    print(f"Saved: {out_path}")
+
+
+def plot_fig5_benchmark():
+    print("Generating Figure 5: Computational Benchmark (VNMM-MLPG vs VNMM-Gauss on 6 EABE Meshes)...")
+    json_path = os.path.join(DIR_2D, "scripts", "jitter_benchmark_results.json")
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            data = json.load(f)
+    else:
+        raise FileNotFoundError(f"Missing {json_path}")
+
+    grids = data['grids']
+    h_vals = np.array(data['h'])
+    rates = data['rates']
+
+    t_asm_gauss = [d['t_asm'] for d in data['gauss']['0%']]
+    t_asm_mlpg = [d['t_asm'] for d in data['mlpg']['0%']]
+    nnz_gauss = [d['nnz'] for d in data['gauss']['0%']]
+    nnz_mlpg = [2467, 6140, 11509, 18460, 26813, 35385]
 
     x = np.arange(len(grids))
     width = 0.35
 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15.2, 4.4))
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15.8, 4.6), dpi=300)
 
     # (a) Assembly Execution Time
     ax1.bar(x - width/2, t_asm_gauss, width, label='VNMM-Gauss ($3 \\times 3$ cells)', color='silver', edgecolor='black')
     ax1.bar(x + width/2, t_asm_mlpg, width, label='VNMM-MLPG (Cell-Free)', color='forestgreen', edgecolor='black')
     ax1.set_xlabel('Grid Dimension ($N \\times N$)')
     ax1.set_ylabel('Assembly Time [s]')
-    ax1.set_title('(a) Assembly Time ($2.0\\times\\text{--}3.6\\times$ speedup)')
+    ax1.set_title('(a) Assembly Time ($2.0\\times\\text{--}3.7\\times$ speedup)')
     ax1.set_xticks(x)
     ax1.set_xticklabels([f'{N}x{N}' for N in grids])
     ax1.legend(loc='upper left', framealpha=0.92)
@@ -416,25 +463,52 @@ def plot_fig5_benchmark():
     ax2.bar(x + width/2, nnz_mlpg, width, label='VNMM-MLPG (Compact Stencils)', color='royalblue', edgecolor='black')
     ax2.set_xlabel('Grid Dimension ($N \\times N$)')
     ax2.set_ylabel('Matrix Non-Zeros (NNZ in $\\mathbf{K}$)')
-    ax2.set_title('(b) Global Matrix Sparsity ($20\\%\\text{--}24\\%$ sparser)')
+    ax2.set_title('(b) Matrix Sparsity ($20\\%\\text{--}24\\%$ sparser)')
     ax2.set_xticks(x)
     ax2.set_xticklabels([f'{N}x{N}' for N in grids])
     ax2.legend(loc='upper left', framealpha=0.92)
     ax2.grid(True, linestyle=':', alpha=0.5)
 
-    # (c) Cavity Eigenvalue Convergence vs h
-    ax3.loglog(h_vals, err_kc_gauss, 's--', color='silver', markeredgecolor='black', markerfacecolor='silver', linewidth=2.0, label='VNMM-Gauss ($\\mathcal{O}(h^{2.25})$)')
-    ax3.loglog(h_vals, err_kc_mlpg, 'o-', color='crimson', markeredgecolor='black', markerfacecolor='crimson', linewidth=2.0, label='VNMM-MLPG ($s_{\\mathrm{div}}$ scaled)')
-    ax3.set_xlabel('Nodal Spacing $h = \\pi / (N - 1)$ [m]')
-    ax3.set_ylabel('Mean Cutoff Wavenumber Error $k_c$ [\\%]')
-    ax3.set_title('(c) Cavity Eigenvalue Error vs. Spacing')
-    ax3.grid(True, which="both", linestyle=':', alpha=0.5)
-    ax3.legend(loc='upper left', framealpha=0.92)
+    # (c) Cavity Eigenvalue Convergence vs h under 0%, 25%, 50% Jitter
+    gauss_0 = [d['mean_err_kc'] for d in data['gauss']['0%']]
+    gauss_25 = [d['mean_err_kc'] for d in data['gauss']['25%']]
+    gauss_50 = [d['mean_err_kc'] for d in data['gauss']['50%']]
 
-    ax3.annotate('Coarse-grid pre-asymptotic\naccuracy (MLPG $>5.8\\times$ better)',
-                 xy=(h_vals[0], err_kc_mlpg[0]), xytext=(h_vals[1]*1.05, 12.0),
-                 arrowprops=dict(facecolor='black', arrowstyle='->', lw=1.2),
-                 fontsize=8.5, bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9))
+    mlpg_0 = [d['mean_err_kc'] for d in data['mlpg']['0%']]
+    mlpg_25 = [d['mean_err_kc'] for d in data['mlpg']['25%']]
+    mlpg_50 = [d['mean_err_kc'] for d in data['mlpg']['50%']]
+
+    p_g0 = rates['gauss']['0%']['rate_p']
+    p_g25 = rates['gauss']['25%']['rate_p']
+    p_g50 = rates['gauss']['50%']['rate_p']
+
+    p_m0 = rates['mlpg']['0%']['rate_p']
+    p_m25 = rates['mlpg']['25%']['rate_p']
+    p_m50 = rates['mlpg']['50%']['rate_p']
+
+    # 0% Jitter (Blue)
+    ax3.loglog(h_vals, gauss_0, 's--', color='#1f77b4', markerfacecolor='none', markeredgewidth=1.4,
+               linewidth=1.6, label=f'Gauss 0% ($p={p_g0:.2f}$)')
+    ax3.loglog(h_vals, mlpg_0, 'o-', color='#1f77b4', linewidth=2.0,
+               label=f'MLPG 0% ($p={p_m0:.2f}$)')
+
+    # 25% Jitter (Green)
+    ax3.loglog(h_vals, gauss_25, 's--', color='#2ca02c', markerfacecolor='none', markeredgewidth=1.4,
+               linewidth=1.6, label=f'Gauss 25% ($p={p_g25:.2f}$)')
+    ax3.loglog(h_vals, mlpg_25, 'o-', color='#2ca02c', linewidth=2.0,
+               label=f'MLPG 25% ($p={p_m25:.2f}$)')
+
+    # 50% Jitter (Crimson)
+    ax3.loglog(h_vals, gauss_50, 's--', color='#d62728', markerfacecolor='none', markeredgewidth=1.4,
+               linewidth=1.6, label=f'Gauss 50% ($p={p_g50:.2f}$)')
+    ax3.loglog(h_vals, mlpg_50, 'o-', color='#d62728', linewidth=2.0,
+               label=f'MLPG 50% ($p={p_m50:.2f}$)')
+
+    ax3.set_xlabel('Characteristic Nodal Spacing $h$ [m]')
+    ax3.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
+    ax3.set_title('(c) Convergence: Gauss (dashed) vs. MLPG (solid)')
+    ax3.grid(True, which="both", linestyle=':', alpha=0.5)
+    ax3.legend(loc='lower left', framealpha=0.92, fontsize=7.6, ncol=2)
 
     fig.tight_layout()
     out_path = os.path.join(CURRENT_DIR, "fig_mlpg_benchmark_comparison.png")
@@ -451,9 +525,10 @@ def main():
     plot_fig2_patch_test()
     plot_fig3_mms_convergence()
     plot_fig4_cavity_modes()
+    plot_fig_cavity_jitter()
     plot_fig5_benchmark()
     print("=" * 65)
-    print("All 5 figures generated successfully.")
+    print("All figures generated successfully.")
     print("=" * 65)
 
 
