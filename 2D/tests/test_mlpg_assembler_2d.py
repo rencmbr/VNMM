@@ -171,6 +171,37 @@ class TestMLPGAssembler2D(unittest.TestCase):
         expected_F = (1.0 * sub.beta[0, i0] + 2.0 * sub.beta[1, i0]) * (np.pi * sub.radius_s ** 2)
         self.assertAlmostEqual(F[sub.node_idx], expected_F, places=8)
 
+    def test_orthogonal_energy_stabilization(self):
+        """Verifies orthogonal energy stabilization increases stiffness rank to 4 while preserving constant fields."""
+        sub = self.subdomains[len(self.subdomains) // 2]
+        
+        # 1. Without stabilization: rank is at most 2
+        K_unstab, _ = compute_subdomain_matrices_analytic(
+            subdomain=sub, s_div=4.0, alpha_stab=0.0, matrix_format="6x6"
+        )
+        rank_unstab = np.linalg.matrix_rank(K_unstab)
+        self.assertLessEqual(rank_unstab, 2)
+
+        # 2. With stabilization: rank becomes 4 (full rank in 4 derivatives)
+        K_stab, _ = compute_subdomain_matrices_analytic(
+            subdomain=sub, s_div=4.0, alpha_stab=1.0, matrix_format="6x6"
+        )
+        rank_stab = np.linalg.matrix_rank(K_stab)
+        self.assertEqual(rank_stab, 4)
+
+        # 3. Patch Test consistency: constant field produces strictly zero stabilization force
+        # Constant vector field u = [a0, a1]^T
+        # In stencil DOFs: u_k = E . t_k = a0 * t_kx + a1 * t_ky
+        for a0, a1 in [(1.0, 0.0), (0.0, 1.0), (3.5, -2.1)]:
+            E_const = np.array([a0, a1])
+            u_dofs = np.array([np.dot(E_const, self.vectors[node]) for node in sub.stencil_nodes])
+            
+            f_unstab = K_unstab @ u_dofs
+            f_stab = K_stab @ u_dofs
+            # Both forces must be zero because constant fields have zero curl, zero div, zero shear
+            np.testing.assert_allclose(f_unstab, np.zeros(6), atol=1e-12)
+            np.testing.assert_allclose(f_stab, np.zeros(6), atol=1e-12)
+
 
 if __name__ == "__main__":
     unittest.main()

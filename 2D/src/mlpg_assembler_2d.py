@@ -219,6 +219,7 @@ def compute_subdomain_matrices_analytic(
     mu_r: float = 1.0,
     epsilon_r: float = 1.0,
     s_div: float = 4.0,
+    alpha_stab: float = 0.0,
     matrix_format: str = "1x6"
 ) -> Tuple[np.ndarray, np.ndarray]:
     r"""
@@ -228,6 +229,7 @@ def compute_subdomain_matrices_analytic(
     Parameters:
     - subdomain: MLPGSubdomain2D instance.
     - mu_r, epsilon_r, s_div: Physical/stabilization parameters.
+    - alpha_stab: Orthogonal energy stabilization parameter for zero-curl zero-div strain modes.
     - matrix_format: '1x6' (row associated with central node test function)
                      or '6x6' (full local Galerkin interaction matrix).
 
@@ -256,6 +258,13 @@ def compute_subdomain_matrices_analytic(
     k_curl = (1.0 / mu_r) * np.outer(curls, curls) * S0
     k_div = (s_div / mu_r) * np.outer(divs, divs) * S0
     k_local_6x6 = k_curl + k_div
+
+    # Orthogonal energy stabilization (penalizes shear and deviatoric strain modes)
+    if alpha_stab > 0.0:
+        shear = beta[4, :] + beta[3, :]
+        hyp = beta[2, :] - beta[5, :]
+        k_stab = (alpha_stab / mu_r) * (np.outer(shear, shear) + np.outer(hyp, hyp)) * S0
+        k_local_6x6 += k_stab
 
     # 6x6 local mass matrix with full geometric moments
     b0 = beta[0, :]
@@ -377,6 +386,7 @@ def assemble_mlpg_matrices_2d(
     mu_r: float = 1.0,
     epsilon_r: float = 1.0,
     s_div: float = 4.0,
+    alpha_stab: float = 0.0,
     integration_mode: str = "analytic",
     assembly_mode: str = "row_petrov_galerkin",
     source_func: Optional[Callable[[np.ndarray], np.ndarray]] = None,
@@ -393,6 +403,7 @@ def assemble_mlpg_matrices_2d(
     - mu_r: Relative magnetic permeability (default: 1.0).
     - epsilon_r: Relative electric permittivity (default: 1.0).
     - s_div: Divergence penalty stabilization parameter (default: 4.0).
+    - alpha_stab: Orthogonal energy stabilization parameter for zero-curl zero-div strain modes (default: 0.0).
     - integration_mode: 'analytic' (exact closed-form) or 'numeric' (polar Gauss).
     - assembly_mode:
         * 'row_petrov_galerkin' (default): each node I generates row I from Omega_s^I.
@@ -432,6 +443,7 @@ def assemble_mlpg_matrices_2d(
                 mu_r=mu_r,
                 epsilon_r=epsilon_r,
                 s_div=s_div,
+                alpha_stab=alpha_stab,
                 matrix_format=mat_format
             )
         elif integration_mode == "numeric":

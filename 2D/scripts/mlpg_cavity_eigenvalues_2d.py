@@ -55,7 +55,8 @@ def solve_mlpg_cavity_eigenvalues(
     assembly_mode: str = "subdomain_galerkin",
     spur_threshold: float = 50.0,
     s_div_scaling: Optional[str] = None,
-    h_ref: float = np.pi / 20.0
+    h_ref: float = np.pi / 20.0,
+    alpha_stab: float = 0.0
 ) -> Dict[str, Any]:
     """
     Resolve o problema espectral da cavidade ressonante retangular 2D com VNMM-MLPG.
@@ -105,14 +106,16 @@ def solve_mlpg_cavity_eigenvalues(
         mu_r=1.0,
         epsilon_r=1.0,
         s_div=0.0,
-        assembly_mode=assembly_mode
+        assembly_mode=assembly_mode,
+        alpha_stab=alpha_stab
     )
     K1, _, _ = assemble_mlpg_matrices_2d(
         subdomains=subdomains,
         mu_r=1.0,
         epsilon_r=1.0,
         s_div=1.0,
-        assembly_mode=assembly_mode
+        assembly_mode=assembly_mode,
+        alpha_stab=alpha_stab
     )
     t_asm = time.time() - t_start_asm
 

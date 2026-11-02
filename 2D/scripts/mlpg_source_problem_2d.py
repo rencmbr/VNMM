@@ -65,7 +65,8 @@ def assemble_and_solve_mlpg_mms(
     n_r: int = 4,
     n_theta: int = 12,
     boundary_condition: str = "dirichlet",
-    assembly_mode: str = "subdomain_galerkin"
+    assembly_mode: str = "subdomain_galerkin",
+    alpha_stab: float = 0.0
 ) -> Dict[str, Any]:
     """
     Assembles and solves the MLPG MMS boundary value problem:
@@ -104,7 +105,8 @@ def assemble_and_solve_mlpg_mms(
                 mu_r=mu_r,
                 epsilon_r=1.0,
                 s_div=s_div,
-                matrix_format="6x6"
+                matrix_format="6x6",
+                alpha_stab=alpha_stab
             )
 
             # Consistent source load vector via disk quadrature:

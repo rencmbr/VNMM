@@ -125,73 +125,56 @@ def run_alpha_s_parametric_study():
                 json.dump(data_by_jitter, f, indent=2)
             print(f"Saved parametric data cache to {cache_file}")
 
-    # Generate 3-Panel Publication Figure: (a) Coverage, (b) Containment, (c) MMS
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14.2, 4.2), dpi=300)
+    # Generate 2-Panel Publication Figure: (a) Coverage, (b) MMS Convergence
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.8), dpi=300)
     alphas = np.array(alpha_vals)
 
     curve_styles = [
         ("jitter_0", '#1f77b4', '-', 'o', 'Jitter 0% (Regular Lattice)'),
-        ("jitter_25", '#d62728', '--', 's', 'Jitter 25% (Perturbed)'),
-        ("jitter_50", '#2ca02c', '-.', '^', 'Jitter 50% (Highly Perturbed)')
+        ("jitter_25", '#2ca02c', '--', 's', 'Jitter 25% (Perturbed)')
     ]
 
     # -------------------------------------------------------------
     # (a) Domain Integration Coverage
     # -------------------------------------------------------------
     ax1.axvspan(0.70, 1.20, color='#2ecc71', alpha=0.18, label=r'Operational Window $[0.7, 1.2]$')
-    ax1.axvline(0.7071, color='#e74c3c', linestyle='--', linewidth=1.3, label=r'Regular Limit $\alpha_s = \sqrt{2}/2 \approx 0.7071$')
+    ax1.axvline(0.7071, color='#e74c3c', linestyle='--', linewidth=1.4, label=r'Regular Limit $\alpha_s = \sqrt{2}/2 \approx 0.7071$')
     ax1.axhline(100.0, color='#7f8c8d', linestyle=':', linewidth=1.0)
 
     for k, col, ls, marker, lbl in curve_styles:
         covs = np.array([r['coverage'] for r in data_by_jitter[k]])
-        ax1.plot(alphas, covs, marker=marker, linestyle=ls, color=col, linewidth=1.8, markersize=5, label=lbl)
+        ax1.plot(alphas, covs, marker=marker, linestyle=ls, color=col, linewidth=2.0, markersize=6, label=lbl)
 
-    ax1.set_xlabel(r'Subdomain Radius Scaling Factor $\alpha_s$')
-    ax1.set_ylabel(r'Domain Integration Coverage (%)')
-    ax1.set_title(r'(a) Global Domain Coverage $\bigcup \Omega_s^I \supseteq \Omega$')
+    ax1.set_xlabel(r'Subdomain Radius Scaling Factor $\alpha_s$', fontsize=10.5)
+    ax1.set_ylabel(r'Domain Integration Coverage (%)', fontsize=10.5)
+    ax1.set_title(r'(a) Global Domain Coverage $\bigcup \Omega_s^I \supseteq \Omega$', fontsize=11.5)
     ax1.set_xlim(0.25, 2.05)
     ax1.set_ylim(10, 105)
+    ax1.tick_params(labelsize=9.5)
     ax1.grid(True, linestyle=':', alpha=0.5)
-    ax1.legend(loc='lower right', framealpha=0.92, fontsize=7.5, labelspacing=0.25)
+    ax1.legend(loc='lower right', framealpha=0.92, fontsize=9.0)
 
     # -------------------------------------------------------------
-    # (b) Support Domain Containment Violations
+    # (b) MMS Source Problem Convergence
     # -------------------------------------------------------------
     ax2.axvspan(0.70, 1.20, color='#2ecc71', alpha=0.18, label=r'Operational Window $[0.7, 1.2]$')
-    ax2.axvline(1.15, color='#e74c3c', linestyle='--', linewidth=1.3, label=r'Containment Threshold $\alpha_s \approx 1.15$')
-
-    for k, col, ls, marker, lbl in curve_styles:
-        viols = np.array([r['viol_pct'] for r in data_by_jitter[k]])
-        ax2.plot(alphas, viols, marker=marker, linestyle=ls, color=col, linewidth=1.8, markersize=5, label=lbl)
-
-    ax2.set_xlabel(r'Subdomain Radius Scaling Factor $\alpha_s$')
-    ax2.set_ylabel(r'Support Domain Violations (%)')
-    ax2.set_title(r'(b) Support Containment Violations ($r_s^I > r_u^I$)')
-    ax2.set_xlim(0.25, 2.05)
-    ax2.set_ylim(-5, 105)
-    ax2.grid(True, linestyle=':', alpha=0.5)
-    ax2.legend(loc='upper left', framealpha=0.92, fontsize=7.5, labelspacing=0.25)
-
-    # -------------------------------------------------------------
-    # (c) MMS Source Problem Convergence
-    # -------------------------------------------------------------
-    ax3.axvspan(0.70, 1.20, color='#2ecc71', alpha=0.18, label=r'Operational Window $[0.7, 1.2]$')
-    ax3.axvline(0.7071, color='#e74c3c', linestyle='--', linewidth=1.3, label=r'Regular Limit $\alpha_s = \sqrt{2}/2$')
+    ax2.axvline(0.7071, color='#e74c3c', linestyle='--', linewidth=1.4, label=r'Regular Limit $\alpha_s = \sqrt{2}/2$')
 
     for k, col, ls, marker, lbl in curve_styles:
         mms_err = np.array([r['mms_l2'] for r in data_by_jitter[k]])
-        ax3.plot(alphas, mms_err, marker=marker, linestyle=ls, color=col, linewidth=1.8, markersize=5, label=lbl)
+        ax2.plot(alphas, mms_err, marker=marker, linestyle=ls, color=col, linewidth=2.0, markersize=6, label=lbl)
         # Mark alpha_s = 0.80
         val_08 = mms_err[alphas == 0.80][0]
-        ax3.plot([0.80], [val_08], '*', color=col, markersize=10)
+        ax2.plot([0.80], [val_08], '*', color=col, markersize=11)
 
-    ax3.plot([], [], '*', color='#2c3e50', markersize=10, label=r'Adopted Standard $\alpha_s = 0.80$')
-    ax3.set_xlabel(r'Subdomain Radius Scaling Factor $\alpha_s$')
-    ax3.set_ylabel(r'MMS Relative $L^2(\vec{E})$ Error (%)')
-    ax3.set_title(r'(c) MMS Convergence ($21 \times 21$, Random Directors)')
-    ax3.set_xlim(0.25, 2.05)
-    ax3.grid(True, linestyle=':', alpha=0.5)
-    ax3.legend(loc='upper left', framealpha=0.92, fontsize=7.5, labelspacing=0.25)
+    ax2.plot([], [], '*', color='#2c3e50', markersize=11, label=r'Adopted Standard $\alpha_s = 0.80$')
+    ax2.set_xlabel(r'Subdomain Radius Scaling Factor $\alpha_s$', fontsize=10.5)
+    ax2.set_ylabel(r'MMS Relative $L^2(\vec{E})$ Error (%)', fontsize=10.5)
+    ax2.set_title(r'(b) MMS Convergence ($21 \times 21$, Random Directors)', fontsize=11.5)
+    ax2.set_xlim(0.25, 2.05)
+    ax2.tick_params(labelsize=9.5)
+    ax2.grid(True, linestyle=':', alpha=0.5)
+    ax2.legend(loc='upper left', framealpha=0.92, fontsize=9.0)
 
     plt.tight_layout()
 

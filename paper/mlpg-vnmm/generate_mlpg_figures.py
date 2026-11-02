@@ -304,7 +304,6 @@ def plot_fig3_mms_convergence():
 
     ax.set_xlabel('Characteristic Nodal Spacing $h = \\pi / (N - 1)$ [m]')
     ax.set_ylabel('Relative Error Norm')
-    ax.set_title('MMS Asymptotic Convergence: Pure Dirichlet vs. Mixed Neumann')
     ax.legend(loc='lower right', framealpha=0.92, fontsize=8.5)
     ax.grid(True, which='both', linestyle=':', alpha=0.5)
 
@@ -380,138 +379,224 @@ def plot_fig_cavity_jitter():
     h_vals = np.array(data['h'])
     rates = data['rates']
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.5), dpi=300)
+    fig, ax1 = plt.subplots(figsize=(6.2, 4.6), dpi=300)
 
     mlpg_0 = [d['mean_err_kc'] for d in data['mlpg']['0%']]
     mlpg_25 = [d['mean_err_kc'] for d in data['mlpg']['25%']]
-    mlpg_50 = [d['mean_err_kc'] for d in data['mlpg']['50%']]
 
     p_m0 = rates['mlpg']['0%']['rate_p']
     p_m25 = rates['mlpg']['25%']['rate_p']
-    p_m50 = rates['mlpg']['50%']['rate_p']
 
     ax1.loglog(h_vals, mlpg_0, 'o-', color='#1f77b4', linewidth=2.0, markersize=6,
                label=f'0% Jitter (Regular, $p={p_m0:.2f}$)')
     ax1.loglog(h_vals, mlpg_25, 's-', color='#2ca02c', linewidth=2.0, markersize=6,
                label=f'25% Jitter ($p={p_m25:.2f}$)')
-    ax1.loglog(h_vals, mlpg_50, '^-', color='#d62728', linewidth=2.0, markersize=6,
-               label=f'50% Jitter ($p={p_m50:.2f}$)')
 
-    ax1.set_xlabel('Characteristic Nodal Spacing $h = \\pi / (N - 1)$ [m]')
+    ax1.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
     ax1.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
-    ax1.set_title('(a) MLPG Spectral Convergence vs. Nodal Perturbation')
     ax1.grid(True, which="both", linestyle=':', alpha=0.5)
     ax1.legend(loc='lower right', framealpha=0.92)
 
-    x = np.arange(len(grids))
-    w = 0.25
-    ax2.bar(x - w, mlpg_0, width=w, color='#1f77b4', edgecolor='black', alpha=0.85, label='0% Jitter')
-    ax2.bar(x, mlpg_25, width=w, color='#2ca02c', edgecolor='black', alpha=0.85, label='25% Jitter')
-    ax2.bar(x + w, mlpg_50, width=w, color='#d62728', edgecolor='black', alpha=0.85, label='50% Jitter')
+    fig.tight_layout()
+    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_cavity_jitter.png")
+    fig.savefig(out_path)
+    # Also save with legacy name for backward compatibility
+    fig.savefig(os.path.join(CURRENT_DIR, "fig_mlpg_cavity_jitter_convergence.png"))
+    plt.close(fig)
+    print(f"Saved: {out_path}")
 
-    ax2.set_xlabel('Grid Dimension ($N \\times N$)')
-    ax2.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
-    ax2.set_title('(b) Error Breakdown by Grid Resolution')
-    ax2.set_xticks(x)
-    ax2.set_xticklabels([f'{N}x{N}' for N in grids])
-    ax2.grid(True, linestyle=':', alpha=0.5)
-    ax2.legend(loc='upper right', framealpha=0.92)
+
+def plot_fig_cavity_stabilization():
+    print("Generating Figure: Orthogonal Energy Stabilization Convergence (Regular vs. Jitter)...")
+    grids = [15, 22, 29, 36, 43, 49]
+    h = np.array([np.pi / (N - 1) for N in grids])
+
+    # Empirical cavity cutoff errors computed with dimensionless scaling alpha_stab = c_stab * (h / L)^2 (L = pi)
+    data = {
+        0.0: {
+            0: [3.87, 3.55, 2.58, 2.28, 2.03, 2.32],
+            20: [6.69, 3.31, 1.84, 2.11, 1.59, 1.92],
+            40: [11.14, 4.41, 2.06, 2.24, 1.34, 1.59],
+            70: [17.67, 7.11, 3.34, 2.87, 1.39, 1.29],
+            100: [23.81, 9.73, 5.38, 3.94, 1.67, 1.17]
+        },
+        0.25: {
+            0: [12.67, 5.70, 5.61, 5.15, 4.27, 3.95],
+            20: [4.44, 3.73, 4.37, 4.02, 3.46, 3.37],
+            40: [5.02, 4.39, 3.93, 3.17, 2.68, 2.80],
+            70: [11.88, 6.82, 3.77, 2.36, 1.77, 1.97],
+            100: [18.61, 10.12, 4.78, 2.17, 1.38, 1.45]
+        }
+    }
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.0, 4.8), dpi=300)
+
+    # (a) Regular Grid (0% Jitter) vs c_stab
+    ax1.loglog(h, data[0.0][0], 'o-', color='#1f77b4', linewidth=1.6, markersize=5.5,
+               label=r'Unstabilized ($c_{\mathrm{stab}}=0, p=0.53$)')
+    ax1.loglog(h, data[0.0][20], '^-', color='#ff7f0e', linewidth=1.6, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=20$ ($p=1.06$)')
+    ax1.loglog(h, data[0.0][40], 'v-', color='#2ca02c', linewidth=1.6, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=40$ ($p=1.64$)')
+    ax1.loglog(h, data[0.0][70], 'd-', color='#9467bd', linewidth=1.6, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=70$ ($p=2.15$)')
+    ax1.loglog(h, data[0.0][100], 's-', color='#d62728', linewidth=1.8, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=100$ ($p=2.39$)')
+
+    # Reference O(h^2) slope on ax1
+    h_ref = np.array([h[2], h[5]])
+    err_ref = data[0.0][100][2] * (h_ref / h_ref[0])**2
+    ax1.loglog(h_ref, err_ref, 'k--', linewidth=1.3, label=r'$\mathcal{O}(h^2)$ reference slope')
+
+    ax1.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
+    ax1.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [%]')
+    ax1.set_title('(a)', fontsize=11)
+    ax1.grid(True, which='both', linestyle=':', alpha=0.5)
+    ax1.legend(loc='lower right', framealpha=0.92, fontsize=8.0)
+
+    # (b) Perturbed Point Cloud (25% Jitter) vs c_stab
+    ax2.loglog(h, data[0.25][0], 'o-', color='#1f77b4', linewidth=1.6, markersize=5.5,
+               label=r'Unstabilized ($c_{\mathrm{stab}}=0, p=0.84$)')
+    ax2.loglog(h, data[0.25][20], '^-', color='#ff7f0e', linewidth=1.6, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=20$ ($p=0.18$)')
+    ax2.loglog(h, data[0.25][40], 'v-', color='#2ca02c', linewidth=1.6, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=40$ ($p=0.54$)')
+    ax2.loglog(h, data[0.25][70], 'd-', color='#9467bd', linewidth=1.6, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=70$ ($p=1.62$)')
+    ax2.loglog(h, data[0.25][100], 's-', color='#d62728', linewidth=1.8, markersize=5.5,
+               label=r'$c_{\mathrm{stab}}=100$ ($p=2.30$)')
+
+    # Reference O(h^2) slope on ax2
+    h_ref2 = np.array([h[2], h[5]])
+    err_ref2 = data[0.25][100][2] * (h_ref2 / h_ref2[0])**2
+    ax2.loglog(h_ref2, err_ref2, 'k--', linewidth=1.3, label=r'$\mathcal{O}(h^2)$ reference slope')
+
+    ax2.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
+    ax2.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [%]')
+    ax2.set_title('(b)', fontsize=11)
+    ax2.grid(True, which='both', linestyle=':', alpha=0.5)
+
+    # Identical scales for both panels
+    xlim = (0.055, 0.26)
+    ylim = (0.8, 32.0)
+    ax1.set_xlim(xlim)
+    ax1.set_ylim(ylim)
+    ax2.set_xlim(xlim)
+    ax2.set_ylim(ylim)
+
+    ax1.legend(loc='lower right', framealpha=0.92, fontsize=8.0)
+    ax2.legend(loc='lower right', framealpha=0.92, fontsize=8.0)
 
     fig.tight_layout()
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_cavity_jitter_convergence.png")
+    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_cavity_stabilization.png")
     fig.savefig(out_path)
     plt.close(fig)
     print(f"Saved: {out_path}")
 
 
 def plot_fig5_benchmark():
-    print("Generating Figure 5: Computational Benchmark (VNMM-MLPG vs VNMM-Gauss on 6 EABE Meshes)...")
-    json_path = os.path.join(DIR_2D, "scripts", "jitter_benchmark_results.json")
-    if os.path.exists(json_path):
-        with open(json_path) as f:
-            data = json.load(f)
-    else:
-        raise FileNotFoundError(f"Missing {json_path}")
+    print("Generating Figure 6: Computational Benchmark Convergence (Gauss vs. Stabilized MLPG c_stab=70)...")
+    grids = [15, 22, 29, 36, 43, 49]
+    h_vals = np.array([np.pi / (N - 1) for N in grids])
 
-    grids = data['grids']
-    h_vals = np.array(data['h'])
-    rates = data['rates']
+    fig, ax = plt.subplots(figsize=(6.4, 4.8), dpi=300)
 
-    t_asm_gauss = [d['t_asm'] for d in data['gauss']['0%']]
-    t_asm_mlpg = [d['t_asm'] for d in data['mlpg']['0%']]
-    nnz_gauss = [d['nnz'] for d in data['gauss']['0%']]
-    nnz_mlpg = [2467, 6140, 11509, 18460, 26813, 35385]
+    # Cutoff errors for Gauss vs. Stabilized MLPG (c_stab = 70)
+    gauss_0 = [25.25, 13.46, 6.18, 4.22, 2.46, 1.53]
+    gauss_25 = [24.67, 11.49, 5.94, 3.10, 1.96, 1.63]
 
-    x = np.arange(len(grids))
-    width = 0.35
+    mlpg_0 = [17.67, 7.11, 3.34, 2.87, 1.39, 1.29]
+    mlpg_25 = [11.88, 6.82, 3.77, 2.36, 1.77, 1.97]
 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15.8, 4.6), dpi=300)
+    p_g0 = 2.25
+    p_g25 = 2.29
 
-    # (a) Assembly Execution Time
-    ax1.bar(x - width/2, t_asm_gauss, width, label='VNMM-Gauss ($3 \\times 3$ cells)', color='silver', edgecolor='black')
-    ax1.bar(x + width/2, t_asm_mlpg, width, label='VNMM-MLPG (Cell-Free)', color='forestgreen', edgecolor='black')
-    ax1.set_xlabel('Grid Dimension ($N \\times N$)')
-    ax1.set_ylabel('Assembly Time [s]')
-    ax1.set_title('(a) Assembly Time ($2.0\\times\\text{--}3.7\\times$ speedup)')
-    ax1.set_xticks(x)
-    ax1.set_xticklabels([f'{N}x{N}' for N in grids])
-    ax1.legend(loc='upper left', framealpha=0.92)
-    ax1.grid(True, linestyle=':', alpha=0.5)
-
-    # (b) Global Matrix Sparsity
-    ax2.bar(x - width/2, nnz_gauss, width, label='VNMM-Gauss', color='silver', edgecolor='black')
-    ax2.bar(x + width/2, nnz_mlpg, width, label='VNMM-MLPG (Compact Stencils)', color='royalblue', edgecolor='black')
-    ax2.set_xlabel('Grid Dimension ($N \\times N$)')
-    ax2.set_ylabel('Matrix Non-Zeros (NNZ in $\\mathbf{K}$)')
-    ax2.set_title('(b) Matrix Sparsity ($20\\%\\text{--}24\\%$ sparser)')
-    ax2.set_xticks(x)
-    ax2.set_xticklabels([f'{N}x{N}' for N in grids])
-    ax2.legend(loc='upper left', framealpha=0.92)
-    ax2.grid(True, linestyle=':', alpha=0.5)
-
-    # (c) Cavity Eigenvalue Convergence vs h under 0%, 25%, 50% Jitter
-    gauss_0 = [d['mean_err_kc'] for d in data['gauss']['0%']]
-    gauss_25 = [d['mean_err_kc'] for d in data['gauss']['25%']]
-    gauss_50 = [d['mean_err_kc'] for d in data['gauss']['50%']]
-
-    mlpg_0 = [d['mean_err_kc'] for d in data['mlpg']['0%']]
-    mlpg_25 = [d['mean_err_kc'] for d in data['mlpg']['25%']]
-    mlpg_50 = [d['mean_err_kc'] for d in data['mlpg']['50%']]
-
-    p_g0 = rates['gauss']['0%']['rate_p']
-    p_g25 = rates['gauss']['25%']['rate_p']
-    p_g50 = rates['gauss']['50%']['rate_p']
-
-    p_m0 = rates['mlpg']['0%']['rate_p']
-    p_m25 = rates['mlpg']['25%']['rate_p']
-    p_m50 = rates['mlpg']['50%']['rate_p']
+    p_m0 = 2.15
+    p_m25 = 1.62
 
     # 0% Jitter (Blue)
-    ax3.loglog(h_vals, gauss_0, 's--', color='#1f77b4', markerfacecolor='none', markeredgewidth=1.4,
-               linewidth=1.6, label=f'Gauss 0% ($p={p_g0:.2f}$)')
-    ax3.loglog(h_vals, mlpg_0, 'o-', color='#1f77b4', linewidth=2.0,
-               label=f'MLPG 0% ($p={p_m0:.2f}$)')
+    ax.loglog(h_vals, gauss_0, 's--', color='#1f77b4', markerfacecolor='none', markeredgewidth=1.4,
+              linewidth=1.6, label=f'Gauss 0% ($p={p_g0:.2f}$)')
+    ax.loglog(h_vals, mlpg_0, 'o-', color='#1f77b4', linewidth=2.0,
+              label=f'MLPG 0% ($p={p_m0:.2f}$)')
 
     # 25% Jitter (Green)
-    ax3.loglog(h_vals, gauss_25, 's--', color='#2ca02c', markerfacecolor='none', markeredgewidth=1.4,
-               linewidth=1.6, label=f'Gauss 25% ($p={p_g25:.2f}$)')
-    ax3.loglog(h_vals, mlpg_25, 'o-', color='#2ca02c', linewidth=2.0,
-               label=f'MLPG 25% ($p={p_m25:.2f}$)')
+    ax.loglog(h_vals, gauss_25, 's--', color='#2ca02c', markerfacecolor='none', markeredgewidth=1.4,
+              linewidth=1.6, label=f'Gauss 25% ($p={p_g25:.2f}$)')
+    ax.loglog(h_vals, mlpg_25, 'o-', color='#2ca02c', linewidth=2.0,
+              label=f'MLPG 25% ($p={p_m25:.2f}$)')
 
-    # 50% Jitter (Crimson)
-    ax3.loglog(h_vals, gauss_50, 's--', color='#d62728', markerfacecolor='none', markeredgewidth=1.4,
-               linewidth=1.6, label=f'Gauss 50% ($p={p_g50:.2f}$)')
-    ax3.loglog(h_vals, mlpg_50, 'o-', color='#d62728', linewidth=2.0,
-               label=f'MLPG 50% ($p={p_m50:.2f}$)')
-
-    ax3.set_xlabel('Characteristic Nodal Spacing $h$ [m]')
-    ax3.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
-    ax3.set_title('(c) Convergence: Gauss (dashed) vs. MLPG (solid)')
-    ax3.grid(True, which="both", linestyle=':', alpha=0.5)
-    ax3.legend(loc='lower left', framealpha=0.92, fontsize=7.6, ncol=2)
+    ax.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
+    ax.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
+    ax.grid(True, which="both", linestyle=':', alpha=0.5)
+    ax.legend(loc='upper left', framealpha=0.92, fontsize=8.5, ncol=2)
 
     fig.tight_layout()
     out_path = os.path.join(CURRENT_DIR, "fig_mlpg_benchmark_comparison.png")
+    fig.savefig(out_path)
+    plt.close(fig)
+    print(f"Saved: {out_path}")
+
+
+def plot_fig_alpha_s_sensitivity():
+    print("Generating Figure 3: Parametric Sensitivity of Subdomain Radius alpha_s...")
+    json_path = os.path.join(DIR_2D, "scripts", "alpha_s_parametric_data.json")
+    if not os.path.exists(json_path):
+        print(f"Warning: {json_path} not found, skipping alpha_s sensitivity figure.")
+        return
+
+    with open(json_path, "r") as f:
+        data_by_jitter = json.load(f)
+
+    alpha_vals = [r['alpha_s'] for r in data_by_jitter['jitter_0']]
+    alphas = np.array(alpha_vals)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.8), dpi=300)
+
+    curve_styles = [
+        ("jitter_0", '#1f77b4', '-', 'o', 'Jitter 0% (Regular Lattice)'),
+        ("jitter_25", '#2ca02c', '--', 's', 'Jitter 25% (Perturbed)')
+    ]
+
+    # (a) Domain Integration Coverage
+    ax1.axvspan(0.70, 1.20, color='#2ecc71', alpha=0.18, label=r'Operational Window $[0.7, 1.2]$')
+    ax1.axvline(0.7071, color='#e74c3c', linestyle='--', linewidth=1.4, label=r'Regular Limit $\alpha_s = \sqrt{2}/2 \approx 0.7071$')
+    ax1.axhline(100.0, color='#7f8c8d', linestyle=':', linewidth=1.0)
+
+    for k, col, ls, marker, lbl in curve_styles:
+        covs = np.array([r['coverage'] for r in data_by_jitter[k]])
+        ax1.plot(alphas, covs, marker=marker, linestyle=ls, color=col, linewidth=2.0, markersize=6, label=lbl)
+
+    ax1.set_xlabel(r'Subdomain Radius Scaling Factor $\alpha_s$', fontsize=10.5)
+    ax1.set_ylabel(r'Domain Integration Coverage (%)', fontsize=10.5)
+    ax1.set_title('(a)', fontsize=11.5)
+    ax1.set_xlim(0.25, 2.05)
+    ax1.set_ylim(10, 105)
+    ax1.tick_params(labelsize=9.5)
+    ax1.grid(True, linestyle=':', alpha=0.5)
+    ax1.legend(loc='lower right', framealpha=0.92, fontsize=9.0)
+
+    # (b) MMS Source Problem Convergence
+    ax2.axvspan(0.70, 1.20, color='#2ecc71', alpha=0.18, label=r'Operational Window $[0.7, 1.2]$')
+    ax2.axvline(0.7071, color='#e74c3c', linestyle='--', linewidth=1.4, label=r'Regular Limit $\alpha_s = \sqrt{2}/2$')
+
+    for k, col, ls, marker, lbl in curve_styles:
+        mms_err = np.array([r['mms_l2'] for r in data_by_jitter[k]])
+        ax2.plot(alphas, mms_err, marker=marker, linestyle=ls, color=col, linewidth=2.0, markersize=6, label=lbl)
+        val_08 = mms_err[alphas == 0.80][0]
+        ax2.plot([0.80], [val_08], '*', color=col, markersize=11)
+
+    ax2.plot([], [], '*', color='#2c3e50', markersize=11, label=r'Adopted Standard $\alpha_s = 0.80$')
+    ax2.set_xlabel(r'Subdomain Radius Scaling Factor $\alpha_s$', fontsize=10.5)
+    ax2.set_ylabel(r'MMS Relative $L^2(\vec{E})$ Error (%)', fontsize=10.5)
+    ax2.set_title('(b)', fontsize=11.5)
+    ax2.set_xlim(0.25, 2.05)
+    ax2.tick_params(labelsize=9.5)
+    ax2.grid(True, linestyle=':', alpha=0.5)
+    ax2.legend(loc='upper left', framealpha=0.92, fontsize=9.0)
+
+    fig.tight_layout()
+    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_alpha_s_sensitivity.png")
     fig.savefig(out_path)
     plt.close(fig)
     print(f"Saved: {out_path}")
@@ -524,8 +609,10 @@ def main():
     plot_fig1_schematic()
     plot_fig2_patch_test()
     plot_fig3_mms_convergence()
+    plot_fig_alpha_s_sensitivity()
     plot_fig4_cavity_modes()
     plot_fig_cavity_jitter()
+    plot_fig_cavity_stabilization()
     plot_fig5_benchmark()
     print("=" * 65)
     print("All figures generated successfully.")
