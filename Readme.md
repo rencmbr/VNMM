@@ -3,7 +3,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![Computational Scope](https://img.shields.io/badge/scope-2D%20%7C%203D-blue.svg)](#)
-[![Unit Tests](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](2D/tests/)
+[![Unit Tests](https://img.shields.io/badge/tests-41%20passed-brightgreen.svg)](2D/tests/)
 [![Paper EABE Stabilized](https://img.shields.io/badge/paper-EABE%20(Stabilized)-orange.svg)](paper/VNMM2D-EABE/)
 [![Paper EABE MLPG](https://img.shields.io/badge/paper-EABE%20(Cell--Free%20MLPG)-darkgreen.svg)](paper/mlpg-vnmm/)
 [![Paper Hybrid](https://img.shields.io/badge/paper-Hybrid%20FEM--VNMM-blueviolet.svg)](paper/HybridVNMM-EFEM/)
@@ -19,7 +19,7 @@ Rather than serving solely as a companion to a single publication, this reposito
 
 - **Two-Dimensional Formulations ([`2D/`](2D/)):**
   - **Stabilized VNMM 2D (Cell-Based Gauss):** Complete linear vector polynomial basis $\mathcal{P}^1$ ($M_{\text{supp}} = 6$), scale-invariant dimensionless placement criterion $\widehat{\mathbf{A}}$ ($\widehat{\mathrm{Tol}} = 0.80$), Gauss-point-based support selection, and Ritz-Galerkin div-curl regularization ($s_{\text{div}} = 6.0$).
-  - **Truly Cell-Free VNMM-MLPG 2D (Meshless Local Petrov--Galerkin):** Truly meshless, cell-free formulation eliminating Cartesian background grids entirely. Employs Vector Point Interpolation (PIM) with exact Kronecker-delta projection, autonomous circular disk subdomains $\Omega_s^I$ ($r_s^I = \alpha_s h_I$), exact closed-form analytical integration without numerical quadrature, a novel **Symmetric Subdomain Galerkin Assembly** restoring discrete coercivity and symmetry, and universal subdomain scaling standard $\alpha_s = 0.80$ bounded by geometric domain coverage ($\ge \sqrt{2}/2 \approx 0.7071$) and support containment limits ($\le 1.15$).
+  - **Truly Cell-Free VNMM-MLPG 2D (Meshless Local Petrov--Galerkin):** Truly meshless, cell-free formulation eliminating Cartesian background grids entirely. Employs Vector Point Interpolation (PIM) with exact Kronecker-delta projection, autonomous circular disk subdomains $\Omega_s^I$ ($r_s^I = \alpha_s h_I$), exact closed-form analytical integration without numerical quadrature, a novel **Symmetric Subdomain Galerkin Assembly** restoring discrete coercivity and symmetry, a **Dimensionless Orthogonal Energy Stabilization** ($\alpha_{\mathrm{stab}} = c_{\mathrm{stab}}(h/L)^2$) with superlinear penalty scaling ($s_{\mathrm{div}} \propto h^{-1.5}$) eliminating discrete mode softening and recovering quadratic convergence ($p = 2.15$, fine-grid error $1.29\%$), and a universal subdomain scaling standard $\alpha_s = 0.80$ bounded by geometric domain coverage ($\ge \sqrt{2}/2 \approx 0.7071$) and support containment limits ($\le 1.15$).
   - **Conforming Hybrid Edge-FEM + VNMM 2D:** Direct master-slave domain decomposition coupling lowest-order Whitney edge finite elements to interior VNMM clouds via exact trace continuity without auxiliary Lagrange multipliers.
 - **Three-Dimensional Formulations ([`3D/`](3D/)):**
   - **VNMM 3D Platform & Roadmap:** Development space for 3D vector meshless solvers, extending the stabilized framework to 3D high-frequency waveguiding and radiation problems with 12-dimensional polynomial spaces ($\mathcal{P}^1$ in 3D), 3D dimensionless stencil selection, and tetrahedral Whitney edge coupling.
@@ -42,7 +42,8 @@ VNMM/
 │   ├── README.md               # Scope, foundations, and structure of the 2D formulation
 │   ├── src/                    # Core 2D numerical libraries
 │   │   ├── vnmm_assembler_2d.py       # Vector matrix assembler with Gauss point-based support (EFG-style)
-│   │   ├── mlpg_subdomains.py         # Truly cell-free MLPG local subdomains, analytical integration, and Symmetric Subdomain Galerkin assembly
+│   │   ├── mlpg_assembler_2d.py       # Truly cell-free MLPG assembler: closed-form disk integration, orthogonal stabilization, and CSR assembly
+│   │   ├── mlpg_subdomains.py         # Subdomain geometry, active area/truncation calculations, and support search
 │   │   ├── fem_edge_2d.py             # Lowest-order Nédélec edge finite element solver (Whitney 1-forms)
 │   │   ├── fem_vnmm_hybrid_2d.py      # Coupled hybrid Edge-FEM + VNMM 2D solver with direct trace continuity
 │   │   ├── eigen_solver_cavity_2d.py  # Generalized eigenvalue solver for resonant PEC cavities
@@ -61,7 +62,12 @@ VNMM/
 │   │   ├── mlpg_cavity_eigenvalues_2d.py # MLPG resonant cavity eigensolver, spectral purification, and benchmark vs. Gauss
 │   │   └── parametric_analysis_alpha_s_mlpg_2d.py # Parametric sweep of subdomain scaling factor alpha_s in [0.30, 2.00]
 │   │
-│   ├── tests/                  # Automated unit test suite (21 passing tests)
+│   ├── tests/                  # Automated unit test suite (41 passing tests across 7 modules)
+│   │   ├── test_mlpg_assembler_2d.py          # Unit tests for MLPG closed-form integration, stabilization, and assembly
+│   │   ├── test_mlpg_cavity_eigenvalues_2d.py # Unit tests for MLPG cavity eigensolver, s_div purification, and speedup
+│   │   ├── test_mlpg_patch_test_2d.py         # Unit tests for MLPG patch test across 7 modes on regular and jitter clouds
+│   │   ├── test_mlpg_source_problem_2d.py     # Unit tests for MLPG MMS monotonic convergence (Dirichlet & Mixed)
+│   │   ├── test_mlpg_subdomains_2d.py         # Unit tests for subdomain construction, coverage, and truncated geometry
 │   │   ├── test_eigen_cavity_2d.py            # Tests for cavity mesh, PEC boundaries, and eigenvalue accuracy
 │   │   ├── test_patch_test_galerkin_2d.py     # Unit tests for Galerkin patch test under affine vector modes
 │   │   ├── test_galerkin_source_problem_2d.py # Unit tests for MMS driven source problem
@@ -130,7 +136,7 @@ pip install -r requirements.txt
 ```
 
 ### 3.3 Running Unit Tests
-Validate the entire numerical suite (21 unit tests covering mesh generation, eigenvalue solvers, patch test, MMS, and hybrid coupling):
+Validate the entire numerical suite (41 unit tests across 7 modules covering mesh generation, eigenvalue solvers, patch tests, MMS convergence, subdomains, MLPG assembly, and hybrid coupling):
 
 ```bash
 python3 -m unittest discover 2D/tests -v
@@ -178,11 +184,16 @@ Setting $s_{\text{div}} = 6.0$ selectively stiffens gradient modes ($\nabla \cdo
 For problems with geometrically complex boundaries or subdomains with established triangular edge finite elements, the repository provides direct master-slave hybrid coupling ([`2D/scripts/hybrid_fem_vnmm_convergence_comparison_2d.py`](2D/scripts/hybrid_fem_vnmm_convergence_comparison_2d.py)). By positioning VNMM interface nodes at the midpoints of adjacent Whitney edges and setting the exact dimensional scaling $c_k = e_k / \Delta y$, interface continuity is enforced directly without auxiliary Lagrange multipliers, preserving positive-definiteness and eliminating zero-mass saddle-point indefiniteness.
 
 ### 4.5 Truly Cell-Free VNMM-MLPG via Meshless Local Petrov--Galerkin
-The latest formulation developed on this platform eliminates background integration cells entirely by combining the VNMM with a **Meshless Local Petrov--Galerkin (MLPG)** framework ([`2D/src/mlpg_subdomains.py`](2D/src/mlpg_subdomains.py)):
+The latest formulation developed on this platform eliminates background integration cells entirely by combining the VNMM with a **Meshless Local Petrov--Galerkin (MLPG)** framework ([`2D/src/mlpg_assembler_2d.py`](2D/src/mlpg_assembler_2d.py), [`2D/src/mlpg_subdomains.py`](2D/src/mlpg_subdomains.py)):
 - **Vector Point Interpolation Method (Vector PIM):** Shape functions are constructed via directional polynomial point interpolation over 6-node stencils $\Omega_u^I$ ($\mathcal{P}^1$), preserving the strict vector Kronecker-delta projection property.
 - **Breakdown of Classical MLPG1 Test Functions:** We proved analytically that standard weight test functions vanishing on subdomain boundaries cause the bilinear forms to vanish identically by Stokes' and Gauss' theorems on linear vector fields, necessitating the Local Galerkin variation (MLPG6).
 - **Exact Closed-Form Disk Integrals:** Stiffness and mass matrices are integrated analytically over circular disk subdomains $\Omega_s^I$ ($V_0 = \pi (r_s^I)^2, I_2 = \frac{\pi}{4}(r_s^I)^4$), totally eliminating numerical quadrature error and intra-cell stencil switching.
 - **Symmetric Subdomain Galerkin Assembly:** Testing against the complete local polynomial space on each disk overcomes the historical asymmetry and loss of coercivity of row-by-row MLPG/LPIM schemes, guaranteeing strictly symmetric positive-semidefinite global operators.
+- **Dimensionless Orthogonal Energy Stabilization:** An analytical rank analysis reveals that evaluating linear vector fields on circular disks produces a localized rank-2 deficiency in local stiffness operators ($\mathbf{K}_{\mathrm{curl}}^I$ and $\mathbf{K}_{\mathrm{div}}^I$ have rank 1, whereas $\mathbf{M}^I$ has rank 6), causing discrete algebraic modes to soften under spatial refinement. We resolve this via a Dimensionless Orthogonal Energy Stabilization operator:
+  $$
+  \mathbf{K}_{\mathrm{stab}}^I = \alpha_{\mathrm{stab}}(h) \mathbf{M}^I (\mathbf{I} - \boldsymbol{\Pi}_{\mathrm{const}}^I), \qquad \alpha_{\mathrm{stab}}(h) = c_{\mathrm{stab}} \left(\frac{h_{\mathrm{local}}}{L}\right)^2,
+  $$
+  derived from Variational Multiscale (VMS) subgrid modeling, coupled with superlinear divergence penalty scaling $s_{\mathrm{div}} = s_0 (h_0/h)^{1.5}$. Setting $c_{\mathrm{stab}} = 70$ completely eliminates mode softening, restoring optimal asymptotic quadratic convergence ($p = 2.15$) with fine-mesh error down to $1.29\%$ on $49\times 49$.
 - **Universal Parameter Standardization ($\alpha_s = 0.80$):** Sizing of the disk radius $r_s^I = \alpha_s h_I$ is governed by two geometric bounds:
   $$\alpha_s \ge \frac{\sqrt{2}}{2} \approx 0.7071 \quad \text{(full domain coverage)}, \qquad \alpha_s \le 1.15\text{--}1.20 \quad \text{(support domain containment: } r_s^I \le r_u^I\text{)}.$$
   The universal standard $\alpha_s = 0.80$ resides centrally in the optimal window $[0.75, 0.85]$, eliminating empirical tuning and establishing parameter symmetry with the stencil threshold $\widehat{\mathrm{Tol}} = 0.80$.
@@ -338,17 +349,20 @@ For the standard square cavity $\Omega = [0, \pi]^2$ with $N_x=21, N_y=21$ (361 
 
 ### 6.3 Computational Benchmark: Truly Cell-Free VNMM-MLPG vs. Cell-Based VNMM-Gauss
 
-Benchmarking global operator assembly time and matrix non-zero entries (NNZ) demonstrates the decisive computational advantages of the closed-form analytical integration over disk subdomains compared to numerical Gauss quadrature on background cells:
+Benchmarking global operator assembly time, matrix non-zero entries (NNZ), and spectral accuracy on the 2D PEC resonant cavity demonstrates the decisive computational and accuracy advantages of stabilized VNMM-MLPG ($c_{\mathrm{stab}} = 70$) with closed-form analytical disk integration compared to numerical Gauss quadrature on background Cartesian cells:
 
-| Grid Resolution | Active DoFs | Assembly Time VNMM-Gauss (s) | Assembly Time VNMM-MLPG (s) | Assembly Speedup | NNZ VNMM-Gauss | NNZ VNMM-MLPG | Sparsity Reduction |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **$11 \times 11$** | 81 | 0.0673 | **0.0192** | **$3.51\times$** | 1,841 | **1,173** | **$-36.3\%$** |
-| **$15 \times 15$** | 169 | 0.1304 | **0.0373** | **$3.50\times$** | 3,969 | **2,505** | **$-36.9\%$** |
-| **$21 \times 21$** | 361 | 0.2728 | **0.0759** | **$3.59\times$** | 8,369 | **5,331** | **$-36.3\%$** |
-| **$27 \times 27$** | 625 | 0.4907 | **0.1352** | **$3.63\times$** | 14,881 | **9,477** | **$-36.3\%$** |
+| Grid Resolution | Active DoFs | Assembly Time VNMM-Gauss (s) | Assembly Time VNMM-MLPG (s) | Assembly Speedup | NNZ VNMM-Gauss | NNZ VNMM-MLPG | Sparsity Reduction | Error $k_c$ VNMM-Gauss | Error $k_c$ VNMM-MLPG ($c_{\mathrm{stab}}=70$) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **$15 \times 15$** | 169 | 0.0528 | **0.0260** | **$2.03\times$** | 3,969 | **3,149** | **$-20.7\%$** | 14.53% | **14.18%** |
+| **$21 \times 21$** | 361 | 0.1256 | **0.0523** | **$2.40\times$** | 8,369 | **6,629** | **$-20.8\%$** | 6.97% | **6.33%** |
+| **$27 \times 27$** | 625 | 0.2227 | **0.0886** | **$2.51\times$** | 14,881 | **11,729** | **$-21.2\%$** | 4.09% | **3.81%** |
+| **$35 \times 35$** | 1,089 | 0.4079 | **0.1555** | **$2.62\times$** | 25,609 | **20,085** | **$-21.6\%$** | 2.55% | **2.31%** |
+| **$41 \times 41$** | 1,521 | 0.5960 | **0.2132** | **$2.80\times$** | 35,521 | **27,789** | **$-21.8\%$** | 1.86% | **1.76%** |
+| **$49 \times 49$** | 2,209 | 1.1345 | **0.3060** | **$3.71\times$** | 51,073 | **38,817** | **$-24.0\%$** | 1.31% | **1.29%** |
 
-- **Assembly Speedup:** VNMM-MLPG achieves a sustained **$\sim 3.6\times$ speedup** by evaluating analytical closed-form formulas over $N$ disk subdomains rather than thousands of Gauss quadrature points with point-in-cell tests.
-- **Matrix Sparsity:** VNMM-MLPG produces matrices that are **$36\%$ sparser** because each node interacts strictly with its own 6-node stencil $\Omega_u^I$, rather than coupling with all nodes of 9 Gauss points per background cell.
+- **Assembly Speedup:** VNMM-MLPG delivers a **$2.0\times\text{--}3.7\times$ speedup** by replacing thousands of bivariate Gauss quadrature points and point-in-cell topological tests with closed-form analytical formulas evaluated directly over $N$ disk subdomains.
+- **Matrix Sparsity:** VNMM-MLPG matrices are **$20\%\text{--}24\%$ sparser** because each node interacts strictly within its autonomous 6-node stencil $\Omega_u^I$, rather than coupling with all stencils across overlapping cell quadrature points.
+- **Superior Spectral Accuracy & Convergence:** Stabilized VNMM-MLPG ($c_{\mathrm{stab}} = 70$) achieves lower cutoff wavenumber errors than cell-based VNMM-Gauss across all regular resolutions and on coarse perturbed clouds ($11.88\%$ vs. $24.67\%$, a $2.08\times$ error reduction), recovering near-quadratic asymptotic convergence ($p = 2.15$).
 
 ---
 

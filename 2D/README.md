@@ -19,7 +19,7 @@ The 2D codebase implements the stabilized formulation described in the scientifi
 5. **Conforming Hybrid Edge-FEM + VNMM Coupling:**
    Direct master-slave formulation linking Whitney edge elements to VNMM points across an interface $\Gamma_{\mathrm{int}}$ via exact scale mapping ($c_k = e_k / \Delta y$) without Lagrange multipliers.
 6. **Truly Cell-Free VNMM-MLPG (Meshless Local Petrov--Galerkin):**
-   Decouples spatial integration from background Cartesian grids by assigning autonomous circular subdomains $\Omega_s^I$ ($r_s^I = \alpha_s h_I$) to each node. Employs closed-form analytical integration over disks, eliminating numerical quadrature and intra-cell stencil switching. Resolves operator asymmetry via a novel **Symmetric Subdomain Galerkin Assembly**, guaranteeing strictly symmetric positive-semidefinite global operators, accompanied by a universal subdomain sizing standard $\alpha_s = 0.80$ bounded by geometric domain coverage and support containment limits.
+   Decouples spatial integration from background Cartesian grids by assigning autonomous circular subdomains $\Omega_s^I$ ($r_s^I = \alpha_s h_I$) to each node. Employs closed-form analytical integration over disks, eliminating numerical quadrature and intra-cell stencil switching. Resolves operator asymmetry via a novel **Symmetric Subdomain Galerkin Assembly**, guaranteeing strictly symmetric positive-semidefinite global operators. Solves the localized rank-2 deficiency of linear vector fields on circular disks through a **Dimensionless Orthogonal Energy Stabilization** ($\alpha_{\mathrm{stab}} = c_{\mathrm{stab}}(h/L)^2$) and superlinear divergence penalty scaling ($s_{\mathrm{div}} \propto h^{-1.5}$), eliminating mode softening and restoring near-quadratic convergence ($p = 2.15$, fine-mesh error down to $1.29\%$). Standardizes subdomain sizing with universal parameter $\alpha_s = 0.80$, bounded by geometric coverage and support containment limits.
 
 ---
 
@@ -30,7 +30,8 @@ The 2D codebase implements the stabilized formulation described in the scientifi
 ├── src/                    # Core mathematical and numerical library
 │   ├── cavity_mesh_2d.py       # Point cloud generation, PEC boundary tagging, and directional assignment
 │   ├── vnmm_assembler_2d.py    # Numerical quadrature, local matrix inversion, and global system assembly
-│   ├── mlpg_subdomains.py      # Truly cell-free MLPG local subdomains, closed-form analytic integrals, and Symmetric Subdomain Galerkin assembly
+│   ├── mlpg_assembler_2d.py    # Truly cell-free MLPG assembler: closed-form disk integration, orthogonal stabilization, and CSR assembly
+│   ├── mlpg_subdomains.py      # Subdomain geometry, active area/truncation calculations, and support search
 │   ├── eigen_solver_cavity_2d.py # Sparse generalized eigensolver (Arpack / eigs) and modal sorting
 │   ├── gauss_quadrature_2d.py  # 2D tensor-product Gauss-Legendre quadrature engine
 │   ├── fem_edge_2d.py          # Pure triangular Nédélec 1st-kind edge finite element solver
@@ -53,11 +54,16 @@ The 2D codebase implements the stabilized formulation described in the scientifi
 │   ├── dense_mesh_2d.csv       # Standard dense benchmark cloud
 │   └── dense_mesh_1928_2d.csv  # High-density 1,928-node cloud
 │
-└── tests/                  # Automated unit test suite (21 passing tests)
-    ├── test_eigen_cavity_2d.py        # Mesh validity, PEC boundaries, and eigenvalue accuracy
-    ├── test_patch_test_galerkin_2d.py # Consistency tests under affine vector modes
+└── tests/                  # Automated unit test suite (41 passing tests across 7 modules)
+    ├── test_mlpg_assembler_2d.py          # Unit tests for MLPG closed-form integration, stabilization, and assembly
+    ├── test_mlpg_cavity_eigenvalues_2d.py # Unit tests for MLPG cavity eigensolver, s_div purification, and speedup
+    ├── test_mlpg_patch_test_2d.py         # Unit tests for MLPG patch test across 7 modes on regular and jitter clouds
+    ├── test_mlpg_source_problem_2d.py     # Unit tests for MLPG MMS monotonic convergence (Dirichlet & Mixed)
+    ├── test_mlpg_subdomains_2d.py         # Unit tests for subdomain construction, coverage, and truncated geometry
+    ├── test_eigen_cavity_2d.py            # Mesh validity, PEC boundaries, and eigenvalue accuracy
+    ├── test_patch_test_galerkin_2d.py     # Consistency tests under affine vector modes
     ├── test_galerkin_source_problem_2d.py # MMS driven source problem convergence
-    └── test_hybrid_fem_vnmm_2d.py     # Coupled hybrid solver symmetry and accuracy
+    └── test_hybrid_fem_vnmm_2d.py         # Coupled hybrid solver symmetry and accuracy
 ```
 
 ---
