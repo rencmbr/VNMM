@@ -16,15 +16,48 @@ ENV/
 .coverage
 htmlcov/
 
-# LaTeX build and log artifacts
-*.log
+# LaTeX build and auxiliary artifacts
+*.aux
+*.bbl
 *.blg
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bcf
+*.run.xml
+*.xdv
+*.dvi
 *.spl
 *.fls
 *.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.synctex
 *.nav
 *.snm
 *.vrb
+*.idx
+*.ilg
+*.ind
+*.upa
+*.upb
+*.loa
+*.lol
+*.loe
+*.tdo
+*.vtc
+_minted*
+
+# Editor and IDE Files
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+*.bak
 
 # Operating System Files
 .DS_Store
@@ -39,3 +72,10 @@ reports/**/*.pdf
 reports/*.pdf
 reports/**/*.png
 reports/*.png
+
+# Data and JSON caches
+*.json
+
+# Scratch directories
+scratch/
+

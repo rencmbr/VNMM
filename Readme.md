@@ -3,8 +3,9 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![Computational Scope](https://img.shields.io/badge/scope-2D%20%7C%203D-blue.svg)](#)
-[![Unit Tests](https://img.shields.io/badge/tests-21%20passed-brightgreen.svg)](2D/tests/)
-[![Paper EABE](https://img.shields.io/badge/paper-EABE%20(Elsevier)-orange.svg)](paper/VNMM2D-EABE/)
+[![Unit Tests](https://img.shields.io/badge/tests-41%20passed-brightgreen.svg)](2D/tests/)
+[![Paper EABE Stabilized](https://img.shields.io/badge/paper-EABE%20(Stabilized)-orange.svg)](paper/VNMM2D-EABE/)
+[![Paper EABE MLPG](https://img.shields.io/badge/paper-EABE%20(Cell--Free%20MLPG)-darkgreen.svg)](paper/mlpg-vnmm/)
 [![Paper Hybrid](https://img.shields.io/badge/paper-Hybrid%20FEM--VNMM-blueviolet.svg)](paper/HybridVNMM-EFEM/)
 [![Repository](https://img.shields.io/badge/GitHub-VNMM-blue.svg)](https://github.com/rencmbr/VNMM)
 
@@ -17,12 +18,14 @@ This repository hosts the central scientific computing platform, numerical libra
 Rather than serving solely as a companion to a single publication, this repository functions as an **active, multi-dimensional research platform** dedicated to the continuous theoretical and computational advancement of the VNMM in both **two dimensions (2D)** and **three dimensions (3D)**:
 
 - **Two-Dimensional Formulations ([`2D/`](2D/)):**
-  - **Stabilized VNMM 2D:** Complete linear vector polynomial basis $\mathcal{P}^1$ ($M_{\text{supp}} = 6$), scale-invariant dimensionless placement criterion $\widehat{\mathbf{A}}$ ($\widehat{\mathrm{Tol}} = 0.80$), Gauss-point-based support selection, and Ritz-Galerkin div-curl regularization ($s_{\text{div}} = 6.0$).
+  - **Stabilized VNMM 2D (Cell-Based Gauss):** Complete linear vector polynomial basis $\mathcal{P}^1$ ($M_{\text{supp}} = 6$), scale-invariant dimensionless placement criterion $\widehat{\mathbf{A}}$ ($\widehat{\mathrm{Tol}} = 0.80$), Gauss-point-based support selection, and Ritz-Galerkin div-curl regularization ($s_{\text{div}} = 6.0$).
+  - **Truly Cell-Free VNMM-MLPG 2D (Meshless Local Petrov--Galerkin):** Truly meshless, cell-free formulation eliminating Cartesian background grids entirely. Employs Vector Point Interpolation (PIM) with exact Kronecker-delta projection, autonomous circular disk subdomains $\Omega_s^I$ ($r_s^I = \alpha_s h_I$), exact closed-form analytical integration without numerical quadrature, a novel **Symmetric Subdomain Galerkin Assembly** restoring discrete coercivity and symmetry, a **Dimensionless Orthogonal Energy Stabilization** ($\alpha_{\mathrm{stab}} = c_{\mathrm{stab}}(h/L)^2$) with superlinear penalty scaling ($s_{\mathrm{div}} \propto h^{-1.5}$) eliminating discrete mode softening and recovering quadratic convergence ($p = 2.15$, fine-grid error $1.29\%$), and a universal subdomain scaling standard $\alpha_s = 0.80$ bounded by geometric domain coverage ($\ge \sqrt{2}/2 \approx 0.7071$) and support containment limits ($\le 1.15$).
   - **Conforming Hybrid Edge-FEM + VNMM 2D:** Direct master-slave domain decomposition coupling lowest-order Whitney edge finite elements to interior VNMM clouds via exact trace continuity without auxiliary Lagrange multipliers.
 - **Three-Dimensional Formulations ([`3D/`](3D/)):**
   - **VNMM 3D Platform & Roadmap:** Development space for 3D vector meshless solvers, extending the stabilized framework to 3D high-frequency waveguiding and radiation problems with 12-dimensional polynomial spaces ($\mathcal{P}^1$ in 3D), 3D dimensionless stencil selection, and tetrahedral Whitney edge coupling.
 - **Scientific Publications ([`paper/`](paper/)):**
   - **EABE Elsevier Submission ([`paper/VNMM2D-EABE/`](paper/VNMM2D-EABE/)):** *"A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds"*, under review in *Engineering Analysis with Boundary Elements*.
+  - **Truly Cell-Free VNMM-MLPG Manuscript ([`paper/mlpg-vnmm/`](paper/mlpg-vnmm/)):** *"A Truly Cell-Free Vector Nodal Meshless Method via Meshless Local Petrov--Galerkin (VNMM-MLPG) for 2D Electromagnetic Problems"*, targeted for *Engineering Analysis with Boundary Elements*.
   - **Hybrid Coupling Manuscript ([`paper/HybridVNMM-EFEM/`](paper/HybridVNMM-EFEM/)):** *"Conforming Hybrid Edge Finite Element and Vector Nodal Meshless Formulation for 2D Electromagnetics"*.
 
 ---
@@ -39,21 +42,32 @@ VNMM/
 │   ├── README.md               # Scope, foundations, and structure of the 2D formulation
 │   ├── src/                    # Core 2D numerical libraries
 │   │   ├── vnmm_assembler_2d.py       # Vector matrix assembler with Gauss point-based support (EFG-style)
+│   │   ├── mlpg_assembler_2d.py       # Truly cell-free MLPG assembler: closed-form disk integration, orthogonal stabilization, and CSR assembly
+│   │   ├── mlpg_subdomains.py         # Subdomain geometry, active area/truncation calculations, and support search
 │   │   ├── fem_edge_2d.py             # Lowest-order Nédélec edge finite element solver (Whitney 1-forms)
 │   │   ├── fem_vnmm_hybrid_2d.py      # Coupled hybrid Edge-FEM + VNMM 2D solver with direct trace continuity
 │   │   ├── eigen_solver_cavity_2d.py  # Generalized eigenvalue solver for resonant PEC cavities
 │   │   ├── cavity_mesh_2d.py          # Nodal cloud generators with tangential boundary directors
 │   │   └── gauss_quadrature_2d.py     # 1D and tensor-product 2D Gauss-Legendre quadrature schemes
 │   │
-│   ├── scripts/                # Executable research scripts, benchmarks, and figure generators (43 scripts)
-│   │   ├── generate_*_2d.py           # Publication-quality figure generation (Figures 1 to 9 of the paper)
+│   ├── scripts/                # Executable research scripts, benchmarks, and figure generators (47 scripts)
+│   │   ├── generate_*_2d.py           # Publication-quality figure generation (Figures 1 to 9 of the stabilized paper)
 │   │   ├── galerkin_*_2d.py           # Variational patch test and Method of Manufactured Solutions (MMS)
 │   │   ├── dimensionless_*_2d.py      # Dimensionless placement matrix A_hat and scale-invariant stencil search
 │   │   ├── comparative_*_2d.py        # Systematic convergence benchmarks: VNMM 2D vs. Edge FEM
 │   │   ├── hybrid_*_2d.py             # Coupled hybrid FEM-VNMM solver across regular and irregular meshes
-│   │   └── parametric_*_2d.py         # Parametric tolerance sweeps and spatial density studies
+│   │   ├── parametric_*_2d.py         # Parametric tolerance sweeps and spatial density studies
+│   │   ├── mlpg_patch_test_2d.py      # MLPG Galerkin patch test across 7 affine vector modes (~10^-15 precision)
+│   │   ├── mlpg_source_problem_2d.py  # MLPG asymptotic convergence (MMS) under Dirichlet and mixed Dirichlet-Neumann
+│   │   ├── mlpg_cavity_eigenvalues_2d.py # MLPG resonant cavity eigensolver, spectral purification, and benchmark vs. Gauss
+│   │   └── parametric_analysis_alpha_s_mlpg_2d.py # Parametric sweep of subdomain scaling factor alpha_s in [0.30, 2.00]
 │   │
-│   ├── tests/                  # Automated unit test suite (21 passing tests)
+│   ├── tests/                  # Automated unit test suite (41 passing tests across 7 modules)
+│   │   ├── test_mlpg_assembler_2d.py          # Unit tests for MLPG closed-form integration, stabilization, and assembly
+│   │   ├── test_mlpg_cavity_eigenvalues_2d.py # Unit tests for MLPG cavity eigensolver, s_div purification, and speedup
+│   │   ├── test_mlpg_patch_test_2d.py         # Unit tests for MLPG patch test across 7 modes on regular and jitter clouds
+│   │   ├── test_mlpg_source_problem_2d.py     # Unit tests for MLPG MMS monotonic convergence (Dirichlet & Mixed)
+│   │   ├── test_mlpg_subdomains_2d.py         # Unit tests for subdomain construction, coverage, and truncated geometry
 │   │   ├── test_eigen_cavity_2d.py            # Tests for cavity mesh, PEC boundaries, and eigenvalue accuracy
 │   │   ├── test_patch_test_galerkin_2d.py     # Unit tests for Galerkin patch test under affine vector modes
 │   │   ├── test_galerkin_source_problem_2d.py # Unit tests for MMS driven source problem
@@ -80,6 +94,13 @@ VNMM/
 │   │   ├── Highlights.txt      # Research highlights (≤ 85 characters per bullet point)
 │   │   ├── Suggested_Reviewers.txt # 5 independent international reviewers with institutional emails
 │   │   └── references.bib      # BibTeX citation database
+│   │
+│   ├── mlpg-vnmm/              # Truly Cell-Free VNMM-MLPG 2D Manuscript (EABE Elsevier)
+│   │   ├── main-vnmm-mlpg.tex  # Main manuscript source for the truly cell-free MLPG formulation
+│   │   ├── generate_mlpg_figures.py # Script generating all 6 publication figures (PNG)
+│   │   ├── references.bib      # BibTeX citation database
+│   │   ├── fig_mlpg_*.png      # 6 publication figures
+│   │   └── main-vnmm-mlpg.pdf  # Compiled manuscript PDF
 │   │
 │   └── HybridVNMM-EFEM/        # Manuscript sources for hybrid Edge-FEM + VNMM coupling
 │       ├── main-acoplamento-vnmm-efem.tex # Main manuscript source for hybrid formulation
@@ -115,7 +136,7 @@ pip install -r requirements.txt
 ```
 
 ### 3.3 Running Unit Tests
-Validate the entire numerical suite (21 unit tests covering mesh generation, eigenvalue solvers, patch test, MMS, and hybrid coupling):
+Validate the entire numerical suite (41 unit tests across 7 modules covering mesh generation, eigenvalue solvers, patch tests, MMS convergence, subdomains, MLPG assembly, and hybrid coupling):
 
 ```bash
 python3 -m unittest discover 2D/tests -v
@@ -162,7 +183,22 @@ Setting $s_{\text{div}} = 6.0$ selectively stiffens gradient modes ($\nabla \cdo
 ### 4.4 Conforming Hybrid Edge-FEM + VNMM 2D Coupling
 For problems with geometrically complex boundaries or subdomains with established triangular edge finite elements, the repository provides direct master-slave hybrid coupling ([`2D/scripts/hybrid_fem_vnmm_convergence_comparison_2d.py`](2D/scripts/hybrid_fem_vnmm_convergence_comparison_2d.py)). By positioning VNMM interface nodes at the midpoints of adjacent Whitney edges and setting the exact dimensional scaling $c_k = e_k / \Delta y$, interface continuity is enforced directly without auxiliary Lagrange multipliers, preserving positive-definiteness and eliminating zero-mass saddle-point indefiniteness.
 
-### 4.5 Architectural Roadmap for Three-Dimensional Extension (VNMM 3D)
+### 4.5 Truly Cell-Free VNMM-MLPG via Meshless Local Petrov--Galerkin
+The latest formulation developed on this platform eliminates background integration cells entirely by combining the VNMM with a **Meshless Local Petrov--Galerkin (MLPG)** framework ([`2D/src/mlpg_assembler_2d.py`](2D/src/mlpg_assembler_2d.py), [`2D/src/mlpg_subdomains.py`](2D/src/mlpg_subdomains.py)):
+- **Vector Point Interpolation Method (Vector PIM):** Shape functions are constructed via directional polynomial point interpolation over 6-node stencils $\Omega_u^I$ ($\mathcal{P}^1$), preserving the strict vector Kronecker-delta projection property.
+- **Breakdown of Classical MLPG1 Test Functions:** We proved analytically that standard weight test functions vanishing on subdomain boundaries cause the bilinear forms to vanish identically by Stokes' and Gauss' theorems on linear vector fields, necessitating the Local Galerkin variation (MLPG6).
+- **Exact Closed-Form Disk Integrals:** Stiffness and mass matrices are integrated analytically over circular disk subdomains $\Omega_s^I$ ($V_0 = \pi (r_s^I)^2, I_2 = \frac{\pi}{4}(r_s^I)^4$), totally eliminating numerical quadrature error and intra-cell stencil switching.
+- **Symmetric Subdomain Galerkin Assembly:** Testing against the complete local polynomial space on each disk overcomes the historical asymmetry and loss of coercivity of row-by-row MLPG/LPIM schemes, guaranteeing strictly symmetric positive-semidefinite global operators.
+- **Dimensionless Orthogonal Energy Stabilization:** An analytical rank analysis reveals that evaluating linear vector fields on circular disks produces a localized rank-2 deficiency in local stiffness operators ($\mathbf{K}_{\mathrm{curl}}^I$ and $\mathbf{K}_{\mathrm{div}}^I$ have rank 1, whereas $\mathbf{M}^I$ has rank 6), causing discrete algebraic modes to soften under spatial refinement. We resolve this via a Dimensionless Orthogonal Energy Stabilization operator:
+  $$
+  \mathbf{K}_{\mathrm{stab}}^I = \alpha_{\mathrm{stab}}(h) \mathbf{M}^I (\mathbf{I} - \boldsymbol{\Pi}_{\mathrm{const}}^I), \qquad \alpha_{\mathrm{stab}}(h) = c_{\mathrm{stab}} \left(\frac{h_{\mathrm{local}}}{L}\right)^2,
+  $$
+  derived from Variational Multiscale (VMS) subgrid modeling, coupled with superlinear divergence penalty scaling $s_{\mathrm{div}} = s_0 (h_0/h)^{1.5}$. Setting $c_{\mathrm{stab}} = 70$ completely eliminates mode softening, restoring optimal asymptotic quadratic convergence ($p = 2.15$) with fine-mesh error down to $1.29\%$ on $49\times 49$.
+- **Universal Parameter Standardization ($\alpha_s = 0.80$):** Sizing of the disk radius $r_s^I = \alpha_s h_I$ is governed by two geometric bounds:
+  $$\alpha_s \ge \frac{\sqrt{2}}{2} \approx 0.7071 \quad \text{(full domain coverage)}, \qquad \alpha_s \le 1.15\text{--}1.20 \quad \text{(support domain containment: } r_s^I \le r_u^I\text{)}.$$
+  The universal standard $\alpha_s = 0.80$ resides centrally in the optimal window $[0.75, 0.85]$, eliminating empirical tuning and establishing parameter symmetry with the stencil threshold $\widehat{\mathrm{Tol}} = 0.80$.
+
+### 4.6 Architectural Roadmap for Three-Dimensional Extension (VNMM 3D)
 Extending the stabilized vector nodal meshless methodology to three dimensions ([`3D/`](3D/)) addresses full 3D vector electromagnetic boundary-value and eigenvalue problems:
 - **3D Complete Polynomial Space ($\mathcal{P}^1$ in 3D):** Requires $M_{\text{supp}} = 12$ support nodes per stencil to span the 12-dimensional vector polynomial space $\mathcal{P}_1 \times \mathcal{P}_1 \times \mathcal{P}_1$, completely capturing the 9-component 3D displacement gradient tensor $\mathbf{J} = \nabla\vec{E}$ and eliminating 3D curl stagnation.
 - **3D Scale-Invariant Placement Matrix ($\widehat{\mathbf{A}}_{12 \times 12}$):** Extends dimensionless coordinate normalization to 3D spherical neighborhoods, establishing reliable conditioning thresholds against 3D coplanar, concurrent, and degenerated director stencils.
@@ -244,6 +280,36 @@ python3 2D/scripts/comparative_convergence_vnmm_vs_fem_2d.py
 
 ---
 
+### 5.5 Truly Cell-Free VNMM-MLPG 2D Scripts & Benchmarks
+
+| Script | Location | Scientific Contribution / Benchmark |
+| :--- | :--- | :--- |
+| [`mlpg_patch_test_2d.py`](2D/scripts/mlpg_patch_test_2d.py) | `2D/scripts/` | Verifies the Galerkin patch test across 7 affine vector states on regular and 25% jittered clouds (machine precision $\sim 10^{-15}$). |
+| [`mlpg_source_problem_2d.py`](2D/scripts/mlpg_source_problem_2d.py) | `2D/scripts/` | MMS asymptotic convergence order study ($h \to 0$) under pure Dirichlet and mixed Dirichlet--Neumann (PMC) conditions ($\mathcal{O}(h^2)$ in $L^2$, $\mathcal{O}(h)$ in $H(\mathbf{curl})$). |
+| [`mlpg_cavity_eigenvalues_2d.py`](2D/scripts/mlpg_cavity_eigenvalues_2d.py) | `2D/scripts/` | 2D PEC resonant cavity eigensolver, spectral purification with $s_{\mathrm{div}}$, cutoff wavenumber comparisons, and CPU assembly benchmarks. |
+| [`parametric_analysis_alpha_s_mlpg_2d.py`](2D/scripts/parametric_analysis_alpha_s_mlpg_2d.py) | `2D/scripts/` | Comprehensive sweep of $\alpha_s \in [0.30, 2.00]$ analyzing domain coverage, support containment, MMS accuracy, and cavity eigenvalues. |
+| [`generate_mlpg_figures.py`](paper/mlpg-vnmm/generate_mlpg_figures.py) | `paper/mlpg-vnmm/` | Standalone generator reproducing all 6 publication figures for the VNMM-MLPG manuscript. |
+
+#### MLPG Execution Quick Commands:
+```bash
+# Run Galerkin patch test for VNMM-MLPG:
+python3 2D/scripts/mlpg_patch_test_2d.py
+
+# Run asymptotic MMS convergence test (Dirichlet & Mixed):
+python3 2D/scripts/mlpg_source_problem_2d.py
+
+# Run resonant cavity eigensolver and assembly benchmark:
+python3 2D/scripts/mlpg_cavity_eigenvalues_2d.py
+
+# Run parametric sensitivity analysis of alpha_s:
+python3 2D/scripts/parametric_analysis_alpha_s_mlpg_2d.py
+
+# Generate all 6 publication figures for the MLPG paper:
+python3 paper/mlpg-vnmm/generate_mlpg_figures.py
+```
+
+---
+
 ## 6. Key Benchmark Results
 
 ### 6.1 Baseline PEC Resonant Cavity Benchmark ($TE_z$)
@@ -281,6 +347,25 @@ For the standard square cavity $\Omega = [0, \pi]^2$ with $N_x=21, N_y=21$ (361 
 
 ---
 
+### 6.3 Computational Benchmark: Truly Cell-Free VNMM-MLPG vs. Cell-Based VNMM-Gauss
+
+Benchmarking global operator assembly time, matrix non-zero entries (NNZ), and spectral accuracy on the 2D PEC resonant cavity demonstrates the decisive computational and accuracy advantages of stabilized VNMM-MLPG ($c_{\mathrm{stab}} = 70$) with closed-form analytical disk integration compared to numerical Gauss quadrature on background Cartesian cells:
+
+| Grid Resolution | Active DoFs | Assembly Time VNMM-Gauss (s) | Assembly Time VNMM-MLPG (s) | Assembly Speedup | NNZ VNMM-Gauss | NNZ VNMM-MLPG | Sparsity Reduction | Error $k_c$ VNMM-Gauss | Error $k_c$ VNMM-MLPG ($c_{\mathrm{stab}}=70$) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **$15 \times 15$** | 169 | 0.0528 | **0.0260** | **$2.03\times$** | 3,969 | **3,149** | **$-20.7\%$** | 14.53% | **14.18%** |
+| **$21 \times 21$** | 361 | 0.1256 | **0.0523** | **$2.40\times$** | 8,369 | **6,629** | **$-20.8\%$** | 6.97% | **6.33%** |
+| **$27 \times 27$** | 625 | 0.2227 | **0.0886** | **$2.51\times$** | 14,881 | **11,729** | **$-21.2\%$** | 4.09% | **3.81%** |
+| **$35 \times 35$** | 1,089 | 0.4079 | **0.1555** | **$2.62\times$** | 25,609 | **20,085** | **$-21.6\%$** | 2.55% | **2.31%** |
+| **$41 \times 41$** | 1,521 | 0.5960 | **0.2132** | **$2.80\times$** | 35,521 | **27,789** | **$-21.8\%$** | 1.86% | **1.76%** |
+| **$49 \times 49$** | 2,209 | 1.1345 | **0.3060** | **$3.71\times$** | 51,073 | **38,817** | **$-24.0\%$** | 1.31% | **1.29%** |
+
+- **Assembly Speedup:** VNMM-MLPG delivers a **$2.0\times\text{--}3.7\times$ speedup** by replacing thousands of bivariate Gauss quadrature points and point-in-cell topological tests with closed-form analytical formulas evaluated directly over $N$ disk subdomains.
+- **Matrix Sparsity:** VNMM-MLPG matrices are **$20\%\text{--}24\%$ sparser** because each node interacts strictly within its autonomous 6-node stencil $\Omega_u^I$, rather than coupling with all stencils across overlapping cell quadrature points.
+- **Superior Spectral Accuracy & Convergence:** Stabilized VNMM-MLPG ($c_{\mathrm{stab}} = 70$) achieves lower cutoff wavenumber errors than cell-based VNMM-Gauss across all regular resolutions and on coarse perturbed clouds ($11.88\%$ vs. $24.67\%$, a $2.08\times$ error reduction), recovering near-quadratic asymptotic convergence ($p = 2.15$).
+
+---
+
 ## 7. Technical Reports & Historical Research Notes
 
 For in-depth mathematical derivations, failure mode analyses, and comprehensive parameter studies, refer to the technical reports in [`reports/`](reports/):
@@ -301,7 +386,7 @@ For in-depth mathematical derivations, failure mode analyses, and comprehensive 
 
 ## 8. Citation
 
-If this codebase, the stabilized 2D formulation, or the VNMM research platform contributes to your research, please cite:
+If this codebase, the stabilized 2D formulation, or the truly cell-free VNMM-MLPG framework contributes to your research, please cite:
 
 ```bibtex
 @article{mesquita2026stabilized,
@@ -310,6 +395,14 @@ If this codebase, the stabilized 2D formulation, or the VNMM research platform c
   journal={Engineering Analysis with Boundary Elements},
   year={2026},
   note={Under review. Public repository at \url{https://github.com/rencmbr/VNMM}}
+}
+
+@article{mesquita2026mlpg,
+  title={A Truly Cell-Free Vector Nodal Meshless Method via Meshless Local Petrov--Galerkin (VNMM-MLPG) for 2D Electromagnetic Problems},
+  author={Mesquita, Renato C. and da Silva, Elson J. and Gon{\c{c}}alves, B{\'a}rbara M. F. and Ortiz, Luilly A. G.},
+  journal={Engineering Analysis with Boundary Elements},
+  year={2026},
+  note={Targeted submission. Public repository at \url{https://github.com/rencmbr/VNMM}}
 }
 ```
 
