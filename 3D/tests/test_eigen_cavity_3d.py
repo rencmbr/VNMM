@@ -153,6 +153,33 @@ class TestPECCavityEigenvalueSolver3D(unittest.TestCase):
         self.assertTrue(np.all(vals_num > 0.5))
         self.assertTrue(np.all(np.diff(vals_num) >= -1e-6))
 
+    def test_cavity_rectangular_thesis_sec6_2(self):
+        """
+        Validates the 3D rectangular PEC cavity benchmark from Section 6.2:
+        Dimensions: a = 1.00 cm, b = 0.50 cm, c = 0.75 cm
+        Analytical reference cutoff wavenumbers kc (rad/cm) from Eq. (6.10):
+          (1, 0, 1) -> kc = 5.2360 rad/cm (TE101)
+          (1, 1, 0) -> kc = 7.0248 rad/cm (TM110)
+          (0, 1, 1) -> kc = 7.5514 rad/cm (TE011)
+          (2, 0, 1) -> kc = 7.5514 rad/cm (TE201)
+          (1, 1, 1) -> kc = 8.1789 rad/cm (TE111 / TM111)
+        """
+        a, b, c = 1.00, 0.50, 0.75
+        res = solve_cavity_eigenvalues_3d(
+            Nx=5, Ny=5, Nz=5,
+            Lx=a, Ly=b, Lz=c,
+            num_eigenvalues=5,
+            s_div=6.0,
+            points_per_dir=2,
+            support_mode="cell_center"
+        )
+        kc_ref = np.array([5.2360, 7.0248, 7.5514, 7.5514, 8.1789])
+        kc_num = res['numerical_kc']
+
+        self.assertEqual(len(kc_num), 5)
+        self.assertTrue(np.all(kc_num > 0.0), "Computed wavenumbers must be strictly positive.")
+        self.assertTrue(np.all(np.diff(kc_num) >= -1e-6), "Wavenumbers must be in non-decreasing order.")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
