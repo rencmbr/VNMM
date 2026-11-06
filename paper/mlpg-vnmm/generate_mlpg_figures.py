@@ -285,24 +285,24 @@ def plot_fig3_mms_convergence():
 
     # Pure Dirichlet curves
     ax.loglog(h_vals, err_L2_dir, 'o-b', linewidth=1.8, markersize=6,
-              label=f'Dirichlet $L^2(\\mathbf{{E}})$ (Rate: $\\mathcal{{O}}(h^{{{rate_L2_dir:.2f}}})$)')
+              label=f'Dirichlet $L^2(\\mathbf{{E}})$ (Rate: $\\mathcal{{O}}(h_{{\\mathrm{{nom}}}}^{{{rate_L2_dir:.2f}}})$)')
     ax.loglog(h_vals, err_curl_dir, 's-r', linewidth=1.8, markersize=6,
-              label=f'Dirichlet $H(\\mathbf{{curl}})$ (Rate: $\\mathcal{{O}}(h^{{{rate_curl_dir:.2f}}})$)')
+              label=f'Dirichlet $|H(\\mathbf{{curl}})|$ (Rate: $\\mathcal{{O}}(h_{{\\mathrm{{nom}}}}^{{{rate_curl_dir:.2f}}})$)')
 
     # Mixed Dirichlet-Neumann curves
     ax.loglog(h_vals, err_L2_neu, 'o--c', linewidth=1.8, markersize=6, fillstyle='none',
-              label=f'Mixed Neumann $L^2(\\mathbf{{E}})$ (Rate: $\\mathcal{{O}}(h^{{{rate_L2_neu:.2f}}})$)')
+              label=f'Mixed Neumann $L^2(\\mathbf{{E}})$ (Rate: $\\mathcal{{O}}(h_{{\\mathrm{{nom}}}}^{{{rate_L2_neu:.2f}}})$)')
     ax.loglog(h_vals, err_curl_neu, 's--m', linewidth=1.8, markersize=6, fillstyle='none',
-              label=f'Mixed Neumann $H(\\mathbf{{curl}})$ (Rate: $\\mathcal{{O}}(h^{{{rate_curl_neu:.2f}}})$)')
+              label=f'Mixed Neumann $|H(\\mathbf{{curl}})|$ (Rate: $\\mathcal{{O}}(h_{{\\mathrm{{nom}}}}^{{{rate_curl_neu:.2f}}})$)')
 
     # Theoretical asymptotic slopes
     h_ref = np.array([h_vals[1], h_vals[-1]])
     slope2 = err_L2_dir[1] * (h_ref / h_ref[0]) ** 2.0
     slope1 = err_curl_dir[1] * (h_ref / h_ref[0]) ** 1.0
-    ax.loglog(h_ref, slope2, 'k:', linewidth=1.2, label='Theoretical $\\mathcal{O}(h^2)$ slope')
-    ax.loglog(h_ref, slope1, 'gray', linestyle=':', linewidth=1.2, label='Theoretical $\\mathcal{O}(h^1)$ slope')
+    ax.loglog(h_ref, slope2, 'k:', linewidth=1.2, label=r'Theoretical $\mathcal{O}(h_{\mathrm{nom}}^2)$ slope')
+    ax.loglog(h_ref, slope1, 'gray', linestyle=':', linewidth=1.2, label=r'Theoretical $\mathcal{O}(h_{\mathrm{nom}}^1)$ slope')
 
-    ax.set_xlabel('Characteristic Nodal Spacing $h = \\pi / (N - 1)$ [m]')
+    ax.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]')
     ax.set_ylabel('Relative Error Norm')
     ax.legend(loc='lower right', framealpha=0.92, fontsize=8.5)
     ax.grid(True, which='both', linestyle=':', alpha=0.5)
@@ -392,7 +392,7 @@ def plot_fig_cavity_jitter():
     ax1.loglog(h_vals, mlpg_25, 's-', color='#2ca02c', linewidth=2.0, markersize=6,
                label=f'25% Jitter ($p={p_m25:.2f}$)')
 
-    ax1.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
+    ax1.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]')
     ax1.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
     ax1.grid(True, which="both", linestyle=':', alpha=0.5)
     ax1.legend(loc='lower right', framealpha=0.92)
@@ -446,9 +446,9 @@ def plot_fig_cavity_stabilization():
     # Reference O(h^2) slope on ax1
     h_ref = np.array([h[2], h[5]])
     err_ref = data[0.0][100][2] * (h_ref / h_ref[0])**2
-    ax1.loglog(h_ref, err_ref, 'k--', linewidth=1.3, label=r'$\mathcal{O}(h^2)$ reference slope')
+    ax1.loglog(h_ref, err_ref, 'k--', linewidth=1.3, label=r'$\mathcal{O}(h_{\mathrm{nom}}^2)$ reference slope')
 
-    ax1.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
+    ax1.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]')
     ax1.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [%]')
     ax1.set_title('(a)', fontsize=11)
     ax1.grid(True, which='both', linestyle=':', alpha=0.5)
@@ -469,9 +469,9 @@ def plot_fig_cavity_stabilization():
     # Reference O(h^2) slope on ax2
     h_ref2 = np.array([h[2], h[5]])
     err_ref2 = data[0.25][100][2] * (h_ref2 / h_ref2[0])**2
-    ax2.loglog(h_ref2, err_ref2, 'k--', linewidth=1.3, label=r'$\mathcal{O}(h^2)$ reference slope')
+    ax2.loglog(h_ref2, err_ref2, 'k--', linewidth=1.3, label=r'$\mathcal{O}(h_{\mathrm{nom}}^2)$ reference slope')
 
-    ax2.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
+    ax2.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]')
     ax2.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [%]')
     ax2.set_title('(b)', fontsize=11)
     ax2.grid(True, which='both', linestyle=':', alpha=0.5)
@@ -526,7 +526,7 @@ def plot_fig5_benchmark():
     ax.loglog(h_vals, mlpg_25, 'o-', color='#2ca02c', linewidth=2.0,
               label=f'MLPG 25% ($p={p_m25:.2f}$)')
 
-    ax.set_xlabel(r'Characteristic Nodal Spacing $h = \pi / (N - 1)$ [m]')
+    ax.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]')
     ax.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
     ax.grid(True, which="both", linestyle=':', alpha=0.5)
     ax.legend(loc='upper left', framealpha=0.92, fontsize=8.5, ncol=2)

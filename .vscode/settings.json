@@ -24,5 +24,8 @@
   "latex-workshop.view.pdf.tab.editorGroup": "right",
   "latex-workshop.showContextMenu": true,
   "latex-workshop.synctex.afterBuild.enabled": true,
-  "latex-workshop.formatting.latex": "latexindent"
+  "latex-workshop.formatting.latex": "none",
+  "[latex]": {
+    "editor.formatOnSave": false
+  }
 }
