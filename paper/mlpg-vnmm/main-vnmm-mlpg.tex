@@ -172,7 +172,7 @@ For all three cases, Fig.~\ref{fig:schematic_mlpg} also illustrates the real 6-n
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=0.72\textwidth]{fig_mlpg_subdomains_schematic.png}
+    \includegraphics[width=0.72\textwidth]{fig_mlpg_subdomains_schematic.pdf}
     \caption{Schematic of the VNMM-MLPG nodal cloud, local integration subdomains $\Omega_s$ (drawn with an enlarged radius factor $\alpha_s = 1.10$ for clear visual illustration of near-boundary Case~2 truncation), and 6-node trial support stencils $\Omega_u$.}
     \label{fig:schematic_mlpg}
 \end{figure}
@@ -1012,7 +1012,7 @@ To systematically test the boundary formulation developed in Section~\ref{subsec
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=0.78\textwidth]{fig_mlpg_mms_convergence.png}
+    \includegraphics[width=0.78\textwidth]{fig_mlpg_mms_convergence.pdf}
     \caption{Asymptotic spatial convergence for the VNMM-MLPG under MMS with Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions across the six meshes in \cite{stable_vnmm2d_2026} with isotropic random directors. Both boundary formulations achieve the theoretical polynomial convergence rates: strictly monotonic quadratic $\mathcal{O}(h_{\mathrm{nom}}^2)$ in the $L^2(\vec{E})$ field norm and linear $\mathcal{O}(h_{\mathrm{nom}}^1)$ in the $H(\mathbf{curl})$ rotational semi-norm $|\cdot|_{H(\mathbf{curl})}$, demonstrating the numerical stability and accuracy of natural Neumann boundary treatment.}
     \label{fig:mms_convergence}
 \end{figure}
@@ -1083,7 +1083,7 @@ The local integration subdomain radius is defined in \eqref{eq:subdomain_disk} a
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=\textwidth]{fig_mlpg_alpha_s_sensitivity.png}
+    \includegraphics[width=\textwidth]{fig_mlpg_alpha_s_sensitivity.pdf}
     \caption{Parametric sensitivity of the subdomain radius factor $\alpha_s$ ($21\times 21$ mesh, random directors): (a) Domain integration coverage percentage $\bigcup \Omega_s^I \supseteq \Omega$; (b) Relative $L^2(\vec{E})$ error in the 2D MMS problem across regular and perturbed clouds.}
     \label{fig:alpha_s_sensitivity}
 \end{figure}
@@ -1288,7 +1288,7 @@ Fig.~\ref{fig:mlpg_cavity_jitter} depicts the resulting eigenvalue cutoff wavenu
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=0.68\textwidth]{fig_mlpg_cavity_jitter.png}
+    \includegraphics[width=0.68\textwidth]{fig_mlpg_cavity_jitter.pdf}
     \caption{VNMM-MLPG cavity eigenvalue cutoff wavenumber error across the six benchmark grid resolutions ($15 \times 15$ to $49 \times 49$) under interior nodal position perturbations: log-log scaling of the mean cutoff error $\overline{\varepsilon}_{k_c}$ vs. nominal nodal spacing $h_{\mathrm{nom}}$ for $0\%$ (regular) and $25\%$ nodal jitter, showing empirical scaling exponents $p = 0.53$ and $p = 0.84$.}
     \label{fig:mlpg_cavity_jitter}
 \end{figure}
@@ -1337,7 +1337,7 @@ To restore full rank and eliminate this stagnation, we activate the Orthogonal E
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=\textwidth]{fig_mlpg_cavity_stabilization.png}
+    \includegraphics[width=\textwidth]{fig_mlpg_cavity_stabilization.pdf}
     \caption{Cavity eigenvalue cutoff wavenumber convergence under Dimensionless Orthogonal Energy Stabilization ($\alpha_{\mathrm{stab}} = c_{\mathrm{stab}} (h_{\mathrm{nom}}/L)^2$, $L = \pi\text{ m}$) across parameters $c_{\mathrm{stab}} \in \{0, 20, 40, 70, 100\}$: (a) Regular grids ($0\%$ jitter); (b) Perturbed point clouds ($25\%$ jitter).}
     \label{fig:mlpg_cavity_stabilization}
 \end{figure}
@@ -1384,7 +1384,7 @@ Table~\ref{tab:benchmark_comparison} compares the global matrix assembly times a
 
 \begin{figure}[!t]
     \centering
-    \includegraphics[width=0.68\textwidth]{fig_mlpg_benchmark_comparison.png}
+    \includegraphics[width=0.68\textwidth]{fig_mlpg_benchmark_comparison.pdf}
     \caption{Computational benchmark comparing stabilized VNMM-MLPG ($c_{\mathrm{stab}} = 70$) against VNMM-Gauss across the six grid resolutions matching \cite{stable_vnmm2d_2026}: Cavity eigenvalue cutoff wavenumber convergence between VNMM-Gauss (dashed lines) and VNMM-MLPG (solid lines) under $0\%$ (blue) and $25\%$ (green) nodal position jitter.}
     \label{fig:benchmark}
 \end{figure}

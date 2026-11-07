@@ -43,7 +43,7 @@ from scripts.mlpg_cavity_eigenvalues_2d import (
     run_mlpg_vs_gauss_benchmark
 )
 
-# Style setup for IEEE / Elsevier standard
+# Style setup for Wiley / IEEE / Elsevier standard
 plt.rcParams.update({
     'font.family': 'serif',
     'font.size': 10,
@@ -55,8 +55,20 @@ plt.rcParams.update({
     'figure.titlesize': 12,
     'figure.dpi': 300,
     'savefig.dpi': 300,
-    'savefig.bbox': 'tight'
+    'savefig.bbox': 'tight',
+    'pdf.fonttype': 42,
+    'ps.fonttype': 42
 })
+
+
+def save_dual_figure(fig, base_name, extra_names=None):
+    names = [base_name] + (extra_names or [])
+    for name in names:
+        for ext in ['.pdf', '.png']:
+            out_path = os.path.join(CURRENT_DIR, f"{name}{ext}")
+            fig.savefig(out_path, bbox_inches='tight')
+    plt.close(fig)
+    print(f"Saved: {base_name}.pdf and {base_name}.png")
 
 
 def plot_fig1_schematic():
@@ -182,9 +194,7 @@ def plot_fig1_schematic():
               ncol=2, frameon=True, framealpha=0.95, edgecolor='#bdc3c7', fontsize=8.0)
 
     out_path = os.path.join(CURRENT_DIR, "fig_mlpg_subdomains_schematic.png")
-    fig.savefig(out_path, bbox_inches='tight')
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_subdomains_schematic")
 
 
 def plot_fig2_patch_test():
@@ -245,10 +255,7 @@ def plot_fig2_patch_test():
     ax2.grid(True, which='both', linestyle=':', alpha=0.5)
 
     fig.tight_layout()
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_patch_test.png")
-    fig.savefig(out_path)
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_patch_test")
 
 
 def plot_fig3_mms_convergence():
@@ -307,10 +314,7 @@ def plot_fig3_mms_convergence():
     ax.legend(loc='lower right', framealpha=0.92, fontsize=8.5)
     ax.grid(True, which='both', linestyle=':', alpha=0.5)
 
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_mms_convergence.png")
-    fig.savefig(out_path)
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_mms_convergence")
 
 
 def plot_fig4_cavity_modes():
@@ -360,10 +364,7 @@ def plot_fig4_cavity_modes():
     ax2.set_title('(b) Spurious Mode Shifting vs. $s_{\\mathrm{div}}$')
     ax2.grid(True, linestyle=':', alpha=0.5)
 
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_cavity_modes_and_purification.png")
-    fig.savefig(out_path)
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_cavity_modes_and_purification")
 
 
 def plot_fig_cavity_jitter():
@@ -398,12 +399,7 @@ def plot_fig_cavity_jitter():
     ax1.legend(loc='lower right', framealpha=0.92)
 
     fig.tight_layout()
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_cavity_jitter.png")
-    fig.savefig(out_path)
-    # Also save with legacy name for backward compatibility
-    fig.savefig(os.path.join(CURRENT_DIR, "fig_mlpg_cavity_jitter_convergence.png"))
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_cavity_jitter", extra_names=["fig_mlpg_cavity_jitter_convergence"])
 
 
 def plot_fig_cavity_stabilization():
@@ -488,10 +484,7 @@ def plot_fig_cavity_stabilization():
     ax2.legend(loc='lower right', framealpha=0.92, fontsize=8.0)
 
     fig.tight_layout()
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_cavity_stabilization.png")
-    fig.savefig(out_path)
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_cavity_stabilization")
 
 
 def plot_fig5_benchmark():
@@ -532,10 +525,7 @@ def plot_fig5_benchmark():
     ax.legend(loc='upper left', framealpha=0.92, fontsize=8.5, ncol=2)
 
     fig.tight_layout()
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_benchmark_comparison.png")
-    fig.savefig(out_path)
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_benchmark_comparison")
 
 
 def plot_fig_alpha_s_sensitivity():
@@ -596,15 +586,12 @@ def plot_fig_alpha_s_sensitivity():
     ax2.legend(loc='upper left', framealpha=0.92, fontsize=9.0)
 
     fig.tight_layout()
-    out_path = os.path.join(CURRENT_DIR, "fig_mlpg_alpha_s_sensitivity.png")
-    fig.savefig(out_path)
-    plt.close(fig)
-    print(f"Saved: {out_path}")
+    save_dual_figure(fig, "fig_mlpg_alpha_s_sensitivity")
 
 
 def main():
     print("=" * 65)
-    print("Generating Figures for EABE Paper in paper/mlpg-vnmm/")
+    print("Generating Figures (PDF & PNG) for IJNME Paper in paper/mlpg-vnmm/")
     print("=" * 65)
     plot_fig1_schematic()
     plot_fig2_patch_test()
