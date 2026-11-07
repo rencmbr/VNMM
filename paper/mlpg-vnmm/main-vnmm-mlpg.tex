@@ -92,7 +92,7 @@ While MLPG and LPIM have been widely applied to scalar mechanics, acoustics, and
 In this paper, we address these challenges by formulating, implementing, and validating the \textbf{VNMM-MLPG}---a truly cell-free vector nodal meshless method for 2D electromagnetics. By combining the directional $\mathcal{P}^1$ Vector Nodal Meshless Method \cite{ortiz2021nodal, stable_vnmm2d_2026} with an overlapping \textbf{Symmetric Subdomain Galerkin Assembly} within the Local Galerkin (MLPG6) framework \cite{atluri2002meshless}, the main contributions of this work are:
 \begin{itemize}
     \item \textbf{Closed-Form Analytical Discretization of VNMM Operators:} Exact closed-form factorization of all local curl, divergence, and mass matrices in terms of the directional inverse collocation matrix $\boldsymbol{\beta}^I = \mathbf{A}_I^{-1}$ and analytical geometric moments over interior disks and boundary-truncated circular segments, eliminating numerical quadrature error and lens-intersection cubatures.
-    \item \textbf{Symmetric Subdomain Galerkin Assembly and Coercivity Analysis:} Formulation of an additive overlapping-subdomain Symmetric Subdomain Galerkin energy assembly that guarantees strictly symmetric positive-semidefinite global operators $\mathbf{K}$ and $\mathbf{M}$, characterizing the 2D rigid translation kernel, proving strict positive-definiteness after PEC reduction, and demonstrating that classical row-by-row MLPG/LPIM assembly loses discrete coercivity under refinement for non-polynomial fields.
+    \item \textbf{Symmetric Subdomain Galerkin Assembly and Coercivity Analysis:} Formulation of an additive overlapping-subdomain Symmetric Subdomain Galerkin energy assembly that guarantees strictly symmetric positive-semidefinite global operators $\mathbf{K}$ and $\mathbf{M}$, characterizing the 2D rigid translation kernel, proving strict positive-definiteness on fixed meshes after PEC reduction, distinguishing fixed-mesh positive-definiteness from uniform asymptotic coercivity, and demonstrating that classical row-by-row MLPG/LPIM assembly suffers catastrophic loss of stability under refinement for non-polynomial fields.
     \item \textbf{Modal Rank Decomposition and VMS-Inspired Orthogonal Energy Stabilization:} Analytical projection of the two harmonic zero-energy deformation modes ($\mathbf{v}_{\mathrm{shear}}^I, \mathbf{v}_{\mathrm{hyp}}^I$) onto the VNMM directional degrees of freedom, and formulation of a VMS-inspired orthogonal energy stabilization operator ($\alpha_{\mathrm{stab}} = c_{\mathrm{stab}}(h_{\mathrm{nom}}/L)^2$) coupled with superlinear penalty scaling ($s_{\mathrm{div}} \propto h_{\mathrm{nom}}^{-1.5}$). This restores full rank 4 over the local linear deformation subspace, eliminates mode softening, and achieves superlinear-to-quadratic convergence ($p = 2.15\text{--}2.39$ on regular grids and $p = 1.62$ under $25\%$ nodal jitter).
     \item \textbf{Unified Boundary Treatment on Truncated Subdomains:} Integration of VNMM's directional Kronecker-delta collocation \cite{ortiz2021nodal, stable_vnmm2d_2026} with truncated-disk MLPG6 weak forms, eliminating essential Dirichlet rows/columns without Nitsche or Lagrange multiplier boundary integrals while reducing inhomogeneous Neumann (validated via mixed MMS benchmarks) and Robin conditions to simple 1D boundary segment integrals.
     \item \textbf{Accuracy, Sparsity, and Assembly Speedup over Cell-Based Quadrature:} Comprehensive verification across patch tests, manufactured solutions (recovering theoretical quadratic $L^2$ and linear broken $H(\mathbf{curl})$ semi-norm convergence), subdomain containment analysis (confirming the classical MLPG/LPIM scaling $\alpha_s = 0.80$ \cite{atluri2002meshless, liu2009mesh} within the 6-node vector stencil containment bound $\alpha_s \le 1.15$), and PEC cavity eigenproblems, achieving $2.0\times\text{--}3.7\times$ faster matrix assembly, $20\%\text{--}24\%$ sparser matrices, and higher spectral accuracy than cell-based VNMM-Gauss.
@@ -158,7 +158,7 @@ In the MLPG framework, two distinct local domains are defined for each node $P_I
               \Omega_s^I = \left\{ \mathbf{x} \in \mathbb{R}^2 : \|\mathbf{x} - \mathbf{x}_I\| \le r_s^I \right\}, \qquad r_s^I = \alpha_s h_I,
               \label{eq:subdomain_disk}
           \end{equation}
-          where $h_I \equiv h_{\mathrm{local}}(\mathbf{x}_I)$ denotes the local nodal spacing (distance to nearest neighbor or mean distance to adjacent nodes, in direct correspondence with $h_{\mathrm{local}}$ in \cite{stable_vnmm2d_2026}), and $\alpha_s > 0$ is a dimensionless radius scaling parameter. Throughout this entire work, the single universal value $\alpha_s = 0.80$ is adopted, as justified by the theoretical geometric bounds and parametric sensitivity analysis in Section~\ref{subsec:stage4_alpha_s}.
+          where $h_I \equiv \min_{J \ne I} \|\mathbf{x}_J - \mathbf{x}_I\|$ denotes the local nodal spacing, uniquely defined as the Euclidean distance to the nearest neighbor (in direct correspondence with $h_{\mathrm{local}}$ in \cite{stable_vnmm2d_2026}), and $\alpha_s > 0$ is a dimensionless radius scaling parameter. In this work, the baseline parameter $\alpha_s = 0.80$ is adopted: as established in Section~\ref{subsec:stage4_alpha_s}, it guarantees complete ($100\%$) domain coverage on regular lattices and achieves $94.4\%$ coverage under $25\%$ nodal jitter without violating trial stencil support containment.
 \end{enumerate}
 
 A representative nodal distribution generated on a rectangular cavity with a $25\%$ random perturbation (jitter) is depicted in Fig.~\ref{fig:schematic_mlpg}. Interior nodes $\mathbf{x}_k$ are assigned arbitrary, randomized unit director orientations $\vec{t}_k$, whereas boundary nodes are constrained strictly tangential to $\partial\Omega$ ($\vec{t}_k \parallel \partial\Omega$). Depending on the spatial position of the central evaluation node relative to the physical boundary, three fundamental topological configurations of local integration subdomains $\Omega_s$ and trial support stencils $\Omega_u$ arise:
@@ -300,7 +300,7 @@ Following the calibrated baseline in \cite{stable_vnmm2d_2026}, we adopt $\wideh
 \subsubsection{The 4-Phase Automated Selection Pipeline}
 Following \cite{stable_vnmm2d_2026}, for each node $P_I$ ($I = 1, \dots, N$), the active stencil $\Omega_u^I$ is determined through the following 4-phase procedure:
 \begin{enumerate}
-    \item \textbf{Phase 1 (Spatial Neighborhood Query via $k$-d Tree):} An orthogonal $k$-d tree constructed over all nodal coordinates $\mathcal{X}$ queries the $K_{\mathrm{initial}} \ge 12$ nearest spatial neighbors of $\mathbf{x}_I$ with $\mathcal{O}(\log N)$ complexity. The local spacing $h_I \equiv h_{\mathrm{local}}(\mathbf{x}_I)$ is evaluated deterministically from this local cluster (as the nearest-neighbor distance or canonical 6-neighbor mean).
+    \item \textbf{Phase 1 (Spatial Neighborhood Query via $k$-d Tree):} An orthogonal $k$-d tree constructed over all nodal coordinates $\mathcal{X}$ queries the $K_{\mathrm{initial}} \ge 12$ nearest spatial neighbors of $\mathbf{x}_I$ with $\mathcal{O}(\log N)$ complexity. The local spacing $h_I \equiv \min_{J \ne I} \|\mathbf{x}_J - \mathbf{x}_I\|$ is evaluated deterministically as the distance to the nearest neighbor (matching Phase 1 of \cite{stable_vnmm2d_2026}).
     \item \textbf{Phase 2 (Central Node Anchoring):} The evaluation node $\mathbf{x}_I$ is permanently anchored as the first member of the candidate stencil ($\mathbf{x}_{(1)} = \mathbf{x}_I$, so $\Delta\mathbf{x}_{(1)} = \mathbf{0}$). This anchors the constant polynomial terms directly to $\vec{E}(\mathbf{x}_I)$. The remaining $K-1$ candidate nodes are sorted in ascending order of Euclidean distance $\|\mathbf{x}_k - \mathbf{x}_I\|$.
     \item \textbf{Phase 3 (Proximity-Ordered Evaluation with Early Stopping):} Candidate 5-combinations are drawn from the sorted neighbor list in order of increasing mean distance. For each candidate sextet, normalized local coordinates are assembled into $\widehat{\mathbf{A}}_I$. The first combination satisfying the dimensionless threshold:
           \begin{equation}
@@ -378,24 +378,35 @@ For inhomogeneous source and boundary-value problems (such as the Patch Test and
           \end{equation}
           proving exact machine-precision reproduction in the Galerkin patch test regardless of overlap multiplicity $M(\mathbf{x})$.
 
-    \item \textbf{Local Residual Accumulation and Internal Flux Cancellation for General Smooth Fields ($\vec{E}^* \in [H^2(\Omega)]^2$):}
-          For general non-polynomial fields, the local $\mathcal{P}^1$ interpolation incurs a Taylor truncation error $\mathcal{O}(h_I^2)$ in field values and $\mathcal{O}(h_I)$ in derivatives. Integrating over disk $\Omega_s^I$ (area $S_0^I \sim h_I^2$), the local residual is bounded by:
+    \item \textbf{Direct Consistency Functional Estimate for General Smooth Fields ($\vec{E} \in [H^2(\Omega)]^2$):}
+          For general non-polynomial fields, the local $\mathcal{P}^1$ interpolation incurs a Taylor truncation error $\mathcal{O}(h_I^2)$ in field values and $\mathcal{O}(h_I)$ in derivatives. Integrating over disk $\Omega_s^I$ (area $S_0^I \sim h_I^2$), the local residual vector satisfies:
           \begin{equation}
-              \|\mathbf{r}_I(\mathbf{e}^*)\|_2 \le C_{\mathrm{loc}} h_I^2 S_0^I \|\vec{E}^*\|_{H^2(\Omega_u^I)} \le C' h_{\mathrm{nom}}^4 \|\vec{E}^*\|_{H^2(\Omega_u^I)}.
+              \|\mathbf{r}_I(\mathbf{e})\|_2 \le C_{\mathrm{loc}} h_I^2 S_0^I \|\vec{E}\|_{H^2(\Omega_u^I)} \le C' h_{\mathrm{nom}}^4 \|\vec{E}\|_{H^2(\Omega_u^I)}.
           \end{equation}
-          Crucially, the global consistency error does not simply sum these Euclidean residuals; rather, it is tested variationally against discrete functions $\vec{w}_h \in \mathbf{V}_h$.
-          In the weak statement, the internal boundary fluxes along circular arcs $L_s^I = \partial\Omega_s^I \setminus \partial\Omega$ are not evaluated directly in cell-free assembly. Instead, because each internal arc $L_s^I$ is submerged within overlapping neighbor subdomains $\Omega_s^J$, the net interface flux contribution over all interior arcs $\Sigma = \bigcup_{I} L_s^I$ groups into pairwise jump integrals:
+          Crucially, the global consistency error does not simply accumulate Euclidean residuals; rather, it is tested variationally against discrete functions $\vec{w}_h \in \mathbf{V}_h$ through the consistency functional:
           \begin{equation}
-              I_{\mathrm{int}}(\vec{w}_h) = \sum_{I=1}^N \int_{L_s^I} \vec{\tau}(\vec{E}^*) \cdot \vec{w}_{I,h} \, ds = \sum_{I < J} \int_{\Sigma_{IJ}} \vec{\tau}(\vec{E}^*) \cdot [\vec{w}_h]_{\Sigma_{IJ}} \, ds,
-              \label{eq:internal_arc_jump_integral}
+              \mathcal{R}_h(\vec{w}_h) \equiv a_h(\vec{E}, \vec{w}_h) - \ell_h(\vec{w}_h) = \sum_{I=1}^N \left( a_{\Omega_s^I}(\vec{E}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h}) \right).
+              \label{eq:consistency_functional_def}
           \end{equation}
-          where $[\vec{w}_h]_{\Sigma_{IJ}} = \vec{w}_{I,h}|_{\Sigma_{IJ}} - \vec{w}_{J,h}|_{\Sigma_{IJ}}$ is the inter-stencil test function trace jump across shared boundary arc $\Sigma_{IJ} = \partial\Omega_s^I \cap \Omega_s^J$.
-          Applying Cauchy--Schwarz, the continuous trace theorem for $\vec{\tau}(\vec{E}^*)$, and the inter-stencil discrepancy bound \eqref{eq:stencil_jump_L2}:
+          By Green's vector identity \eqref{eq:local_weak_form} on each subdomain $\Omega_s^I \cap \Omega$, since $\vec{E}$ satisfies the continuous PDE and physical boundary conditions, the local volumetric mismatch reduces to the boundary flux across the internal circular arc $L_s^I = \partial\Omega_s^I \cap \Omega$:
           \begin{equation}
-              |I_{\mathrm{int}}(\vec{w}_h)| \le \sum_{I < J} \|\vec{\tau}(\vec{E}^*)\|_{L^2(\Sigma_{IJ})} \|[\vec{w}_h]\|_{L^2(\Sigma_{IJ})} \le C_{\mathrm{cons}} h_{\mathrm{nom}} \|\vec{E}^*\|_{H^2(\Omega)} \|\vec{w}_h\|_h.
+              a_{\Omega_s^I}(\vec{E}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h}) = \int_{L_s^I} \vec{\tau}(\vec{E}) \cdot \vec{w}_{I,h} \, ds.
+              \label{eq:local_green_flux_balance}
+          \end{equation}
+          Because the circular subdomains $\Omega_s^I$ overlap ($M(\mathbf{x}) \ge 2$) and do not form a disjoint partition of $\Omega$, the internal boundary arcs $L_s^I$ are independent curved boundaries submerged within multiple neighbor disks, rather than paired coincident interface segments between adjacent elements. Therefore, we do not assert pairwise cancellation of opposing interface fluxes. Instead, we directly estimate the consistency functional by bounding the sum of all arc integrals via the scaled trace inequality and local polynomial approximation.
+          Specifically, on each disk $\Omega_s^I$ (radius $r_s^I = \alpha_s h_I \le C h_{\mathrm{nom}}$), decomposing $a_{\Omega_s^I}(\vec{E}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h}) = a_{\Omega_s^I}(\vec{E} - \vec{E}_{I,h}, \vec{w}_{I,h}) + [a_{\Omega_s^I}(\vec{E}_{I,h}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h})]$:
+          applying the scaled trace theorem on star-shaped domains \cite{brenner2008mathematical, ciarlet2002finite} for circular arcs $L_s^I \subset \partial\Omega_s^I$:
+          \begin{equation}
+              \|v\|_{L^2(L_s^I)} \le C_{\mathrm{tr}} \left( h_I^{-1/2} \|v\|_{L^2(\Omega_s^I)} + h_I^{1/2} \|\nabla v\|_{L^2(\Omega_s^I)} \right),
+              \label{eq:scaled_trace_disk}
+          \end{equation}
+          and the local $\mathcal{P}^1$ Taylor interpolation bounds \eqref{eq:local_taylor_bounds}, each local contribution is bounded by $|a_{\Omega_s^I}(\vec{E}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h})| \le C h_I \|\vec{E}\|_{H^2(\Omega_u^I)} \|\vec{w}_{I,h}\|_{h, \Omega_s^I}$.
+          Summing over all $N$ subdomains, using Cauchy--Schwarz and the bounded overlap multiplicity $M(\mathbf{x}) = \sum_{I=1}^N \chi_{\Omega_s^I}(\mathbf{x}) \le M_{\max} \le 6$:
+          \begin{equation}
+              |\mathcal{R}_h(\vec{w}_h)| = \left| \sum_{I=1}^N \int_{L_s^I} \vec{\tau}(\vec{E}) \cdot \vec{w}_{I,h} \, ds \right| \le C h_{\mathrm{nom}} \left( \sum_{I=1}^N \|\vec{E}\|_{H^2(\Omega_u^I)}^2 \right)^{1/2} \left( \sum_{I=1}^N \|\vec{w}_{I,h}\|_{h, \Omega_s^I}^2 \right)^{1/2} \le C_{\mathrm{cons}} M_{\max}^{1/2} h_{\mathrm{nom}} \|\vec{E}\|_{H^2(\Omega)} \|\vec{w}_h\|_h.
               \label{eq:rigorous_internal_flux_bound}
           \end{equation}
-          Eq.~\eqref{eq:rigorous_internal_flux_bound} provides the exact mathematical proof of internal flux cancellation: opposing interior boundary fluxes do not need to coincide geometrically cell-by-cell; their net variational mismatch decays strictly as $\mathcal{O}(h_{\mathrm{nom}})$, feeding directly into Strang's First Lemma \eqref{eq:strang_lemma} to guarantee optimal first-order convergence in the energy norm.
+          Eq.~\eqref{eq:rigorous_internal_flux_bound} directly bounds the consistency functional without presupposing coincident interfaces: the total variational consistency error decays strictly as $\mathcal{O}(h_{\mathrm{nom}})$, feeding directly into Strang's First Lemma \eqref{eq:strang_lemma} to provide the consistency bound for the conditional convergence analysis in Section~\ref{subsubsec:variational_consistency_strang}.
 \end{enumerate}
 
 \subsubsection{Variational Consistency, Strang Lemma, and Overlap Multiplicity Analysis}
@@ -416,12 +427,12 @@ Because each local evaluation node $\mathbf{x}_I$ constructs its approximation f
     \label{eq:broken_space_definition}
 \end{equation}
 where $\mathbf{v} \in \mathbb{R}^N$ is the vector of nodal degrees of freedom, and $\mathbf{L}_I \in \mathbb{R}^{6 \times N}$ is the Boolean gathering matrix.
-The broken energy norm on $\mathbf{V}_h$ (and on $\boldsymbol{H}^1(\Omega) + \mathbf{V}_h$) is defined by:
+The regularized broken div-curl energy norm on $\mathbf{V}_h$ (and on $\boldsymbol{H}^1(\Omega) + \mathbf{V}_h$) is defined by:
 \begin{equation}
-    \|\vec{v}_h\|_h^2 \equiv \sum_{I=1}^N \|\vec{v}_{I,h}\|_{\boldsymbol{H}(\mathbf{curl}, \Omega_s^I \cap \Omega)}^2 = \sum_{I=1}^N \iint_{\Omega_s^I \cap \Omega} \left[ |\nabla \times \vec{v}_{I,h}|^2 + s_{\mathrm{div}} |\nabla \cdot \vec{v}_{I,h}|^2 + |\vec{v}_{I,h}|^2 \right] d\Omega.
+    \|\vec{v}_h\|_{h, a}^2 \equiv \sum_{I=1}^N \iint_{\Omega_s^I \cap \Omega} \left[ |\nabla \times \vec{v}_{I,h}|^2 + s_{\mathrm{div}} |\nabla \cdot \vec{v}_{I,h}|^2 + |\vec{v}_{I,h}|^2 \right] d\Omega.
     \label{eq:broken_energy_norm}
 \end{equation}
-The global bilinear form is correspondingly defined by $a_h(\vec{u}_h, \vec{v}_h) \equiv \sum_{I=1}^N a_{\Omega_s^I}(\vec{u}_{I,h}, \vec{v}_{I,h})$.
+This energy norm directly incorporates the divergence penalty weight $s_{\mathrm{div}} \ge 0$ and naturally induces the continuity and coercivity of the discrete bilinear form $a_h(\vec{u}_h, \vec{v}_h) \equiv \sum_{I=1}^N a_{\Omega_s^I}(\vec{u}_{I,h}, \vec{v}_{I,h})$.
 
 \paragraph{2. Local Approximation Error and Stencil Overlap Discrepancy:}
 Let the exact solution satisfy $\vec{E} \in [\boldsymbol{H}^2(\Omega)]^2$. Because each local polynomial expansion reproduces linear fields identically ($\mathcal{P}^1$-exact collocation via \eqref{eq:beta_matrix_inversion}), standard polynomial interpolation theory on star-shaped domains yields the optimal local approximation bounds:
@@ -438,41 +449,89 @@ Now consider two adjacent subdomains $\Omega_s^I$ and $\Omega_s^J$ that overlap 
 \end{align}
 Eqs.~\eqref{eq:stencil_jump_L2}--\eqref{eq:stencil_jump_curl} prove that the discrepancies between reconstructions from distinct stencils across overlapping subdomains are not uncontrolled discontinuities; they are bounded by the asymptotic discretization scale and vanish strictly as $h_{\mathrm{nom}} \to 0$.
 
-\paragraph{3. Variational Consistency and Strang's First Lemma:}
-Because $\mathbf{V}_h \not\subset \boldsymbol{H}(\mathbf{curl}, \Omega)$, the discrete solution $\vec{E}_h \in \mathbf{V}_h$ does not satisfy Galerkin orthogonality $a(\vec{E} - \vec{E}_h, \vec{v}_h) = 0$ in the classical sense. Instead, its error is governed by Strang's First Lemma for non-conforming variational approximations \cite{ciarlet2002finite, brenner2008mathematical}:
+\paragraph{3. Variational Consistency, Strang's First Lemma, and Conditional Convergence:}
+Because $\mathbf{V}_h \not\subset \boldsymbol{H}(\mathbf{curl}, \Omega)$, the discrete solution $\vec{E}_h \in \mathbf{V}_h$ does not satisfy Galerkin orthogonality $a(\vec{E} - \vec{E}_h, \vec{v}_h) = 0$ in the classical conforming sense. Instead, the error of non-conforming approximations is governed by Strang's First Lemma \cite{ciarlet2002finite, brenner2008mathematical}:
 \begin{equation}
-    \|\vec{E} - \vec{E}_h\|_h \le \left( 1 + \frac{\gamma}{\alpha_h} \right) \inf_{\vec{v}_h \in \mathbf{V}_h} \|\vec{E} - \vec{v}_h\|_h + \frac{1}{\alpha_h} \sup_{\vec{w}_h \in \mathbf{V}_h \setminus \{\mathbf{0}\}} \frac{|a_h(\vec{E}, \vec{w}_h) - \ell_h(\vec{w}_h)|}{\|\vec{w}_h\|_h},
+    \|\vec{E} - \vec{E}_h\|_{h, a} \le \left( 1 + \frac{\gamma}{\alpha_h} \right) \inf_{\vec{v}_h \in \mathbf{V}_h} \|\vec{E} - \vec{v}_h\|_{h, a} + \frac{1}{\alpha_h} \sup_{\vec{w}_h \in \mathbf{V}_h \setminus \{\mathbf{0}\}} \frac{|a_h(\vec{E}, \vec{w}_h) - \ell_h(\vec{w}_h)|}{\|\vec{w}_h\|_{h, a}},
     \label{eq:strang_lemma}
 \end{equation}
-where $\alpha_h > 0$ is the discrete coercivity constant (ensured by the stabilized bilinear form in Section~\ref{subsec:rank_deficiency_stabilization}) and $\gamma$ is the continuity constant.
-The first term in \eqref{eq:strang_lemma} is the best-approximation error, which is $\mathcal{O}(h_{\mathrm{nom}})$ in the broken energy norm by \eqref{eq:local_taylor_bounds}.
-The second term represents the \textbf{variational consistency error} (or non-conforming crime). Integrating by parts on each individual subdomain $\Omega_s^I \cap \Omega$:
-\begin{equation}
-    a_{\Omega_s^I}(\vec{E}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h}) = \int_{L_s^I} \vec{\tau}(\vec{E}) \cdot \vec{w}_{I,h} \, ds,
-\end{equation}
-where $L_s^I = \partial\Omega_s^I \setminus \partial\Omega$ is the internal boundary of disk $\Omega_s^I$, and $\vec{\tau}(\vec{E})$ is the continuous electromagnetic flux.
-Summing over all subdomains $I=1,\dots,N$, internal arcs $L_s^I$ intersect neighboring subdomains $\Omega_s^J$. Along any shared intersection arc $\Sigma_{IJ} \subset L_s^I \cap \Omega_s^J$, the flux of the continuous solution $\vec{\tau}(\vec{E})$ is single-valued, while the test functions $\vec{w}_{I,h}$ and $\vec{w}_{J,h}$ differ by the stencil discrepancy \eqref{eq:stencil_jump_L2}. Applying the trace theorem and the discrepancy bound \eqref{eq:stencil_jump_L2}:
-\begin{equation}
-    \left| a_h(\vec{E}, \vec{w}_h) - \ell_h(\vec{w}_h) \right| = \left| \sum_{I=1}^N \int_{L_s^I} \vec{\tau}(\vec{E}) \cdot \vec{w}_{I,h} \, ds \right| \le C_5 h_{\mathrm{nom}} \|\vec{E}\|_{\boldsymbol{H}^2(\Omega)} \|\vec{w}_h\|_h.
-    \label{eq:consistency_error_bound}
-\end{equation}
-Substituting \eqref{eq:consistency_error_bound} into \eqref{eq:strang_lemma} rigorously establishes that:
-\begin{equation}
-    \|\vec{E} - \vec{E}_h\|_h \le C h_{\mathrm{nom}} \|\vec{E}\|_{\boldsymbol{H}^2(\Omega)},
-\end{equation}
-guaranteeing optimal first-order asymptotic convergence in the broken energy (curl) norm, and $\mathcal{O}(h_{\mathrm{nom}}^2)$ in the $\boldsymbol{L}^2(\Omega)$ norm via the standard Aubin--Nitsche duality argument.
+where $\gamma > 0$ is the continuity constant of $a_h(\cdot, \cdot)$, and $\alpha_h > 0$ is the discrete coercivity constant over the broken space $\mathbf{V}_{h, 0}$ (incorporating essential boundary conditions).
+To formulate convergence with analytical rigor without over-claiming, we establish the convergence properties under clearly identified hypotheses:
 
-\paragraph{4. Asymptotic Invariance under Overlap Multiplicity $M(\mathbf{x})$:}
-Regarding the spatial variation of $M(\mathbf{x}) = \sum_{I=1}^N \chi_{\Omega_s^I \cap \Omega}(\mathbf{x})$: in the domain interior, the nodal quasi-uniformity ensures that $M(\mathbf{x})$ fluctuates around a well-defined mean $\bar{M} \approx 2\pi \alpha_s^2$, whereas near $\partial\Omega$ it transitions smoothly to $\bar{M}_{\mathrm{bnd}} \approx \pi \alpha_s^2$ (as illustrated in Figure~\ref{fig:schematic_mlpg}).
-The global discrete eigenvalue problem \eqref{eq:rayleigh_quotient_overlap} corresponds to the generalized spectral approximation of the compact self-adjoint solution operator $T: \boldsymbol{L}^2(\Omega) \to \boldsymbol{L}^2(\Omega)$ \cite{babuska1991eigenvalue, boffi2013mixed}.
-Because both $a_h(\cdot, \cdot)$ and $m_h(\cdot, \cdot)$ are assembled from the identical family of active subdomains with identical local weighting, the discrete forms satisfy the uniform spectral approximation property:
-\begin{equation}
-    |\lambda - \lambda_h| \le C \left( \sup_{\vec{u} \in \mathcal{E}(\lambda), \|\vec{u}\|_h = 1} \inf_{\vec{v}_h \in \mathbf{V}_h} \|\vec{u} - \vec{v}_h\|_h^2 + \sup_{\vec{w}_h \in \mathbf{V}_h} \frac{|a_h(\vec{u}, \vec{w}_h) - \lambda m_h(\vec{u}, \vec{w}_h)|}{\|\vec{w}_h\|_h} \right) \le C' h_{\mathrm{nom}}^2,
-    \label{eq:babuska_osborn_spectral}
-\end{equation}
-where $\mathcal{E}(\lambda)$ is the eigenspace of $\lambda$.
-The spatial variability of $M(\mathbf{x})$ does not corrupt the limiting continuous spectrum because the consistency error \eqref{eq:consistency_error_bound} decays at rate $\mathcal{O}(h_{\mathrm{nom}})$, contributing $\mathcal{O}(h_{\mathrm{nom}}^2)$ to the eigenvalue error in \eqref{eq:babuska_osborn_spectral}.
-This settles the variational consistency of the symmetric Subdomain Galerkin assembly and explains why no partition-of-unity renormalization weights are necessary.
+\begin{enumerate}
+    \item \textbf{Hypothesis 1 (Uniform Discrete Coercivity):}
+          While the VMS-inspired stabilization (Section~\ref{subsec:rank_deficiency_stabilization}) restores full rank on the local linear polynomial space of each stencil, guaranteeing that the assembled global operators $\mathbf{K}$ and $\mathbf{M}$ are strictly positive-definite after PEC reduction, a closed-form analytical proof of a uniform lower bound:
+          \begin{equation}
+              a_h(\vec{v}_h, \vec{v}_h) \ge \alpha_0 \|\vec{v}_h\|_{h, a}^2 \quad \forall \vec{v}_h \in \mathbf{V}_{h, 0}, \quad \text{with } \alpha_0 > 0 \text{ independent of } h_{\mathrm{nom}},
+              \label{eq:uniform_coercivity_hypothesis}
+          \end{equation}
+          for general overlapping meshless covers remains an open theoretical question. We therefore formulate the energy convergence as a \textbf{conditional result} assuming Hypothesis~1 holds. This stability hypothesis is consistently corroborated in practice by the bounded matrix condition numbers and positive, uncorrupted spectra observed across all numerical benchmarks in Section~\ref{sec:results}.
+
+    \item \textbf{Best-Approximation Error:}
+          The first term in \eqref{eq:strang_lemma} represents the broken interpolation error, which by the local Taylor bounds \eqref{eq:local_taylor_bounds} and bounded stencil multiplicity $M_{\max}$ satisfies:
+          \begin{equation}
+              \inf_{\vec{v}_h \in \mathbf{V}_h} \|\vec{E} - \vec{v}_h\|_h \le C_{\mathrm{approx}} M_{\max}^{1/2} h_{\mathrm{nom}} \|\vec{E}\|_{\boldsymbol{H}^2(\Omega)}.
+              \label{eq:best_approx_bound}
+          \end{equation}
+
+    \item \textbf{Variational Consistency Functional Bound:}
+          The second term in \eqref{eq:strang_lemma} evaluates the variational consistency functional $\mathcal{R}_h(\vec{w}_h) \equiv a_h(\vec{E}, \vec{w}_h) - \ell_h(\vec{w}_h)$.
+          Integrating by parts on each individual subdomain $\Omega_s^I \cap \Omega$:
+          \begin{equation}
+              a_{\Omega_s^I}(\vec{E}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h}) = \int_{L_s^I} \vec{\tau}(\vec{E}) \cdot \vec{w}_{I,h} \, ds,
+          \end{equation}
+          where $L_s^I = \partial\Omega_s^I \cap \Omega$ is the internal circular boundary arc of disk $\Omega_s^I$, and $\vec{\tau}(\vec{E})$ is the continuous electromagnetic flux.
+          Because the circular subdomains overlap ($M(\mathbf{x}) \ge 2$) and do not form a partition of $\Omega$, internal boundary arcs $L_s^I$ are independent curves submerged within multiple neighbor subdomains, without forming coincident paired interfaces.
+          Decomposing the local balance as:
+          \begin{equation}
+              a_{\Omega_s^I}(\vec{E}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h}) = a_{\Omega_s^I}(\vec{E} - \vec{E}_{I,h}, \vec{w}_{I,h}) + \left[ a_{\Omega_s^I}(\vec{E}_{I,h}, \vec{w}_{I,h}) - \ell_{\Omega_s^I}(\vec{w}_{I,h}) \right],
+          \end{equation}
+          where $\vec{E}_{I,h} \in [\mathcal{P}^1(\Omega_s^I)]^2$ is the local polynomial interpolant of $\vec{E}$.
+          By continuity of $a_{\Omega_s^I}(\cdot, \cdot)$ and the local Taylor bound \eqref{eq:local_taylor_bounds}, the first term is bounded by $C_a h_I \|\vec{E}\|_{\boldsymbol{H}^2(\Omega_u^I)} \|\vec{w}_{I,h}\|_{h, \Omega_s^I}$.
+          For the second term, applying the scaled trace inequality \eqref{eq:scaled_trace_disk} along circular arc $L_s^I$ and noting that the constant-flux portion of linear field $\vec{E}_{I,h}$ integrates to zero around circular boundaries by angular symmetry ($\int_{\partial\Omega_s^I} \vec{n}_I \, ds = \mathbf{0}$, $\int_{\partial\Omega_s^I} \vec{t}_I \, ds = \mathbf{0}$), the local residual is likewise bounded by $C_b h_I \|\vec{E}\|_{\boldsymbol{H}^2(\Omega_u^I)} \|\vec{w}_{I,h}\|_{h, \Omega_s^I}$.
+          Summing over all $N$ subdomains, applying Cauchy--Schwarz, and utilizing the bounded overlap multiplicity $\sum_{I=1}^N \chi_{\Omega_u^I}(\mathbf{x}) \le M_{\max} \le 6$:
+          \begin{equation}
+              \left| a_h(\vec{E}, \vec{w}_h) - \ell_h(\vec{w}_h) \right| = \left| \sum_{I=1}^N \int_{L_s^I} \vec{\tau}(\vec{E}) \cdot \vec{w}_{I,h} \, ds \right| \le C_5 M_{\max}^{1/2} h_{\mathrm{nom}} \|\vec{E}\|_{\boldsymbol{H}^2(\Omega)} \|\vec{w}_h\|_h.
+              \label{eq:consistency_error_bound}
+          \end{equation}
+
+    \item \textbf{Conditional Energy Convergence and Aubin--Nitsche Duality in $\boldsymbol{L}^2$:}
+          Substituting \eqref{eq:best_approx_bound} and \eqref{eq:consistency_error_bound} into \eqref{eq:strang_lemma}, and assuming Hypothesis~1 ($\alpha_h \ge \alpha_0 > 0$), we obtain the conditional energy convergence bound:
+          \begin{equation}
+              \|\vec{E} - \vec{E}_h\|_h \le C h_{\mathrm{nom}} \|\vec{E}\|_{\boldsymbol{H}^2(\Omega)}.
+              \label{eq:strang_conditional_energy_bound}
+          \end{equation}
+          Regarding convergence in the $\boldsymbol{L}^2(\Omega)$ norm: in non-conforming variational methods, recovering optimal $\mathcal{O}(h_{\mathrm{nom}}^2)$ convergence via the Aubin--Nitsche duality argument requires $H^2(\Omega)$-regularity of the adjoint problem $\mathcal{L}^* \vec{\Phi} = \vec{\Psi}$, an optimal adjoint approximation estimate, and sufficient variational consistency of $a_h(\cdot, \cdot)$ on the dual solution. Although these adjoint regularity conditions are fulfilled for convex Lipschitz domains (such as the square cavity benchmark), establishing the adjoint consistency bound for overlapping broken spaces remains an open analytical question. Consequently, the $\mathcal{O}(h_{\mathrm{nom}}^2)$ rate in $\boldsymbol{L}^2(\Omega)$ is presented here as a \textbf{conditional theoretical prediction}, which is systematically verified by the numerical convergence studies in Section~\ref{sec:results} (where asymptotic rates of $p = 1.95\text{--}2.01$ are measured across regular and perturbed point clouds).
+\end{enumerate}
+
+\paragraph{4. Overlap Multiplicity $M(\mathbf{x})$: Geometric Derivation and Uniform Norm Equivalence:}
+A central question in cell-free assembly without partition-of-unity weighting concerns the spatial variation of the overlap multiplicity $M(\mathbf{x}) = \sum_{I=1}^N \chi_{\Omega_s^I \cap \Omega}(\mathbf{x})$:
+
+\begin{enumerate}
+    \item \textbf{Geometric Derivation of Expected Multiplicity $\bar{M}$:}
+          Let $A_{\mathrm{node}}$ denote the representative Voronoi area per node in the point cloud. On a quasi-uniform lattice with nominal spacing $h_{\mathrm{nom}}$, $A_{\mathrm{node}} = h_{\mathrm{nom}}^2$ for a Cartesian grid, whereas $A_{\mathrm{node}} = \frac{\sqrt{3}}{2} h_{\mathrm{nom}}^2 \approx 0.866 h_{\mathrm{nom}}^2$ for equilateral triangular packing.
+          Because each interior circular disk has radius $r_s^I = \alpha_s h_I \approx \alpha_s h_{\mathrm{nom}}$, its area is $|\Omega_s^I| = \pi (r_s^I)^2 = \pi \alpha_s^2 h_{\mathrm{nom}}^2$.
+          The expected interior overlap multiplicity is given by the ratio of subdomain area to representative nodal area:
+          \begin{equation}
+              \bar{M} = \frac{|\Omega_s^I|}{A_{\mathrm{node}}} = \begin{cases} \pi \alpha_s^2 \approx 2.01 & \text{(Cartesian grid, } \alpha_s = 0.80\text{)}, \\ \frac{2\pi}{\sqrt{3}}\alpha_s^2 \approx 2.32 & \text{(triangular packing, } \alpha_s = 0.80\text{)}. \end{cases}
+              \label{eq:mean_multiplicity_derivation}
+          \end{equation}
+          Near the physical boundary $\partial\Omega$, subdomains are truncated into circular sectors or chord cuts (Section~\ref{subsec:boundary_treatment}), smoothly reducing the boundary multiplicity to $\bar{M}_{\mathrm{bnd}} \approx \frac{\pi}{2}\alpha_s^2 \approx 1.01$ along flat edges and $\bar{M}_{\mathrm{corner}} \approx \frac{\pi}{4}\alpha_s^2 \approx 0.50$ at 90-degree convex corners (as illustrated in Figure~\ref{fig:schematic_mlpg}).
+
+    \item \textbf{Uniform Norm Equivalence:}
+          Because $M(\mathbf{x})$ varies spatially, a weighted Rayleigh quotient does not in general equal an unweighted quotient. On regular lattices, whenever the integration radius satisfies the coverage condition $\alpha_s \ge \sqrt{2}/2 \approx 0.7071$ (Section~\ref{subsec:stage4_alpha_s}), every point in $\Omega$ is covered by at least one disk ($M_{\min} \ge 1$), while nearest-neighbor bounds constrain the maximum overlap to $M_{\max} \le 6$ for $\alpha_s \le 0.85$. On perturbed point clouds under $25\%$ jitter with $\alpha_s = 0.80$, $M(\mathbf{x}) \ge 1$ holds across $94.4\%$ of the domain, leaving minor interstitial voids ($M=0$, totaling $5.6\%$, as analyzed in Section~\ref{subsec:stage4_alpha_s}).
+          Consequently, the multiplicity-weighted broken $L^2$ norm satisfies the two-sided uniform norm equivalence:
+          \begin{equation}
+              M_{\min} \|\vec{v}\|_{\boldsymbol{L}^2(\Omega)}^2 \le \sum_{I=1}^N \|\vec{v}\|_{\boldsymbol{L}^2(\Omega_s^I \cap \Omega)}^2 = \iint_{\Omega} M(\mathbf{x}) |\vec{v}(\mathbf{x})|^2 \, d\Omega \le M_{\max} \|\vec{v}\|_{\boldsymbol{L}^2(\Omega)}^2 \quad \forall \vec{v} \in \boldsymbol{L}^2(\Omega),
+              \label{eq:norm_equivalence_multiplicity}
+          \end{equation}
+          with uniform constants $1 \le M_{\min} \le M_{\max} \le 6$ independent of $h_{\mathrm{nom}}$.
+          Eq.~\eqref{eq:norm_equivalence_multiplicity} guarantees that the assembled discrete forms $a_h(\cdot, \cdot)$ and $m_h(\cdot, \cdot)$ are topologically equivalent to the continuous physical energy forms, preventing any spatial degeneracy or spurious amplification under grid refinement.
+
+    \item \textbf{Spectral Eigenvalue Approximation as a Numerical Result:}
+          In the discrete generalized eigenvalue problem $\mathbf{K} \mathbf{e} = \lambda_h \mathbf{M} \mathbf{e}$, the Rayleigh quotient $\lambda_h = a_h(\vec{E}_h, \vec{E}_h) / m_h(\vec{E}_h, \vec{E}_h)$ is assembled additively from the overlapping subdomains.
+          A fully rigorous mathematical proof of optimal $\mathcal{O}(h_{\mathrm{nom}}^2)$ eigenvalue convergence via Babu\v{s}ka--Osborn spectral theory \cite{babuska1991eigenvalue, boffi2013mixed} would require proving compact resolvent convergence for the non-partitioned overlapping solution operator. In the absence of an explicit compact resolvent proof, the quadratic convergence $|\lambda - \lambda_h| = \mathcal{O}(h_{\mathrm{nom}}^2)$ is presented here as an \textbf{empirical numerical finding}. As demonstrated comprehensively in Section~\ref{sec:results} across all 10 recovered physical cavity modes on regular and perturbed clouds ($p \in [1.91, 2.05]$, Table~\ref{tab:eigenvalue_convergence}), this quadratic convergence is systematically achieved in practice without requiring partition-of-unity rational distortion.
+\end{enumerate}
 
 \subsection{Selection of the MLPG6 (Local Galerkin) Test Space}
 \label{subsec:mlpg6_selection}
@@ -662,50 +721,57 @@ Consequently, their congruence sum \eqref{eq:global_assembly} guarantees that th
 \end{equation}
 Imposing essential PEC boundary conditions by eliminating boundary DoFs preserves this symmetry on the condensed generalized eigenvalue problem $\mathbf{K}_{\mathrm{red}} \mathbf{e}_{\mathrm{red}} = \lambda \mathbf{M}_{\mathrm{red}} \mathbf{e}_{\mathrm{red}}$, strictly guaranteeing that all discrete eigenvalues are real ($\lambda = k_c^2 \in \mathbb{R}$) and precluding unphysical complex-conjugate eigenvalue pairs (a known pathology of unsymmetric collocation and Petrov--Galerkin discretizations).
 
-\paragraph{Distinction Between Complex Eigenvalue Suppression and Spurious Mode Elimination:}
-It is essential to distinguish between the elimination of complex eigenvalues and the elimination of spurious modes:
+\paragraph{Distinction Between Complex Eigenvalue Suppression and Spurious Mode Shifting:}
+It is essential to distinguish between the elimination of complex eigenvalues and the shifting of spurious modes:
 \begin{enumerate}
     \item \textbf{Complex Eigenvalue Elimination via Operator Symmetry:} Discrete operator symmetry ($\mathbf{K}_{\mathrm{red}} = \mathbf{K}_{\mathrm{red}}^T$) and strict positive-definiteness of the mass matrix ($\mathbf{M}_{\mathrm{red}} = \mathbf{M}_{\mathrm{red}}^T > 0$) guarantee that all eigenvalues of the generalized pencil $(\mathbf{K}_{\mathrm{red}}, \mathbf{M}_{\mathrm{red}})$ are strictly real ($\operatorname{Im}(\lambda) = 0$). This precludes non-physical complex-conjugate eigenvalue pairs, which frequently appear in unsymmetric MLPG or collocation schemes and corrupt modal stability.
-    \item \textbf{Spurious Mode Elimination via Divergence Penalization:} Crucially, however, operator symmetry and real eigenvalues do \emph{not}, by themselves, ensure that all discrete modes correspond to physical electromagnetic cavity modes. In continuous Maxwell theory, the curl-curl operator possesses an infinite-dimensional nullspace spanned by irrotational gradient fields $\nabla H^1(\Omega) \subset \ker(\nabla \times)$. In discrete nodal formulations lacking the de Rham exact sequence, these gradient modes pollute the positive curl spectrum as real spurious modes. Their elimination is achieved independently by the volumetric div-curl penalty $s_{\mathrm{div}} \mathbf{K}_{\mathrm{div}}$: because irrotational modes have non-vanishing divergence ($\nabla \cdot (\nabla \phi) = \Delta \phi \ne 0$), the penalty elevates their eigenvalues into the far high-frequency spectrum ($\lambda \sim \mathcal{O}(s_{\mathrm{div}})$), cleanly separating them from the lower physical transverse spectrum ($TE_{mn}$).
+    \item \textbf{Spurious Mode Shifting Outside the Operational Band via Divergence Penalization:} Crucially, however, operator symmetry and real eigenvalues do \emph{not}, by themselves, ensure that all discrete modes in the lower spectrum correspond to physical electromagnetic cavity modes. In continuous Maxwell theory, the curl-curl operator possesses an infinite-dimensional nullspace spanned by irrotational gradient fields $\nabla H^1(\Omega) \subset \ker(\nabla \times)$. In discrete nodal formulations lacking the de Rham exact sequence, these gradient modes pollute the positive curl spectrum as real spurious modes. Their suppression from the lower physical spectrum is achieved by the volumetric div-curl penalty $s_{\mathrm{div}} \mathbf{K}_{\mathrm{div}}$: because irrotational modes have non-vanishing divergence ($\nabla \cdot (\nabla \phi) = \Delta \phi \ne 0$), the penalty elevates their eigenvalues into the high-frequency spectrum ($\lambda \sim \mathcal{O}(s_{\mathrm{div}})$), cleanly shifting them outside the operational spectral band of interest ($TE_{mn}$) without claiming total elimination across the entire infinite spectrum.
 \end{enumerate}
 
-\paragraph{Characterization of Global Kernel, Boundary Elimination, and Uniform Coercivity:}
-A rigorous functional distinction must be established between local positivity, global kernel dimension, and discrete coercivity:
+\paragraph{Algebraic Hierarchy: Symmetry, Semidefiniteness, Positive-Definiteness, and Uniform Coercivity:}
+To establish rigorous analytical precision, a clear distinction must be maintained between four interrelated but fundamentally distinct algebraic and functional properties:
 \begin{enumerate}[(i)]
-    \item \textbf{Local vs. Global Semidefiniteness:}
-          While each local stabilized block satisfies $\mathbf{K}_I^{\mathrm{local, stab}} \ge 0$, its kernel $\ker(\mathbf{K}_I^{\mathrm{local, stab}}) \subset \mathbb{R}^6$ is strictly 2-dimensional (corresponding to the two rigid Cartesian translation states $[c_x, c_y]^T$, since rank is 4 out of 6 degrees of freedom).
-          When assembled globally via $\mathbf{K} = \sum_{I=1}^N \mathbf{L}_I^T \mathbf{K}_I^{\mathrm{local, stab}} \mathbf{L}_I$, any vector in the global kernel $\mathbf{e} \in \ker(\mathbf{K})$ must satisfy:
+    \item \textbf{Property 1: Discrete Operator Symmetry ($\mathbf{K} = \mathbf{K}^T$, $\mathbf{M} = \mathbf{M}^T$):}
+          Global symmetry follows directly from the congruence assembly \eqref{eq:global_assembly}: because each local matrix block $\mathbf{K}_I^{\mathrm{local}}$ and $\mathbf{M}_I^{\mathrm{local}}$ is an outer-product or Gram matrix of real vectors, it is individually symmetric ($(\mathbf{K}_I^{\mathrm{local}})^T = \mathbf{K}_I^{\mathrm{local}}$). Consequently, the global sum $\mathbf{K} = \sum_{I=1}^N \mathbf{L}_I^T \mathbf{K}_I^{\mathrm{local}} \mathbf{L}_I$ is unconditionally symmetric on any point cloud.
+          
+    \item \textbf{Property 2: Global Positive Semidefiniteness ($\mathbf{K} \ge 0$, $\mathbf{M} > 0$):}
+          For any global vector $\mathbf{e} \in \mathbb{R}^N$, the global quadratic form evaluates as the sum of independent local quadratic forms:
           \begin{equation}
-              \mathbf{e}^T \mathbf{K} \mathbf{e} = \sum_{I=1}^N (\mathbf{L}_I \mathbf{e})^T \mathbf{K}_I^{\mathrm{local, stab}} (\mathbf{L}_I \mathbf{e}) = 0 \iff \mathbf{L}_I \mathbf{e} \in \ker(\mathbf{K}_I^{\mathrm{local, stab}}) \quad \forall I = 1, \dots, N.
+              \mathbf{e}^T \mathbf{K} \mathbf{e} = \sum_{I=1}^N (\mathbf{L}_I \mathbf{e})^T \mathbf{K}_I^{\mathrm{local}} (\mathbf{L}_I \mathbf{e}) \ge 0,
           \end{equation}
-          Because adjacent stencils overlap and share evaluation nodes, the local translation constants must match across the entire connected domain ($\vec{c}_I = \vec{c}_J = \vec{c} \in \mathbb{R}^2$).
-          Consequently, **the unconstrained global stiffness matrix $\mathbf{K}$ has an exact 2-dimensional kernel**:
+          which is non-negative because each local block satisfies $\mathbf{K}_I^{\mathrm{local}} \ge 0$. The global mass matrix $\mathbf{M} > 0$ is strictly positive-definite because every node belongs to multiple subdomains covering $\Omega$ ($M(\mathbf{x}) \ge 1$), accumulating positive mass across all DoFs.
+          
+    \item \textbf{Property 3: Strict Positive Definiteness on a Fixed Mesh after PEC Reduction ($\mathbf{K}_{\mathrm{red}} > 0$):}
+          This property does \emph{not} follow automatically from (i) and (ii); it requires establishing that the only global vector in the kernel of the condensed matrix is the zero vector.
+          For $\mathbf{e}^T \mathbf{K} \mathbf{e} = 0$, every local contribution must vanish identically, requiring $\mathbf{L}_I \mathbf{e} \in \ker(\mathbf{K}_I^{\mathrm{local, stab}})$ for all $I = 1, \dots, N$.
+          With the VMS-inspired orthogonal energy stabilization (Section~\ref{subsec:rank_deficiency_stabilization}), the local nullspace $\ker(\mathbf{K}_I^{\mathrm{local, stab}}) \subset \mathbb{R}^6$ is restricted strictly to the 2-dimensional space of constant rigid Cartesian translations ($\nabla \vec{E}_{I, h} \equiv \mathbf{0} \iff \vec{E}_{I, h} = \vec{c}_I \in \mathbb{R}^2$).
+          Because adjacent stencils overlap and share evaluation nodes, consistent nodal matching across shared degrees of freedom propagates this constant across the entire connected point cloud, enforcing $\vec{c}_I = \vec{c}_J = \vec{c} \in \mathbb{R}^2$ globally.
+          Consequently, the unconstrained global stiffness matrix has an exact 2-dimensional rigid translation nullspace:
           \begin{equation}
               \ker(\mathbf{K}) = \mathrm{span}\left\{ \mathbf{e}_{\mathrm{trans}, x}, \; \mathbf{e}_{\mathrm{trans}, y} \right\}, \qquad \dim(\ker(\mathbf{K})) = 2.
           \end{equation}
-    \item \textbf{Strict Positive Definiteness of the Condensed System ($\mathbf{K}_{\mathrm{red}} > 0$):}
-          Along a closed physical PEC boundary $\partial\Omega$ enclosing a two-dimensional domain, the tangential trace is set to zero: $\vec{E} \cdot \vec{t} = 0$. For any domain with non-parallel boundary segments (such as the four walls of a polygonal or Cartesian cavity), a constant translation field $\vec{E}(\mathbf{x}) \equiv [c_x, c_y]^T$ satisfies:
+          Along a closed physical PEC boundary $\partial\Omega$ enclosing a two-dimensional cavity, the tangential trace vanishes: $\vec{E} \cdot \vec{t} = 0$. For any domain with non-parallel boundary segments (such as the four orthogonal walls of a Cartesian cavity), a constant translation field satisfies $\vec{c} \cdot \vec{t}_1 = 0$ and $\vec{c} \cdot \vec{t}_2 = 0$, implying $\vec{c} = \mathbf{0}$.
+          Eliminating boundary rows and columns strictly removes this 2D nullspace, proving that for any fixed mesh resolution:
           \begin{equation}
-              c_x t_x + c_y t_y = 0 \quad \text{along } \partial\Omega \implies c_x = 0 \quad \text{and} \quad c_y = 0.
-          \end{equation}
-          Hence, no non-trivial constant translation mode can satisfy the homogeneous PEC boundary condition. Eliminating boundary degrees of freedom strictly removes the 2-dimensional nullspace:
-          \begin{equation}
-              \ker(\mathbf{K}_{\mathrm{red}}) = \{ \mathbf{0} \} \implies \mathbf{K}_{\mathrm{red}} = \mathbf{K}_{\mathrm{red}}^T > 0 \quad \text{(strictly positive-definite)}.
+              \ker(\mathbf{K}_{\mathrm{red}}) = \{ \mathbf{0} \} \implies \mathbf{K}_{\mathrm{red}} = \mathbf{K}_{\mathrm{red}}^T > 0 \quad \text{(strictly positive-definite on a fixed mesh)}.
               \label{eq:condensed_positive_definite_proof}
           \end{equation}
-    \item \textbf{Mesh-Independent Discrete Coercivity:}
-          By the generalized vector Friedrichs--Poincaré inequality for divergence-penalized Maxwell spaces with vanishing tangential boundary trace \cite{monk2003finite, boffi2013mixed}, there exists a geometric constant $C_F > 0$ independent of mesh spacing $h_{\mathrm{nom}}$ such that:
+          
+    \item \textbf{Property 4: Distinction from Uniform Discrete Coercivity ($\alpha_h \ge \alpha_0 > 0$ as $h_{\mathrm{nom}} \to 0$):}
+          Crucially, the terms \textbf{positive-definite}, \textbf{discrete coercive}, and \textbf{uniformly coercive} must not be used interchangeably.
+          On any fixed mesh of finite dimension, strict positive-definiteness $\mathbf{K}_{\mathrm{red}} > 0$ guarantees that there exists a mesh-dependent constant $\alpha(h_{\mathrm{nom}}) = \lambda_{\min}(\mathbf{K}_{\mathrm{red}}) > 0$ such that $a_h(\vec{v}_h, \vec{v}_h) \ge \alpha(h_{\mathrm{nom}}) \|\vec{v}_h\|_h^2$.
+          However, finite-dimensional positive-definiteness does \emph{not}, by itself, demonstrate that $\alpha(h_{\mathrm{nom}})$ is bounded away from zero uniformly under grid refinement:
           \begin{equation}
-              a_h(\vec{v}_h, \vec{v}_h) \ge \alpha_0 \|\vec{v}_h\|_h^2 \quad \forall \vec{v}_h \in \mathbf{V}_{h, 0}, \qquad \alpha_0 = \frac{\min(1, s_{\mathrm{div}})}{1 + C_F^2} > 0.
-              \label{eq:uniform_coercivity_proof}
+              \alpha_h \ge \alpha_0 > 0 \quad \text{independent of } h_{\mathrm{nom}} \quad \text{as } h_{\mathrm{nom}} \to 0.
           \end{equation}
-          Eq.~\eqref{eq:uniform_coercivity_proof} establishes uniform discrete coercivity on the condensed space, completing the stability foundation required by Strang's First Lemma \eqref{eq:strang_lemma}.
+          While the continuous Maxwell operator satisfies Friedrichs--Poincaré coercivity in the conforming space $\boldsymbol{H}_0(\mathbf{curl}, \Omega) \cap \boldsymbol{H}(\mathrm{div}, \Omega)$ \cite{monk2003finite, boffi2013mixed}, establishing a closed-form lower bound $\alpha_0 > 0$ for non-conforming broken spaces $\mathbf{V}_{h, 0}$ over overlapping meshless covers remains an open theoretical question.
+          Therefore, as formalized in Section~\ref{subsubsec:variational_consistency_strang}, uniform discrete coercivity is maintained strictly as a \textbf{stability hypothesis (Hypothesis~1)}. The formulation guarantees strict positive-definiteness on each individual mesh (precluding singular systems or complex eigenvalues), while uniform stability as $h_{\mathrm{nom}} \to 0$ is corroborated empirically by the stable matrix conditioning and asymptotic convergence observed across all numerical benchmarks.
 \end{enumerate}
 
 \paragraph{Effect of Overlap Multiplicity on Global Assembly:}
-With support size $\alpha_s = 0.80$, the cumulative subdomain area exceeds the physical domain measure ($\sum_{I=1}^N \mathrm{Area}(\Omega_s^I \cap \Omega) \approx 2\pi \alpha_s^2 \, \mathrm{Area}(\Omega) \approx 4\,\mathrm{Area}(\Omega)$), and the pointwise overlap multiplicity $M(\mathbf{x})$ varies near truncated boundaries and under nodal jitter.
-As rigorously demonstrated in Section~\ref{subsubsec:variational_consistency_strang} via Strang's First Lemma and Babuska--Osborn spectral theory (Eqs.~\eqref{eq:strang_lemma}--\eqref{eq:babuska_osborn_spectral}), this redundant coverage does not corrupt the limiting continuous spectrum or require partition-of-unity renormalization weights.
-Because the discrete operators and load vectors are assembled congruently from locally balanced subdomains ($\mathbf{r}_I(\mathbf{e}^*) \equiv \mathbf{0}$, Eq.~\eqref{eq:subdomain_residual_zero}), the global assembly \eqref{eq:global_assembly} directly inherits exact machine-precision consistency on affine fields and optimal $\mathcal{O}(h_{\mathrm{nom}}^2)$ asymptotic convergence on general smooth fields without partition-of-unity rational distortion.
+With support size $\alpha_s = 0.80$, the cumulative subdomain area on a Cartesian grid exceeds the physical domain measure by the factor $\bar{M} \approx \pi \alpha_s^2 \approx 2.01$ ($\sum_{I=1}^N \mathrm{Area}(\Omega_s^I \cap \Omega) \approx 2.01\,\mathrm{Area}(\Omega)$), and the pointwise overlap multiplicity $M(\mathbf{x})$ varies near truncated boundaries and under nodal jitter.
+As analyzed in Section~\ref{subsubsec:variational_consistency_strang}, the two-sided uniform norm equivalence \eqref{eq:norm_equivalence_multiplicity} ($1 \le M_{\min} \le M(\mathbf{x}) \le M_{\max} \le 6$ on regular grids, and holding across $94.4\%$ of the domain under $25\%$ jitter) ensures that this redundant coverage preserves operator stability and topological equivalence to the physical energy forms without requiring partition-of-unity renormalization weights.
+Because the discrete operators and load vectors are assembled congruently from locally balanced subdomains ($\mathbf{r}_I(\mathbf{e}^*) \equiv \mathbf{0}$, Eq.~\eqref{eq:subdomain_residual_zero}), the global assembly \eqref{eq:global_assembly} directly inherits exact machine-precision consistency on affine fields and optimal asymptotic convergence on general smooth fields without partition-of-unity rational distortion.
 
 Both assembly modes (the classical row-by-row testing of Section~\ref{subsubsec:row_mlpg_symmetry} and the symmetric Subdomain Galerkin assembly of Section~\ref{subsubsec:symmetric_assembly}) are supported in our implementation.
 
@@ -790,10 +856,10 @@ which map via $\mathbf{v}_\alpha^I = (\boldsymbol{\beta}^I)^T \mathbf{d}_\alpha$
     Direct computation of the Euclidean inner products in polynomial coefficient space $\mathbb{R}^6$ yields $\mathbf{d}_{\mathrm{curl}} \cdot \mathbf{d}_{\mathrm{div}} = 0$, $\mathbf{d}_{\mathrm{curl}} \cdot \mathbf{d}_{\mathrm{shear}} = 1 - 1 = 0$, $\mathbf{d}_{\mathrm{curl}} \cdot \mathbf{d}_{\mathrm{hyp}} = 0$, $\mathbf{d}_{\mathrm{div}} \cdot \mathbf{d}_{\mathrm{shear}} = 0$, $\mathbf{d}_{\mathrm{div}} \cdot \mathbf{d}_{\mathrm{hyp}} = 1 - 1 = 0$, and $\mathbf{d}_{\mathrm{shear}} \cdot \mathbf{d}_{\mathrm{hyp}} = 0$, with squared norms $\|\mathbf{d}_\alpha\|^2 = 1^2 + (\pm 1)^2 = 2$. Substituting $\mathbf{V}_I = \mathbf{D}\boldsymbol{\beta}^I$ and $\boldsymbol{\beta}^I \mathbf{A}_I = \mathbf{I}_6$ gives $\mathbf{V}_I \mathbf{A}_I^T \mathbf{A}_I \mathbf{V}_I^T = \mathbf{D}(\boldsymbol{\beta}^I \mathbf{A}_I)(\boldsymbol{\beta}^I \mathbf{A}_I)^T \mathbf{D}^T = \mathbf{D}\mathbf{D}^T = 2\mathbf{I}_4$. Because $\mathbf{A}_I$ is non-singular on every qualified stencil, $\mathrm{rank}(\mathbf{V}_I) = 4$.
 \end{proof}
 
-\subsubsection{Orthogonal Subgrid Decomposition and Derivation of the Stabilization Operator}
+\subsubsection{Orthogonal Subgrid Decomposition and VMS-Inspired Energy Stabilization}
 \label{subsubsec:derivation_orthogonal_stabilization}
 
-To establish the mathematical foundations of the stabilization operator, we introduce an orthogonal subgrid decomposition of the local displacement/gradient field, inspired by the Variational Multiscale (VMS) framework \cite{hughes1998variational, codina2000stabilization} and classical orthogonal hourglass control in under-integrated formulations \cite{flanagan1981uniform, belytschko2023meshfree}.
+To establish the mathematical foundations of the stabilization operator, we introduce an orthogonal decomposition of the local displacement/gradient field, inspired by the Variational Multiscale (VMS) framework \cite{hughes1998variational, codina2000stabilization} and classical orthogonal hourglass control in under-integrated formulations \cite{flanagan1981uniform, belytschko2023meshfree}. We emphasize that this formulation is a VMS-inspired algebraic subgrid energy stabilization that penalizes unresolved deformation modes, rather than a formal two-scale Green's function elimination.
 
 \paragraph{1. Complete Orthogonal Gradient Decomposition:}
 In two dimensions, the spatial gradient tensor $\nabla \vec{E} \in \mathbb{R}^{2 \times 2}$ of any smooth vector field admits a canonical, irreducible orthogonal decomposition into four physically distinct components:
@@ -802,7 +868,7 @@ In two dimensions, the spatial gradient tensor $\nabla \vec{E} \in \mathbb{R}^{2
     \label{eq:gradient_orthogonal_decomposition}
 \end{equation}
 where $\mathbf{J} = \begin{bmatrix} 0 & -1 \\ 1 & 0 \end{bmatrix}$ is the symplectic 2D rotation generator, $\mathbf{I}_2$ is the $2 \times 2$ identity tensor, and $\operatorname{dev}\boldsymbol{\varepsilon}(\vec{E}) = \frac{1}{2}(\nabla\vec{E} + (\nabla\vec{E})^T) - \frac{1}{2}(\nabla\cdot\vec{E})\mathbf{I}_2$ is the symmetric traceless strain tensor.
-Under the complete linear vector trial expansion $\mathcal{P}^1$ within stencil $\Omega_u^I$ (Section~\ref{subsubsec:local_rank_analysis}), the gradient components are spatially constant on disk $\Omega_s^I$ and map bijectively to the nodal mode vectors defined in \eqref{eq:derivative_mode_vectors}:
+Under the complete linear vector trial expansion $\mathcal{P}^1$ within stencil $\Omega_u^I$ (Section~\ref{subsubsec:local_rank_analysis}), the gradient components are spatially constant on disk $\Omega_s^I$ and map bijectively to the nodal mode vectors defined in \eqref{eq:v_curl_def}--\eqref{eq:v_hyp_def}:
 \begin{align}
     \frac{1}{2}(\nabla \times \vec{E}^h)_z & = \frac{1}{2} (\mathbf{v}_{\mathrm{curl}}^I)^T \mathbf{u}_I, \qquad
     \frac{1}{2}\nabla \cdot \vec{E}^h = \frac{1}{2} (\mathbf{v}_{\mathrm{div}}^I)^T \mathbf{u}_I, \\
@@ -824,7 +890,7 @@ resides \textbf{identically in the nullspace} of the continuous energy operator:
 In continuous domains, boundary conditions and inter-element trace continuity transmit stiffness into these modes globally. However, in cell-free MLPG with single-subdomain integration, each disk evaluates derivatives within its own polynomial stencil. Consequently, $\mathcal{V}_{\mathrm{unres}}^I$ becomes an unconstrained, zero-energy subgrid subspace, permitting discrete modes to soften and causing the eigenvalue stagnation observed in Section~\ref{subsubsec:stagnation_fixed_sdiv}.
 
 \paragraph{3. Orthogonal Stabilization Operator Construction:}
-Exploiting the mutual orthogonality established in \eqref{eq:orthogonality_gram_matrix}, we stabilize this unresolved subspace by defining the **Orthogonal Subgrid Energy Stabilization Operator** $\mathbf{K}_{I, \mathrm{stab}}^{\mathrm{local}}$:
+Exploiting the mutual orthogonality established in \eqref{eq:orthogonality_gram_matrix}, we stabilize this unresolved subspace by defining the **Orthogonal Subgrid Energy Stabilization Operator** (or VMS-inspired orthogonal stabilization) $\mathbf{K}_{I, \mathrm{stab}}^{\mathrm{local}}$:
 \begin{equation}
     \mathbf{K}_{I, \mathrm{stab}}^{\mathrm{local}} = \frac{\alpha_{\mathrm{stab}}}{\mu_r} S_0^I \left[ \mathbf{v}_{\mathrm{shear}}^I (\mathbf{v}_{\mathrm{shear}}^I)^T + \mathbf{v}_{\mathrm{hyp}}^I (\mathbf{v}_{\mathrm{hyp}}^I)^T \right],
     \label{eq:k_stab_analytic}
@@ -848,27 +914,27 @@ The operator \eqref{eq:k_stab_analytic} satisfies the following exact properties
     \item \textbf{Hourglass and Stabilized Nodal Integration Equivalence:} Rather than subdividing disks into sub-cells as in Modified SCNI/SNNI \cite{chen2001stabilized, hillman2018performance}, our formulation projects the harmonic zero-energy modes in closed form directly through the explicit polynomial basis $\mathcal{P}^1$.
 \end{enumerate}
 
-\subsubsection{Variational Asymptotic Scaling Law (\texorpdfstring{$\alpha_{\mathrm{stab}} \propto (h_{\mathrm{nom}}/L)^2$}{alpha\_stab proportional to (h\_nom/L)2}) and Consistency}
+\subsubsection{Asymptotic Parameter Scaling Law (\texorpdfstring{$\alpha_{\mathrm{stab}} \propto (h_{\mathrm{nom}}/L)^2$}{alpha\_stab proportional to (h\_nom/L)2}) and Conditional Consistency}
 \label{subsubsec:vms_scaling_law}
 
 A central theoretical question concerns the asymptotic scaling of $\alpha_{\mathrm{stab}}$ under spatial refinement:
 \begin{enumerate}[(a)]
     \item \textbf{The Need for Mesh-Dependent Decay:} If $\alpha_{\mathrm{stab}}$ were held constant ($\mathcal{O}(1)$), $\mathbf{K}_{\mathrm{stab}}$ would act as a non-consistent penalty on the continuous problem, penalizing genuine physical fields that possess shear strains (such as higher-order cavity TE modes) and causing artificial over-stiffening.
-    \item \textbf{Strang Variational Consistency Condition:} In Strang's First Lemma \eqref{eq:strang_lemma}, the consistency error contribution generated by the stabilization bilinear form is bounded by:
+    \item \textbf{Conditional Strang Variational Consistency:} In the conditional Strang framework (Section~\ref{subsubsec:variational_consistency_strang}), the consistency perturbation contributed by the stabilization bilinear form is bounded by:
           \begin{equation}
               \frac{|a_h^{\mathrm{stab}}(\vec{E}, \vec{w}_h)|}{\|\vec{w}_h\|_h} \le \alpha_{\mathrm{stab}} \|\operatorname{dev}\boldsymbol{\varepsilon}(\vec{E})\|_{\boldsymbol{L}^2(\Omega)}.
           \end{equation}
-          To ensure that the stabilization does not degrade the optimal $\mathcal{O}(h_{\mathrm{nom}})$ asymptotic energy error, $\alpha_{\mathrm{stab}}$ must decay at least linearly: $\alpha_{\mathrm{stab}} \le C h_{\mathrm{nom}}$.
-    \item \textbf{Babuska--Osborn Spectral Consistency for Eigenvalues:} For self-adjoint eigenvalue problems $\mathbf{K} \mathbf{e} = \lambda \mathbf{M} \mathbf{e}$, the Rayleigh quotient perturbation induced by $\mathbf{K}_{\mathrm{stab}}$ satisfies:
+          Assuming Hypothesis~1 (uniform discrete coercivity) holds, choosing $\alpha_{\mathrm{stab}} \le C h_{\mathrm{nom}}^2$ ensures that the stabilization perturbation decays at rate $\mathcal{O}(h_{\mathrm{nom}}^2)$, which is higher-order than the $\mathcal{O}(h_{\mathrm{nom}})$ broken consistency error in \eqref{eq:consistency_error_bound}. Consequently, conditioned on stability, adding the stabilization does not alter the asymptotic first-order energy convergence bound under Strang's First Lemma.
+    \item \textbf{Rayleigh Quotient Perturbation for Eigenvalues:} For self-adjoint eigenvalue problems $\mathbf{K} \mathbf{e} = \lambda \mathbf{M} \mathbf{e}$, the first-order Rayleigh quotient perturbation induced by $\mathbf{K}_{\mathrm{stab}}$ on an approximated physical mode satisfies:
           \begin{equation}
               \delta \lambda = \frac{\mathbf{e}^{*T} \mathbf{K}_{\mathrm{stab}} \mathbf{e}^*}{\mathbf{e}^{*T} \mathbf{M} \mathbf{e}^*} \approx \alpha_{\mathrm{stab}} \frac{\|\operatorname{dev}\boldsymbol{\varepsilon}(\vec{E}^*)\|_{\boldsymbol{L}^2(\Omega)}^2}{\|\vec{E}^*\|_{\boldsymbol{L}^2(\Omega)}^2}.
           \end{equation}
-          Because the unperturbed $\mathcal{P}^1$ discretization error on eigenvalues scales quadratically as $\mathcal{O}(h_{\mathrm{nom}}^2)$ (Eq.~\eqref{eq:babuska_osborn_spectral}), selecting:
+          In conforming finite elements, the standard benchmark rate for eigenvalue convergence is quadratic ($\mathcal{O}(h^2)$). To ensure that the stabilization perturbation decays at the same quadratic rate without introducing a lower-order ($\mathcal{O}(h)$ or $\mathcal{O}(1)$) artificial stiffening that would distort the spectrum, we adopt the quadratic scaling law:
           \begin{equation}
-              \alpha_{\mathrm{stab}}(h_{\mathrm{nom}}) = c_{\mathrm{stab}} \left(\frac{h_{\mathrm{nom}}}{L}\right)^2,
+              \alpha_{\mathrm{stab}}(h_{\mathrm{nom}}) = c_{\mathrm{stab}} \left(\frac{h_{\mathrm{nom}}}{L}\right)^2.
               \label{eq:alpha_stab_vms_scaling}
           \end{equation}
-          ensures that the eigenvalue perturbation $\delta \lambda \sim \mathcal{O}(h_{\mathrm{nom}}^2)$ decays at the exact same rate as the interpolation error, preserving asymptotic quadratic convergence without locking.
+          This scaling law serves as an asymptotic parameter design guideline, ensuring that the perturbation added to the discrete operator decays as $\mathcal{O}(h_{\mathrm{nom}}^2)$ as $h_{\mathrm{nom}} \to 0$.
 \end{enumerate}
 Here $c_{\mathrm{stab}} \ge 0$ is a dimensionless calibration constant and $L = \max(L_x, L_y)$ is the macroscopic domain length ($L = \pi\text{ m}$ for the square cavity). On unstructured clouds, $h_{\mathrm{nom}}$ is evaluated as the local spacing $h_I$ or the cloud average $\overline{h}$.
 
@@ -946,55 +1012,73 @@ Because boundary DoFs are eliminated directly, evaluating boundary integrals alo
 
 On a natural boundary (such as a homogeneous Neumann PMC wall, a non-zero magnetic surface current, or an absorbing Robin interface), the exact boundary operator must be carefully analyzed in the presence of the divergence regularization parameter $s_{\mathrm{div}}$.
 
-\paragraph{1. The Natural Boundary Condition Associated with the Regularized System:}
-In mathematical elasticity and regularized electromagnetics \cite{monk2003finite, boffi2013mixed}, integrating the regularized vector Helmholtz equation by parts yields the total natural boundary condition:
+\paragraph{1. The Natural Boundary Operator of the Regularized Helmholtz System:}
+In regularized vector electromagnetics and div-curl systems \cite{monk2003finite, boffi2013mixed}, Green's vector identity \eqref{eq:local_weak_form} reveals that the total natural boundary flux contains two distinct components:
 \begin{equation}
-    \vec{\tau}(\vec{E}) \equiv \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}) \vec{n} = \vec{g}(\mathbf{x}) \quad \text{on } \Gamma_{\mathrm{nat}}.
+    \vec{\tau}(\vec{E}) \equiv \vec{\tau}_t(\vec{E}) + \tau_n(\vec{E}) \vec{n} = \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) + \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}) \vec{n} \quad \text{on } \Gamma_{\mathrm{nat}}.
     \label{eq:full_natural_bc}
 \end{equation}
-Therefore, setting the total surface flux to zero ($\vec{\tau} \equiv \mathbf{0}$) corresponds physically and mathematically to the \textbf{joint natural condition}:
-\begin{equation}
-    \vec{n} \times (\nabla \times \vec{E}) = \mathbf{0} \quad \text{and} \quad s_{\mathrm{div}} (\nabla \cdot \vec{E}) = 0 \quad \text{on } \Gamma_N.
-    \label{eq:joint_natural_conditions}
-\end{equation}
-For any physical solenoidal electromagnetic field in a source-free region, the exact continuous solution satisfies $\nabla \cdot \vec{E} = 0$ in $\Omega$ and along $\partial\Omega$. Consequently, the exact solution satisfies both equations in \eqref{eq:joint_natural_conditions} simultaneously.
+Physical electromagnetic boundary conditions prescribe only the tangential magnetic field (Neumann PMC / surface current) or tangential impedance (Robin radiation):
+\begin{align}
+    \text{Neumann:} & \quad \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) = \vec{g}_N(\mathbf{x}) \quad \text{on } \Gamma_N, \label{eq:physical_neumann_bc} \\
+    \text{Robin:} & \quad \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) + \gamma \vec{E}_t = \vec{g}_R(\mathbf{x}) \quad \text{on } \Gamma_R. \label{eq:physical_robin_bc}
+\end{align}
+In standard finite element and meshless implementations, the discrete natural boundary integral evaluates only these physical tangential terms, omitting the discrete normal divergence flux $\int_{\Gamma_s^I} \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}_{I,h}) (\vec{w}_{I,h} \cdot \vec{n}) \, ds$.
+A rigorous mathematical validation of this omission requires addressing both physical and asymptotic scaling considerations:
 
-\paragraph{2. Discrete Divergence Flux and Strang Consistency of Boundary Omission:}
-At the discrete level, however, the finite-dimensional approximation $\vec{E}_h$ does not satisfy $\nabla \cdot \vec{E}_h \equiv 0$ pointwise; rather, the discrete divergence is penalized by the volumetric term $s_{\mathrm{div}} \|\nabla \cdot \vec{E}_h\|_{\boldsymbol{L}^2}^2$.
-When the standard physical electromagnetic condition specifies only the tangential magnetic field:
+\paragraph{2. Physical Solenoicity Condition for Maxwell Fields:}
+In continuous Maxwell theory, the electric field divergence is governed by Gauss' law $\nabla \cdot (\epsilon \vec{E}) = \rho$.
+In homogeneous charge-free media ($\rho = 0$), or in source-driven regions where the applied electric current density is divergence-free ($\nabla \cdot \vec{J}_s = 0$), taking the divergence of the regularized Helmholtz equation \eqref{eq:helmholtz_pde} yields:
 \begin{equation}
-    \frac{1}{\mu_r} \left( \vec{n} \times (\nabla \times \vec{E}) \right) = \vec{g}_N(\mathbf{x}) \quad \text{on } \Gamma_N,
+    -k_0^2 \epsilon_r (\nabla \cdot \vec{E}) - s_{\mathrm{div}} \mu_r^{-1} \Delta (\nabla \cdot \vec{E}) = \nabla \cdot \vec{J}_s = 0 \quad \text{in } \Omega.
 \end{equation}
-omitting the discrete normal divergence term $\int_{\Gamma_s^I} \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}_{I,h}) (\vec{W}_I \cdot \vec{n}) \, ds$ from the natural boundary integral introduces an apparent boundary inconsistency.
+For any well-posed, source-free or divergence-free physical problem, the exact continuous field is strictly solenoidal throughout the closure of the domain:
+\begin{equation}
+    \nabla \cdot \vec{E} \equiv 0 \quad \text{in } \bar{\Omega} = \Omega \cup \partial\Omega.
+    \label{eq:exact_solenoidal_condition}
+\end{equation}
+Under condition \eqref{eq:exact_solenoidal_condition}, the normal flux of the exact continuous solution vanishes identically on all natural boundaries:
+\begin{equation}
+    \tau_n(\vec{E}) = \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}) \equiv 0 \quad \forall \mathbf{x} \in \Gamma_N \cup \Gamma_R.
+    \label{eq:normal_flux_exact_zero}
+\end{equation}
+Consequently, in the consistency functional $\mathcal{R}_h(\vec{w}_h) = a_h(\vec{E}, \vec{w}_h) - \ell_h(\vec{w}_h)$ governing Strang's First Lemma \eqref{eq:strang_lemma}, the boundary consistency error associated with the omitted normal flux is \textbf{identically zero}:
+\begin{equation}
+    \mathcal{R}_{\mathrm{bnd}}(\vec{w}_h) \equiv \sum_{I=1, \Omega_s^I \cap \Gamma_{\mathrm{nat}} \ne \emptyset}^N \int_{\Omega_s^I \cap \Gamma_{\mathrm{nat}}} \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}) (\vec{w}_{I,h} \cdot \vec{n}) \, ds \equiv 0.
+    \label{eq:boundary_consistency_zero}
+\end{equation}
+Therefore, for physical solenoidal fields, omitting the normal divergence flux introduces no variational consistency crime whatsoever, ensuring that the convergence bound \eqref{eq:strang_conditional_energy_bound} remains fully valid.
 
-We resolve this question by establishing that this omission is \textbf{asymptotically consistent} and does not degrade the convergence rate:
+\paragraph{3. Incompatibility of Superlinear Penalty Scaling with Non-Solenoidal Boundaries:}
+We must highlight an important analytical constraint regarding the divergence penalty parameter $s_{\mathrm{div}}$:
+If the exact field were \emph{not} solenoidal ($\nabla \cdot \vec{E} \ne 0$ on $\Gamma_{\mathrm{nat}}$), bounding $\mathcal{R}_{\mathrm{bnd}}(\vec{w}_h)$ via the trace inequality would produce:
+\begin{equation}
+    |\mathcal{R}_{\mathrm{bnd}}(\vec{w}_h)| \le C_{\mathrm{tr}} \frac{s_{\mathrm{div}}}{\mu_r} h_{\mathrm{nom}}^{-1/2} \|\nabla \cdot \vec{E}\|_{\boldsymbol{L}^2(\Gamma_{\mathrm{nat}})} \|\vec{w}_h\|_h.
+\end{equation}
+If the superlinear penalty scaling $s_{\mathrm{div}} \propto h_{\mathrm{nom}}^{-1.5}$ (introduced in Section~\ref{subsec:stage5_cavity} to shift gradient nullspace modes) were substituted into this estimate, the boundary error would scale as:
+\begin{equation}
+    s_{\mathrm{div}} h_{\mathrm{nom}}^{-1/2} \propto h_{\mathrm{nom}}^{-2.0},
+\end{equation}
+which diverges rapidly and destroys asymptotic convergence.
+To preserve mathematical consistency, our formulation establishes a strict separation between two operational regimes:
 \begin{enumerate}[(i)]
-    \item \textbf{Vanishing on the Exact Solution:} For the exact continuous solution $\vec{E}^*$, $\nabla \cdot \vec{E}^* \equiv 0$ on $\Gamma_N$. Therefore, the normal flux evaluated on the exact field vanishes identically:
+    \item \textbf{Boundary-Value Problems with Natural (Neumann/Robin) Boundaries (Section~\ref{subsec:stage3_mms}):}
+          In source problems involving natural boundaries, the divergence penalty is held strictly constant at $\mathcal{O}(1)$ ($s_{\mathrm{div}} = 6.0$, matching \cite{stable_vnmm2d_2026}). Superlinear penalty scaling is never employed in the presence of natural boundaries. Because the manufactured solution in Case~B is solenoidal ($\nabla \cdot \vec{E}^* \equiv 0$), \eqref{eq:boundary_consistency_zero} holds identically, yielding the optimal convergence rates observed in Table~\ref{tab:mms_convergence}.
+    \item \textbf{Resonant Cavity Eigenvalue Problems (Section~\ref{subsec:stage5_cavity}):}
+          The superlinear scaling $s_{\mathrm{div}}(h_{\mathrm{nom}}) \propto h_{\mathrm{nom}}^{-1.5}$ is employed \textbf{exclusively for closed PEC resonant cavities}, where the entire boundary is pure Dirichlet ($\partial\Omega = \Gamma_D = \mathrm{PEC}$, with $\vec{n} \times \vec{E} = \mathbf{0}$). On $\Gamma_D$, all boundary degrees of freedom are eliminated directly at the discrete nodal level ($\mathbf{e}_{\mathrm{bnd}} = \mathbf{0}$, Eq.~\eqref{eq:reduced_eigenproblem}), so \textbf{zero natural boundary integrals (neither Neumann nor Robin) are ever evaluated}. Hence, the superlinear penalty never couples with boundary flux omissions.
+    \item \textbf{General Non-Solenoidal Media with Inhomogeneous Divergence:}
+          If an application involves non-solenoidal fields with prescribed volume charge density $\rho$ or prescribed boundary divergence $\nabla \cdot \vec{E} = g_{\mathrm{div}}(\mathbf{x}) \ne 0$ on $\Gamma_{\mathrm{nat}}$, the formulation must include the consistent normal boundary load vector:
           \begin{equation}
-              \tau_n(\vec{E}^*) = \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}^*) \equiv 0 \quad \forall \mathbf{x} \in \Gamma_N.
+              F_{a, \mathrm{div}}^{\mathrm{bnd}, I} = \int_{\Omega_s^I \cap \Gamma_{\mathrm{nat}}} \frac{s_{\mathrm{div}}}{\mu_r} g_{\mathrm{div}}(\mathbf{x}) (\vec{N}_a^I(\mathbf{x}) \cdot \vec{n}) \, ds.
+              \label{eq:consistent_div_boundary_load}
           \end{equation}
-          Hence, no physical boundary flux is omitted from the continuous weak balance \eqref{eq:local_variational_balance}.
-    \item \textbf{Asymptotic Decay of Discrete Boundary Divergence:} By the trace theorem and local polynomial approximation bounds \eqref{eq:local_taylor_bounds}, the divergence residual on the boundary segment $\Gamma_s^I$ satisfies:
-          \begin{equation}
-              \|\nabla \cdot \vec{E}_{I,h}\|_{\boldsymbol{L}^2(\Gamma_s^I)} \le C_{\mathrm{tr}} h_{\mathrm{nom}}^{-1/2} \|\nabla \cdot \vec{E}_{I,h}\|_{\boldsymbol{L}^2(\Omega_s^I)} + C_{\mathrm{tr}}' h_{\mathrm{nom}}^{1/2} \|\nabla(\nabla \cdot \vec{E}_{I,h})\|_{\boldsymbol{L}^2(\Omega_s^I)}.
-          \end{equation}
-          Because the trial space is $\mathcal{P}^1$, $\nabla(\nabla \cdot \vec{E}_{I,h}) \equiv \mathbf{0}$, and the volumetric divergence error scales as $\|\nabla \cdot \vec{E}_{I,h}\|_{\boldsymbol{L}^2(\Omega_s^I)} \le C h_{\mathrm{nom}} \|\vec{E}^*\|_{\boldsymbol{H}^2}$. Consequently:
-          \begin{equation}
-              \|\nabla \cdot \vec{E}_{I,h}\|_{\boldsymbol{L}^2(\Gamma_s^I)} \le C_{\mathrm{div}} h_{\mathrm{nom}}^{1/2} \|\vec{E}^*\|_{\boldsymbol{H}^2}.
-          \end{equation}
-    \item \textbf{Boundary Strang Perturbation Bound:} In Strang's First Lemma \eqref{eq:strang_lemma}, the boundary variational consistency functional associated with the omitted normal flux is bounded by:
-          \begin{equation}
-              \left| \sum_{I=1}^N \int_{\Omega_s^I \cap \Gamma_N} \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E}_{I,h}) (\vec{w}_{I,h} \cdot \vec{n}) \, ds \right| \le C s_{\mathrm{div}} h_{\mathrm{nom}} \|\vec{E}^*\|_{\boldsymbol{H}^2} \|\vec{w}_h\|_h.
-              \label{eq:strang_boundary_divergence_bound}
-          \end{equation}
-          Eq.~\eqref{eq:strang_boundary_divergence_bound} rigorously proves that the effect of omitting the discrete normal divergence flux is bounded by $\mathcal{O}(h_{\mathrm{nom}})$, decaying at the exact same rate as the interior non-conforming consistency error in \eqref{eq:consistency_error_bound}.
+          In this paper, following standard microwave cavity benchmarks, all exact solutions satisfy $g_{\mathrm{div}} \equiv 0$.
 \end{enumerate}
-This theoretical result explains why the MMS refinement study with active Neumann boundaries (Table~\ref{tab:mms_convergence}, Case~B) achieves the exact optimal convergence rates ($\mathcal{O}(h_{\mathrm{nom}}^{1.85})$ in $\boldsymbol{L}^2(\vec{E})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.02})$ in $|H(\mathbf{curl})|$) without any degradation compared to the pure Dirichlet configuration.
 
 \subsubsection{Inhomogeneous Neumann and Robin Boundary Formulations}
 \label{subsubsec:neumann_inhomogeneous_robin}
 
-With the normal divergence flux asymptotically controlled, the boundary line integrals for inhomogeneous Neumann and Robin conditions are evaluated strictly through their physical tangential contributions:
+With the normal divergence flux established as identically zero for solenoidal fields, the boundary line integrals for inhomogeneous Neumann and Robin conditions are evaluated strictly through their physical tangential contributions:
 \begin{enumerate}
     \item \textbf{Inhomogeneous Neumann (Prescribed Surface Currents):}
           When $\frac{1}{\mu_r} (\vec{n} \times (\nabla \times \vec{E})) = \vec{g}_N(\mathbf{x})$ is prescribed on $\Gamma_N$, the local boundary load vector is given by:
@@ -1013,69 +1097,101 @@ With the normal divergence flux asymptotically controlled, the boundary line int
               C_{ab}^{\mathrm{Robin}, I} = \gamma \int_{\Omega_s^I \cap \Gamma_R} \left( \vec{N}_a^I(\mathbf{x}) \cdot \vec{t} \right) \left( \vec{N}_b^I(\mathbf{x}) \cdot \vec{t} \right) \, ds,
               \label{eq:robin_matrix}
           \end{equation}
-          and adds $\int_{\Omega_s^I \cap \Gamma_R} \vec{g}_R \cdot \vec{N}_a^I \, ds$ to the local load vector.
+          and adds $\int_{\Omega_s^I \cap \Gamma_R} \vec{g}_R \cdot \vec{N}_a^I \, ds$ to the local load vector. As with Neumann boundaries, the omitted normal divergence component $\tau_n = \frac{s_{\mathrm{div}}}{\mu_r} (\nabla \cdot \vec{E})$ vanishes identically for solenoidal fields, ensuring physical and variational consistency.
 \end{enumerate}
 Both \eqref{eq:neumann_load_integral} and \eqref{eq:robin_matrix} are 1D integrals along straight segments $\Gamma_s^I = \Omega_s^I \cap \partial\Omega$. Because $\vec{N}_a^I$ are linear polynomials, a standard 2-point Gauss--Legendre quadrature evaluates them to machine precision ($\Delta F^{\mathrm{Neumann}} \le 1.92 \times 10^{-16}$ and $\Delta C^{\mathrm{Robin}} \le 1.09 \times 10^{-16}$, Table~\ref{tab:stage1_element_verification}), preserving the cell-free character of the formulation without boundary element meshes.
 
-\subsection{Local Regularity, Global Non-Conformity, and the Broken Curl Norm}
+\subsection{Local Regularity, Non-Conforming Broken Spaces, and Error Evaluation}
 \label{subsec:conformity_discussion}
 
-A rigorous functional characterization of the discrete space and its convergence requires distinguishing between local smoothness and global conformity:
-\begin{itemize}
-    \item \textbf{Local Regularity within Subdomains:} Within each autonomous subdomain $\Omega_s^I \cap \Omega$, the vector approximation $\vec{E}_{I,h}(\mathbf{x}) = \mathbf{P}(\mathbf{x} - \mathbf{x}_I) \boldsymbol{\beta}^I \mathbf{L}_I \mathbf{e}$ belongs to $[\mathcal{P}^1(\Omega_s^I \cap \Omega)]^2 \subset [C^\infty(\Omega_s^I \cap \Omega)]^2 \subset \boldsymbol{H}(\mathbf{curl}, \Omega_s^I \cap \Omega)$. Inside each disk, there are no internal edges, no cell boundaries, and no singular distributions.
-    \item \textbf{Global Non-Conformity:} Because each evaluation node $\mathbf{x}_I$ employs an autonomous stencil $\Omega_u^I$ (Section~\ref{subsec:stencil_selection}), adjacent subdomains evaluate distinct polynomial coefficients ($\boldsymbol{\beta}^I \ne \boldsymbol{\beta}^J$). Evaluating the discrete fields across overlapping subdomains produces trace jumps across inter-subdomain boundary arcs $\Sigma_{IJ} = \partial\Omega_s^I \cap \Omega_s^J$. Consequently, the discrete trial space does not conform to the global Sobolev space: $\mathbf{V}_h \not\subset \boldsymbol{H}(\mathbf{curl}, \Omega)$.
-\end{itemize}
+A rigorous mathematical characterization on overlapping subdomains requires clearly distinguishing between three distinct concepts:
+(i) the discrete trial space $\mathbf{V}_h$ as a collection of autonomous local polynomial reconstructions on overlapping disks,
+(ii) the broken Sobolev energy norm used for variational analysis and error measurement, and
+(iii) synthesized global fields employed exclusively for post-processing and visualization.
 
-\paragraph{Distributional Curl and Tangential Trace Jumps:}
-In distribution theory, the global curl of a piecewise-smooth vector field $\vec{E}_h$ with jump discontinuities across internal interface surfaces $\Sigma = \bigcup_{I, J} \Sigma_{IJ}$ contains both regular (volumetric) and singular (distributional Dirac delta) contributions:
+\paragraph{1. The Collection of Local Reconstructions ($\mathbf{V}_h$):}
+The discrete solution of the cell-free VNMM-MLPG is not defined as a single global piecewise function over a partition of $\Omega$. Rather, it belongs to the Cartesian product broken space:
 \begin{equation}
-    \operatorname{curl} \vec{E}_h = \sum_{I=1}^N \chi_{\Omega_s^I} \nabla \times \vec{E}_{I,h} + \sum_{\Sigma_{IJ}} \left( \vec{n}_{\Sigma} \times [\vec{E}_h]_{\Sigma_{IJ}} \right) \delta_{\Sigma_{IJ}},
-    \label{eq:distributional_curl}
+    \mathbf{V}_h = \prod_{I=1}^N [\mathcal{P}^1(\Omega_s^I \cap \Omega)]^2 = \left\{ \vec{v}_h = \{\vec{v}_{I,h}\}_{I=1}^N \;:\; \vec{v}_{I,h}(\mathbf{x}) = \mathbf{P}(\mathbf{x} - \mathbf{x}_I) \boldsymbol{\beta}^I \mathbf{L}_I \mathbf{v} \right\},
+    \label{eq:broken_space_definition_sec28}
 \end{equation}
-where $[\vec{E}_h]_{\Sigma_{IJ}} \equiv \vec{E}_{I,h}|_{\Sigma_{IJ}} - \vec{E}_{J,h}|_{\Sigma_{IJ}}$ represents the field jump, and $\vec{n}_{\Sigma}$ is the unit normal to interface arc $\Sigma_{IJ}$.
-Consequently, simply evaluating the local volume rotational error $\sum_I \|\nabla \times \vec{E}_{I,h} - \nabla \times \vec{E}\|_{\boldsymbol{L}^2(\Omega_s^I)}^2$ is not mathematically equivalent to the complete continuous $\boldsymbol{H}(\mathbf{curl}, \Omega)$ norm unless the tangential jump term $\vec{n}_{\Sigma} \times [\vec{E}_h]$ is proven to converge to zero at an asymptotic rate compatible with the energy error.
+where $\mathbf{v} \in \mathbb{R}^N$ is the vector of nodal degrees of freedom.
+Within each individual subdomain $\Omega_s^I \cap \Omega$, the vector approximation $\vec{E}_{I,h}$ is infinitely smooth: $\vec{E}_{I,h} \in [\mathcal{P}^1(\Omega_s^I \cap \Omega)]^2 \subset \boldsymbol{H}(\mathbf{curl}, \Omega_s^I \cap \Omega)$.
+Because each evaluation node $\mathbf{x}_I$ selects an autonomous support stencil $\Omega_u^I$ (Section~\ref{subsec:stencil_selection}), adjacent subdomains evaluate distinct polynomial coefficients ($\boldsymbol{\beta}^I \ne \boldsymbol{\beta}^J$). Over any overlapping region $\Omega_s^I \cap \Omega_s^J \ne \emptyset$, the two reconstructions $\vec{E}_{I,h}$ and $\vec{E}_{J,h}$ are distinct local functions that differ by the stencil discrepancy \eqref{eq:stencil_jump_L2}.
+Consequently, the discrete space does not conform to the global Sobolev space: $\mathbf{V}_h \not\subset \boldsymbol{H}(\mathbf{curl}, \Omega)$.
 
-\paragraph{Broken Sobolev Norm Definition:}
-To place the convergence analysis on an exact mathematical foundation, all vector and curl errors reported in this work are rigorously defined in the broken Sobolev norm (widely standard in discontinuous Galerkin, Trefftz, and non-conforming meshless methods \cite{brenner2008mathematical, boffi2013mixed}):
+\paragraph{2. The Broken Sobolev Norms: Energy Form vs. Physical Field Evaluation:}
+A rigorous functional formulation requires clearly distinguishing between the \textbf{variational energy norm} used in the coercivity and convergence analysis and the \textbf{physical broken Sobolev norm} used to report field errors:
+\begin{enumerate}[(i)]
+    \item \textbf{Regularized Broken Div-Curl Energy Norm ($\|\cdot\|_{h, a}$):}
+          Defined in \eqref{eq:broken_energy_norm}, this norm governs the bilinear form $a_h(\cdot, \cdot)$ and Strang's First Lemma \eqref{eq:strang_lemma}:
+          \begin{equation}
+              \|\vec{v}_h\|_{h, a}^2 \equiv \sum_{I=1}^N \iint_{\Omega_s^I \cap \Omega} \left[ |\nabla \times \vec{v}_{I,h}|^2 + s_{\mathrm{div}} |\nabla \cdot \vec{v}_{I,h}|^2 + |\vec{v}_{I,h}|^2 \right] d\Omega.
+          \end{equation}
+          Because the divergence penalty parameter $s_{\mathrm{div}}$ scales with resolution in cavity eigenvalue problems ($s_{\mathrm{div}} \propto h_{\mathrm{nom}}^{-1.5}$), this norm strongly weights divergence discrepancies on fine grids, enforcing asymptotic solenoidal compliance.
+          
+    \item \textbf{Normalized Broken $H(\mathbf{curl})$ Semi-Norm and Norm ($\|\cdot\|_{h, \mathbf{curl}}$):}
+          To evaluate physical electromagnetic field convergence independently of artificial penalty weights, the standard broken $\boldsymbol{H}(\mathbf{curl})$ norm is defined by:
+          \begin{equation}
+              \|\vec{w}_h\|_{h, \mathbf{curl}}^2 \equiv \frac{1}{\bar{M}} \sum_{I=1}^N \|\vec{w}_{I,h}\|_{\boldsymbol{H}(\mathbf{curl}, \Omega_s^I \cap \Omega)}^2 = \frac{1}{\bar{M}} \sum_{I=1}^N \iint_{\Omega_s^I \cap \Omega} \left[ |\vec{w}_{I,h}|^2 + |\nabla \times \vec{w}_{I,h}|^2 \right] d\Omega,
+              \label{eq:rigorous_broken_norm}
+          \end{equation}
+          where $\bar{M} = \frac{1}{|\Omega|}\iint_\Omega M(\mathbf{x})\,d\Omega \approx \pi \alpha_s^2$ is the nominal interior overlap multiplicity (Section~\ref{subsubsec:overlap_multiplicity_analysis}), which restores physical area dimensions matching the global integral $\iint_\Omega$.
+          For any discrete field $\vec{v}_h \in \mathbf{V}_h$, the two norms satisfy the direct inequality:
+          \begin{equation}
+              \|\vec{v}_h\|_{h, \mathbf{curl}}^2 \le \frac{1}{\bar{M}} \|\vec{v}_h\|_{h, a}^2 \quad (\text{for } s_{\mathrm{div}} \ge 0).
+          \end{equation}
+          When approximating smooth solenoidal fields ($\nabla \cdot \vec{E} \equiv 0$), the discrete divergence term in $\|\vec{E} - \vec{E}_h\|_{h, a}$ scales as $\mathcal{O}(h_{\mathrm{nom}})$, so that under superlinear scaling $s_{\mathrm{div}} \propto h_{\mathrm{nom}}^{-1.5}$ the penalty energy scales as $\mathcal{O}(h_{\mathrm{nom}}^{0.5}) \to 0$ without polluting the optimal first-order $H(\mathbf{curl})$ error rate.
+          
+    \item \textbf{Multiplicity Weighting and Uniform Norm Equivalence Limits:}
+          While the constant factor $\bar{M}$ scales the global sum, spatial variations in $M(\mathbf{x}) = \sum_{I=1}^N \chi_{\Omega_s^I \cap \Omega}(\mathbf{x})$ mean that a broken norm represents a multiplicity-weighted integral $\iint_\Omega M(\mathbf{x}) |\vec{v}(\mathbf{x})|^2 d\Omega$.
+          Strict topological equivalence to the continuous physical norm requires uniform two-sided bounds:
+          \begin{equation}
+              0 < M_{\min} \le M(\mathbf{x}) \le M_{\max} < \infty \quad \text{almost everywhere in } \Omega.
+              \label{eq:multiplicity_uniform_bounds}
+          \end{equation}
+          On regular Cartesian lattices with $\alpha_s = 0.80$, this condition is strictly satisfied everywhere, with $1 \le M_{\min} \le M(\mathbf{x}) \le M_{\max} \le 6$ ($100\%$ domain coverage).
+          On disordered point clouds under $25\%$ jitter, as established in Section~\ref{subsec:stage4_alpha_s}, domain coverage is $94.4\%$, meaning that $M(\mathbf{x}) = 0$ on the remaining $5.6\%$ of interstitial voids. Consequently, on perturbed clouds under the fixed baseline $\alpha_s = 0.80$, uniform norm equivalence \eqref{eq:multiplicity_uniform_bounds} holds strictly across the covered domain $\Omega_{\mathrm{cov}} = \bigcup_{I=1}^N \Omega_s^I \subset \Omega$. The unintegrated $5.6\%$ voids introduce a localized non-conforming consistency error, which can be eliminated whenever necessary by employing adaptive radii $r_s^I$ or moderately increasing $\alpha_s \in [0.85, 1.00]$.
+\end{enumerate}
+
+\paragraph{Inter-Stencil Trace Compatibility on Overlapping Subdomains:}
+Although the broken space $\mathbf{V}_h$ does not require global trace conformity, a key consistency requirement is that reconstructions from adjacent autonomous stencils must asymptotically coalesce as $h_{\mathrm{nom}} \to 0$.
+To quantify this property without invoking unphysical partition interfaces, we define the geometric set of all overlapping subdomain pairs:
 \begin{equation}
-    \|\vec{E} - \vec{E}_h\|_{h, \mathbf{curl}}^2 \equiv \frac{1}{\bar{M}} \sum_{I=1}^N \|\vec{E} - \vec{E}_{I,h}\|_{\boldsymbol{H}(\mathbf{curl}, \Omega_s^I \cap \Omega)}^2 = \frac{1}{\bar{M}} \sum_{I=1}^N \iint_{\Omega_s^I \cap \Omega} \left[ |\vec{E} - \vec{E}_{I,h}|^2 + |\nabla \times (\vec{E} - \vec{E}_{I,h})|^2 \right] d\Omega,
-    \label{eq:rigorous_broken_norm}
+    \mathcal{P}_{\mathrm{overlap}} \equiv \left\{ (I, J) \;:\; I \ne J, \; \|\mathbf{x}_I - \mathbf{x}_J\|_2 < r_s^I + r_s^J \right\}.
 \end{equation}
-where $\bar{M} \approx 2\pi \alpha_s^2$ is the nominal interior overlap multiplicity normalizer ensuring area-objective dimensions matching $\|\cdot\|_{\boldsymbol{H}(\mathbf{curl}, \Omega)}$.
-
-\paragraph{Asymptotic Decay of Inter-Stencil Tangential Jumps:}
-We now establish that the singular distributional interface contributions in \eqref{eq:distributional_curl} are strictly controlled.
-Let $\Sigma_{IJ} \subset \partial\Omega_s^I \cap \Omega_s^J$ be an internal circular boundary segment of disk $\Omega_s^I$ submerged within neighbor $\Omega_s^J$.
-Applying the trace inequality on disk sectors combined with the local polynomial interpolation bounds \eqref{eq:local_taylor_bounds}:
+For each overlapping pair $(I, J) \in \mathcal{P}_{\mathrm{overlap}}$, let $L_s^{I, J} \equiv \partial\Omega_s^I \cap \Omega_s^J$ denote the internal circular boundary arc of disk $\Omega_s^I$ submerged within neighbor $\Omega_s^J$.
+Importantly, these arcs do \emph{not} form a disjoint partition of internal curves, as a single arc segment may be simultaneously submerged in multiple neighboring disks.
+Applying the scaled trace inequality on star-shaped domains \cite{brenner2008mathematical, ciarlet2002finite} to the lens-shaped intersection $\Omega_s^I \cap \Omega_s^J$:
 \begin{equation}
-    \|\vec{n} \times [\vec{E}_h]\|_{\boldsymbol{L}^2(\Sigma_{IJ})} \le C_{\mathrm{tr}} \left( h_{\mathrm{nom}}^{-1/2} \|\vec{E}_{I,h} - \vec{E}_{J,h}\|_{\boldsymbol{L}^2(\Omega_s^I \cap \Omega_s^J)} + h_{\mathrm{nom}}^{1/2} \|\nabla(\vec{E}_{I,h} - \vec{E}_{J,h})\|_{\boldsymbol{L}^2(\Omega_s^I \cap \Omega_s^J)} \right).
+    \|\vec{n}_I \times (\vec{E}_{I,h} - \vec{E}_{J,h})\|_{\boldsymbol{L}^2(L_s^{I, J})}^2 \le C_{\mathrm{tr}}^2 \left( h_{\mathrm{nom}}^{-1} \|\vec{E}_{I,h} - \vec{E}_{J,h}\|_{\boldsymbol{L}^2(\Omega_s^I \cap \Omega_s^J)}^2 + h_{\mathrm{nom}} \|\nabla(\vec{E}_{I,h} - \vec{E}_{J,h})\|_{\boldsymbol{L}^2(\Omega_s^I \cap \Omega_s^J)}^2 \right).
     \label{eq:trace_inequality_jumps}
 \end{equation}
-Substituting the stencil discrepancy bounds \eqref{eq:stencil_jump_L2}--\eqref{eq:stencil_jump_curl} ($\|\vec{E}_{I,h} - \vec{E}_{J,h}\|_{\boldsymbol{L}^2} \le C h_{\mathrm{nom}}^2$ and $\|\nabla(\vec{E}_{I,h} - \vec{E}_{J,h})\|_{\boldsymbol{L}^2} \le C h_{\mathrm{nom}}$) directly yields:
+Substituting the local volumetric discrepancy bounds \eqref{eq:stencil_jump_L2}--\eqref{eq:stencil_jump_curl} ($\|\vec{E}_{I,h} - \vec{E}_{J,h}\|_{\boldsymbol{L}^2} \le C h_{\mathrm{nom}}^2$ and $\|\nabla(\vec{E}_{I,h} - \vec{E}_{J,h})\|_{\boldsymbol{L}^2} \le C h_{\mathrm{nom}}$) yields:
 \begin{equation}
-    \|\vec{n} \times [\vec{E}_h]\|_{\boldsymbol{L}^2(\Sigma_{IJ})} \le C_6 \left( h_{\mathrm{nom}}^{-1/2} h_{\mathrm{nom}}^2 + h_{\mathrm{nom}}^{1/2} h_{\mathrm{nom}} \right) = \mathcal{O}(h_{\mathrm{nom}}^{1.5}).
+    \|\vec{n}_I \times (\vec{E}_{I,h} - \vec{E}_{J,h})\|_{\boldsymbol{L}^2(L_s^{I, J})}^2 \le C' \left( h_{\mathrm{nom}}^{-1} h_{\mathrm{nom}}^4 + h_{\mathrm{nom}} h_{\mathrm{nom}}^2 \right) = \mathcal{O}(h_{\mathrm{nom}}^3).
     \label{eq:tangential_jump_scaling}
 \end{equation}
-Summing over all internal subdomain interface arcs $\Sigma = \bigcup_{I,J} \Sigma_{IJ}$ (where the number of overlapping pairs per node is bounded by the stencil size $\le 6$):
+The number of intersecting neighbor disks for each node is bounded by the maximum 2D disk packing coordination number $N_{\max}^{\mathrm{overlap}} \le 8$ for $\alpha_s \le 0.85$ (a purely geometric property distinct from the $K=6$ stencil size). Summing over all pairs in $\mathcal{P}_{\mathrm{overlap}}$ across the $N \approx |\Omega|/h_{\mathrm{nom}}^2$ subdomains:
 \begin{equation}
-    \|\vec{n} \times [\vec{E}_h]\|_{\boldsymbol{L}^2(\Sigma)} \equiv \left( \sum_{I=1}^N \int_{L_s^I} |\vec{n} \times [\vec{E}_h]|^2 \, ds \right)^{1/2} \le C_{\mathrm{jump}} \, h_{\mathrm{nom}},
+    \mathcal{J}_h^2 \equiv \sum_{(I, J) \in \mathcal{P}_{\mathrm{overlap}}} \int_{L_s^{I, J}} |\vec{n}_I \times (\vec{E}_{I,h} - \vec{E}_{J,h})|^2 \, ds \le N \cdot N_{\max}^{\mathrm{overlap}} \cdot \mathcal{O}(h_{\mathrm{nom}}^3) = \mathcal{O}(h_{\mathrm{nom}}^{-2}) \cdot \mathcal{O}(h_{\mathrm{nom}}^3) = \mathcal{O}(h_{\mathrm{nom}}).
     \label{eq:global_jump_linear_bound}
 \end{equation}
-which converges to zero at least linearly ($\mathcal{O}(h_{\mathrm{nom}}^{1.39})$ observed numerically in MMS tests, matching \eqref{eq:tangential_jump_scaling}).
-Because the tangential jumps vanish at rate $\mathcal{O}(h_{\mathrm{nom}})$ or faster, the singular distributional component in \eqref{eq:distributional_curl} decays strictly to zero as $h_{\mathrm{nom}} \to 0$. Therefore, convergence in the broken Sobolev norm \eqref{eq:rigorous_broken_norm} is fully consistent with convergence towards the continuous $\boldsymbol{H}(\mathbf{curl}, \Omega)$ solution.
+Normalizing by the cumulative arc length ($\sum |L_s^{I, J}| \sim \mathcal{O}(h_{\mathrm{nom}}^{-1})$), the root-mean-square tangential jump across submerged internal arcs decays linearly as $\mathcal{O}(h_{\mathrm{nom}})$, confirming that autonomous local reconstructions coalesce into a globally continuous field in the asymptotic limit $h_{\mathrm{nom}} \to 0$.
 
-\paragraph{Continuous Global Field Reconstruction for Post-Processing:}
-When a single, continuous or uniquely valued vector field is desired across the entire domain $\Omega$ for visualization, streamline tracing, or sensor evaluation at arbitrary coordinates $\mathbf{x} \in \Omega$, three equivalent post-processing reconstructions are readily available:
+\paragraph{3. Global Field Reconstruction for Post-Processing (Visualization and Sensors):}
+The discrete algebraic solution vector $\mathbf{e} \in \mathbb{R}^N$ completely determines the physical boundary-value problem or resonant eigenspectrum without requiring a single global field to be constructed during solver execution.
+However, when a single-valued continuous vector field is desired across $\Omega$ for post-processing (such as streamline tracing, field contour plotting, or evaluating sensor readings at arbitrary coordinates $\mathbf{x} \in \Omega$), three post-processing reconstructions are readily available:
 \begin{enumerate}
     \item \textbf{Overlap Multiplicity Averaging:}
           \begin{equation}
               \vec{E}_{\mathrm{global}}(\mathbf{x}) = \frac{1}{M(\mathbf{x})} \sum_{I=1, \mathbf{x} \in \Omega_s^I}^N \vec{E}_{I,h}(\mathbf{x}), \qquad M(\mathbf{x}) = \sum_{I=1}^N \chi_{\Omega_s^I \cap \Omega}(\mathbf{x}).
               \label{eq:global_field_reconstruction}
           \end{equation}
-    \item \textbf{Nearest-Node Evaluation:} In which $\mathbf{x}$ is evaluated using the single stencil $\Omega_u^{I^*}$ of its closest node $\mathbf{x}_{I^*} = \arg\min_I \|\mathbf{x} - \mathbf{x}_I\|_2$.
+    \item \textbf{Nearest-Node Evaluation:} Where $\mathbf{x}$ is evaluated using the single stencil $\Omega_u^{I^*}$ of its closest node $\mathbf{x}_{I^*} = \arg\min_I \|\mathbf{x} - \mathbf{x}_I\|_2$.
     \item \textbf{Subdomain-Local Evaluation:} Where every physical quantity is evaluated directly on its host disk $\Omega_s^I$, exactly matching the broken Galerkin integration.
 \end{enumerate}
-Because all three reconstructions differ from one another by at most the stencil discrepancy \eqref{eq:stencil_jump_L2} ($\mathcal{O}(h_{\mathrm{nom}}^2)$ in $\boldsymbol{L}^2$), all three share the exact same asymptotic convergence rates and produce indistinguishable field distributions under refinement.
+We emphasize that these three reconstructions are \textbf{strictly post-processing operations}: they do not enter the algebraic assembly or the variational convergence analysis under Strang's First Lemma. Because all three reconstructions differ from one another by at most the stencil discrepancy \eqref{eq:stencil_jump_L2} ($\mathcal{O}(h_{\mathrm{nom}}^2)$ in $\boldsymbol{L}^2$), all three share the exact same asymptotic convergence rates and produce indistinguishable physical fields under refinement.
 
 %% =========================================================================
 %% SECTION 3: NUMERICAL VALIDATION AND RESULTS
@@ -1234,7 +1350,7 @@ Simulations were performed comparing both the classical unsymmetric row-by-row M
     }
 \end{table}
 
-As reported in Table~\ref{tab:patch_test_results}, the relative error across all seven affine modes remains on the order of $10^{-14}\text{--}10^{-15}$ on regular grids and $\le 1.29 \times 10^{-13}$ on perturbed point clouds for both formulations. This demonstrates that VNMM-MLPG satisfies the Galerkin patch test to machine precision under both unsymmetric row-by-row and symmetric Subdomain Galerkin assemblies, verifying the fundamental linear consistency of the local polynomial reproduction space.
+As reported in Table~\ref{tab:patch_test_results}, the relative error across all seven affine modes remains on the order of $10^{-14}\text{--}10^{-15}$ on regular grids and $\le 1.29 \times 10^{-13}$ on perturbed point clouds for both formulations. This confirms that VNMM-MLPG satisfies the Galerkin patch test to machine precision under both unsymmetric row-by-row and symmetric Subdomain Galerkin assemblies. These results substantiate the linear completeness of the directional $\mathcal{P}^1$ space and the numerical fidelity of the implementation. We emphasize, however, that while passing the patch test is an indispensable consistency prerequisite, it verifies local polynomial reproduction on affine states and does not substitute for the analytical proofs of uniform coercivity and variational consistency on general non-polynomial fields.
 
 \begin{remark}[Patch Test Consistency under Orthogonal Energy Stabilization]
 \label{rem:patch_test_stab}
@@ -1268,13 +1384,13 @@ To systematically test the boundary formulation developed in Section~\ref{subsec
 \begin{table}[!t]
     \centering
     \small
-    \caption{MMS refinement convergence comparison between Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions for VNMM-MLPG 2D ($s_{\mathrm{div}} = 6.0, \alpha_s = 0.80$, isotropic random directors) across the 6-mesh sequence from \cite{stable_vnmm2d_2026}.}
+    \caption{MMS refinement convergence comparison between Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions for VNMM-MLPG 2D ($s_{\mathrm{div}} = 6.0, \alpha_s = 0.80$, isotropic random directors) across the 6-mesh sequence from \cite{stable_vnmm2d_2026}. Errors are evaluated explicitly in the normalized broken Sobolev norms ($\varepsilon_{\boldsymbol{L}^2, h}$ and $\varepsilon_{\mathbf{curl}, h}$, Eqs.~\eqref{eq:mms_broken_L2}--\eqref{eq:mms_broken_curl}) over the non-conforming broken space $\mathbf{V}_h$.}
     \label{tab:mms_convergence}
     \resizebox{\textwidth}{!}{
         \begin{tabular}{cc|cccc|cccc}
             \toprule
                                                                  &                                              & \multicolumn{4}{c|}{\textbf{Case A: Pure Dirichlet}} & \multicolumn{4}{c}{\textbf{Case B: Mixed Dirichlet--Neumann (PMC)}}                                                                                                                                                                                                                                                                   \\
-            \textbf{Mesh}                                        & $\boldsymbol{h_{\mathrm{nom}}}$ \textbf{[m]} & \textbf{Active DoFs}                                 & $\boldsymbol{L^2(\vec{E})}$                                         & $\boldsymbol{|H(\mathbf{curl})|}$                   & \textbf{DoF Error} & \textbf{Active DoFs}                                & $\boldsymbol{L^2(\vec{E})}$                         & $\boldsymbol{|H(\mathbf{curl})|}$                   & \textbf{DoF Error} \\
+            \textbf{Mesh}                                        & $\boldsymbol{h_{\mathrm{nom}}}$ \textbf{[m]} & \textbf{Active DoFs}                                 & $\boldsymbol{\varepsilon_{\boldsymbol{L}^2, h}}$                     & $\boldsymbol{\varepsilon_{\mathbf{curl}, h}}$        & \textbf{DoF Error} & \textbf{Active DoFs}                                & $\boldsymbol{\varepsilon_{\boldsymbol{L}^2, h}}$    & $\boldsymbol{\varepsilon_{\mathbf{curl}, h}}$        & \textbf{DoF Error} \\
             \midrule
             $15 \times 15$                                       & 0.2244                                       & 169                                                  & $6.529\%$                                                           & $21.817\%$                                          & $8.383\%$          & 197                                                 & $7.330\%$                                           & $20.865\%$                                          & $9.599\%$          \\
             $22 \times 22$                                       & 0.1496                                       & 400                                                  & $3.398\%$                                                           & $13.991\%$                                          & $5.555\%$          & 442                                                 & $3.943\%$                                           & $13.661\%$                                          & $13.563\%$         \\
@@ -1293,15 +1409,15 @@ To systematically test the boundary formulation developed in Section~\ref{subsec
 \begin{figure}[!t]
     \centering
     \includegraphics[width=0.78\textwidth]{fig_mlpg_mms_convergence.pdf}
-    \caption{Asymptotic spatial convergence for the VNMM-MLPG under MMS with Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions across the six meshes in \cite{stable_vnmm2d_2026} with isotropic random directors. Both boundary formulations achieve the theoretical polynomial convergence rates: strictly monotonic quadratic $\mathcal{O}(h_{\mathrm{nom}}^2)$ in the $L^2(\vec{E})$ field norm and linear $\mathcal{O}(h_{\mathrm{nom}}^1)$ in the $H(\mathbf{curl})$ rotational semi-norm $|\cdot|_{H(\mathbf{curl})}$, demonstrating the numerical stability and accuracy of natural Neumann boundary treatment.}
+    \caption{Asymptotic spatial convergence for the VNMM-MLPG under MMS with Pure Dirichlet and Mixed Dirichlet--Neumann (PMC) boundary conditions across the six meshes in \cite{stable_vnmm2d_2026} with isotropic random directors. Both boundary formulations achieve the theoretical polynomial convergence rates: strictly monotonic quadratic $\mathcal{O}(h_{\mathrm{nom}}^2)$ in the broken $L^2$ field norm $\varepsilon_{\boldsymbol{L}^2, h}$ and linear $\mathcal{O}(h_{\mathrm{nom}}^1)$ in the broken rotational semi-norm $\varepsilon_{\mathbf{curl}, h}$ over the non-conforming broken space $\mathbf{V}_h$, demonstrating the numerical stability and accuracy of natural Neumann boundary treatment.}
     \label{fig:mms_convergence}
 \end{figure}
 
 The numerical results presented in Table~\ref{tab:mms_convergence} and Fig.~\ref{fig:mms_convergence} confirm several key findings:
 \begin{enumerate}
-    \item \textbf{Field Convergence Rates:} In both Case A (Dirichlet) and Case B (Mixed Neumann), the observed convergence rate in the continuous $L^2(\vec{E})$ field norm is strictly monotonic across all six refinement levels, achieving asymptotic rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.93})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.85})$, respectively, in close agreement with the theoretical quadratic rate $\mathcal{O}(h_{\mathrm{nom}}^2)$ for linear vector polynomials ($p=1$). Note that in Table~\ref{tab:mms_convergence}, the auxiliary ``DoF Error'' column reports the relative discrete $\ell_2$ error $\|\mathbf{e} - \mathbf{e}^*\|_2 / \|\mathbf{e}^*\|_2$ evaluated across the active directional scalar unknowns $e_k = \vec{E}^h(\mathbf{x}_k) \cdot \vec{t}_k$; while Case~B exhibits a localized fluctuation in this pointwise directional metric at $22 \times 22$ ($13.563\%$) due to random interior director orientations ($\vec{t}_k$) near the unconstrained Neumann boundary, the physically objective continuous functional norms $L^2(\vec{E})$ ($3.943\%$) and $|H(\mathbf{curl})|$ ($13.661\%$) decrease strictly monotonically across every refinement step.
-    \item \textbf{Rotational Convergence Rates:} In the $H(\mathbf{curl})$ semi-norm $|\vec{E}^h - \vec{E}^*|_{H(\mathbf{curl})}$, both formulations achieve monotonic rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.05})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.02})$, in exact agreement with the theoretical linear rate $\mathcal{O}(h_{\mathrm{nom}})$.
-    \item \textbf{Boundary Error Equivalence:} Releasing boundary nodes on the Neumann walls $y \in \{0, \pi\}$ introduces no numerical degradation or boundary layer oscillations. In fact, across all grid levels, the $H(\mathbf{curl})$ semi-norm error with active Neumann nodes is marginally lower than with fully clamped Dirichlet nodes (e.g., $20.865\%$ vs. $21.817\%$ on $15 \times 15$ and $5.892\%$ vs. $5.941\%$ on $49 \times 49$), demonstrating that the natural variational weak form relaxes artificial Dirichlet over-constraining.
+    \item \textbf{Field Convergence Rates in Broken $L^2$ Norm:} In both Case A (Dirichlet) and Case B (Mixed Neumann), the observed convergence rate in the normalized broken $L^2$ field norm $\varepsilon_{\boldsymbol{L}^2, h}$ (Eq.~\eqref{eq:mms_broken_L2}) is strictly monotonic across all six refinement levels, achieving asymptotic rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.93})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.85})$, respectively, in close agreement with the theoretical quadratic rate $\mathcal{O}(h_{\mathrm{nom}}^2)$ for linear vector polynomials ($p=1$). Note that in Table~\ref{tab:mms_convergence}, the auxiliary ``DoF Error'' column reports the relative discrete $\ell_2$ error $\|\mathbf{e} - \mathbf{e}^*\|_2 / \|\mathbf{e}^*\|_2$ evaluated across the active directional scalar unknowns $e_k = \vec{E}^h(\mathbf{x}_k) \cdot \vec{t}_k$; while Case~B exhibits a localized fluctuation in this pointwise directional metric at $22 \times 22$ ($13.563\%$) due to random interior director orientations ($\vec{t}_k$) near the unconstrained Neumann boundary, the physically objective broken functional norms $\varepsilon_{\boldsymbol{L}^2, h}$ ($3.943\%$) and $\varepsilon_{\mathbf{curl}, h}$ ($13.661\%$) decrease strictly monotonically across every refinement step.
+    \item \textbf{Rotational Convergence Rates in Broken $H(\mathbf{curl})$ Semi-Norm:} In the broken rotational semi-norm $\varepsilon_{\mathbf{curl}, h}$ (Eq.~\eqref{eq:mms_broken_curl}) over the non-conforming space $\mathbf{V}_h$, both formulations achieve monotonic rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.05})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.02})$, in exact agreement with the theoretical linear rate $\mathcal{O}(h_{\mathrm{nom}})$.
+    \item \textbf{Boundary Error Equivalence:} Releasing boundary nodes on the Neumann walls $y \in \{0, \pi\}$ introduces no numerical degradation or boundary layer oscillations. In fact, across all grid levels, the broken rotational semi-norm error with active Neumann nodes is marginally lower than with fully clamped Dirichlet nodes (e.g., $20.865\%$ vs. $21.817\%$ on $15 \times 15$ and $5.892\%$ vs. $5.941\%$ on $49 \times 49$), demonstrating that the natural variational weak form relaxes artificial Dirichlet over-constraining.
     \item \textbf{Solvability without Penalty Parameters:} The mixed Dirichlet--Neumann problem was solved without adding any boundary penalty terms or boundary element integrations, validating the theoretical analysis in Section~\ref{subsec:boundary_treatment}.
     \item \textbf{Boundary Behavior and Absence of Boundary Layer Degradation:}
           A critical consideration in meshless methods with non-conforming stencils is the behavior of the solution near the physical domain boundaries $\partial\Omega$. In methods employing artificial penalty terms or Lagrange multipliers, numerical errors frequently concentrate along boundaries, producing spurious boundary layers and degraded convergence.
@@ -1309,6 +1425,8 @@ The numerical results presented in Table~\ref{tab:mms_convergence} and Fig.~\ref
           On the finest grid ($49 \times 49$), the broken $L^2$ field error in the truncated boundary subdomains is $\mathbf{0.53\%}$, which is slightly lower than that in the interior subdomains ($\mathbf{0.64\%}$), converging with a strictly quadratic rate of $\mathcal{O}(h_{\mathrm{nom}}^{2.03})$ at the boundary (matching $\mathcal{O}(h_{\mathrm{nom}}^{1.93})$ in the interior).
           Furthermore, evaluating the $L^2$ error directly along the 1D physical boundary segments $\partial\Omega$ reveals that the continuous boundary trace converges at rate $\mathcal{O}(h_{\mathrm{nom}}^{2.04})$ (scaling from $6.79\%$ on $15\times 15$ down to $0.57\%$ on $49\times 49$).
           This confirms that the exact directional nodal projection $e_k = \vec{E}(\mathbf{x}_k) \cdot \vec{t}_k$ and the natural weak boundary flux treatment enforce boundary conditions cleanly without inducing boundary layer oscillations or loss of asymptotic accuracy.
+    \item \textbf{Numerical Evidence vs. Theoretical Stability:}
+          While these MMS convergence rates provide robust empirical evidence of optimal asymptotic accuracy, we emphasize that empirical convergence on smooth manufactured fields does not replace the theoretical requirement of establishing discrete uniform coercivity and variational consistency under Strang's First Lemma. Rather, they demonstrate that under practical mesh refinement, the non-conforming broken approximation $\mathbf{V}_h$ behaves stably and consistently as predicted by the conditional error estimates.
 \end{enumerate}
 
 \subsubsection{Comparison of Symmetric Subdomain Galerkin and Unsymmetric Row Assemblies}
@@ -1325,12 +1443,12 @@ Table~\ref{tab:mms_assembly_comparison} reports the comparative performance of b
 \begin{table}[!t]
     \centering
     \small
-    \caption{MMS performance comparison between the Symmetric Subdomain Galerkin assembly and the Unsymmetric Row-by-Row Petrov-Galerkin assembly ($s_{\mathrm{div}} = 6.0, \alpha_s = 0.80$, Pure Dirichlet conditions).}
+    \caption{MMS performance comparison between the Symmetric Subdomain Galerkin assembly and the Unsymmetric Row-by-Row Petrov-Galerkin assembly ($s_{\mathrm{div}} = 6.0, \alpha_s = 0.80$, Pure Dirichlet conditions). Errors are evaluated in the normalized broken Sobolev norms $\varepsilon_{\boldsymbol{L}^2, h}$ and $\varepsilon_{\mathbf{curl}, h}$ over the non-conforming broken space $\mathbf{V}_h$.}
     \label{tab:mms_assembly_comparison}
     \resizebox{\textwidth}{!}{
         \begin{tabular}{cccccc}
             \toprule
-            \textbf{Mesh}  & \textbf{Formulation}           & $\boldsymbol{L^2(\vec{E})}$ \textbf{Error} & $\boldsymbol{|H(\mathbf{curl})|}$ \textbf{Error} & $\mathrm{cond}(\mathbf{A}_{\mathrm{int}, \mathrm{int}})$ & $\min \mathrm{Re}(\lambda)$ \\
+            \textbf{Mesh}  & \textbf{Formulation}           & $\boldsymbol{\varepsilon_{\boldsymbol{L}^2, h}}$ \textbf{(Broken $L^2$)} & $\boldsymbol{\varepsilon_{\mathbf{curl}, h}}$ \textbf{(Broken $|H(\mathbf{curl})|$)} & $\mathrm{cond}(\mathbf{A}_{\mathrm{int}, \mathrm{int}})$ & $\min \mathrm{Re}(\lambda)$ \\
             \midrule
             $9 \times 9$   & Symmetric (Subdomain Galerkin) & $\mathbf{12.31\%}$                         & $\mathbf{47.86\%}$                             & $1.85 \times 10^2$                                       & $+1.64$                     \\
             $9 \times 9$   & Unsymmetric (Row Petrov-Gal.)  & $75.09\%$                                  & $104.31\%$                                     & $1.82 \times 10^2$                                       & $-14.19$ (10 neg.)          \\
@@ -1349,20 +1467,29 @@ The comparative results highlight a fundamental theoretical and practical distin
 \begin{itemize}
     \item \textbf{Patch Test vs. MMS General PDE Solutions:} While both formulations pass the linear patch test to machine precision (Table~\ref{tab:patch_test_results}) because affine fields have zero local residual in $\mathcal{P}^1$, their behavior diverges sharply on general non-polynomial fields.
     \item \textbf{Loss of Discrete Coercivity in Row Assembly:} Under classical row-by-row assembly, testing with only one vector function per disk fails to constrain all 6 degrees of freedom within the local trial stencil $\Omega_u^I$. As a consequence, the reduced interior matrix $\mathbf{A}_{\mathrm{int}, \mathrm{int}}$ becomes indefinite: for the $9 \times 9$ mesh, it possesses 10 negative real eigenvalues and 26 complex eigenvalues. Upon grid refinement, this inf-sup instability causes the condition number to escalate rapidly to $2.18 \times 10^5$, causing severe numerical divergence.
-    \item \textbf{Discrete Coercivity of Subdomain Galerkin Assembly:} In contrast, the symmetric Subdomain Galerkin formulation tests against the complete local polynomial space on each disk $\Omega_s^I$. This guarantees that the local blocks are symmetric positive-semidefinite and their global sum is strictly positive-definite ($\min \lambda_i > 0$). Consequently, the linear system remains well-conditioned, discrete coercivity is preserved, and the method achieves stable, monotonic $\mathcal{O}(h_{\mathrm{nom}}^2)$ convergence.
+    \item \textbf{Strict Positive-Definiteness and Stability of Subdomain Galerkin Assembly:} In contrast, the symmetric Subdomain Galerkin formulation tests against the complete local polynomial space on each disk $\Omega_s^I$. This guarantees that the local blocks are symmetric positive-semidefinite and their global sum is strictly positive-definite on each mesh ($\min \lambda_i > 0$). Consequently, the linear system remains well-conditioned, avoiding indefinite or complex spectra, and the method achieves stable, monotonic $\mathcal{O}(h_{\mathrm{nom}}^2)$ convergence.
 \end{itemize}
 
 \subsection{Stage 4: Subdomain Scaling Bounds and Parametric Sensitivity of $\alpha_s$}
 \label{subsec:stage4_alpha_s}
 
-The local integration subdomain radius is defined in \eqref{eq:subdomain_disk} as $r_s^I = \alpha_s h_I$. In the classical scalar MLPG and LPIM literature \cite{atluri2002meshless, liu2009mesh}, $\alpha_s$ is typically selected in the interval $[0.75, 0.85]$ (commonly $\alpha_s = 0.80$) to balance domain coverage against subdomain overlap. To verify that this standard carries over to 6-node directional vector stencils ($\mathcal{P}^1$) on both regular and $25\%$ perturbed clouds, we examine the two geometric limits governing $\alpha_s$:
+The local integration subdomain radius is defined in \eqref{eq:subdomain_disk} as $r_s^I = \alpha_s h_I$, where $h_I \equiv \min_{J \ne I} \|\mathbf{x}_J - \mathbf{x}_I\|$ is uniquely defined as the Euclidean distance to the nearest neighbor. In the classical scalar MLPG and LPIM literature \cite{atluri2002meshless, liu2009mesh}, $\alpha_s$ is typically selected in the interval $[0.75, 0.85]$ (commonly $\alpha_s = 0.80$) to balance domain coverage against subdomain overlap. To verify how this scaling behaves for 6-node directional vector stencils ($\mathcal{P}^1$) across both regular and disordered point clouds, we examine the two geometric limits governing $\alpha_s$:
 \begin{enumerate}
-    \item \textbf{Lower Bound (Global Domain Coverage \cite{atluri2002meshless, liu2009mesh}):} Spatial integration in MLPG relies on the collection of local subdomains forming a complete cover of the physical domain, $\bigcup_{I=1}^N \Omega_s^I \supseteq \Omega$. In a quasi-uniform nodal distribution with nominal grid spacing $h_{\mathrm{nom}}$, the maximum distance from any point in a Cartesian cell to its nearest node (the cell circumradius) is:
+    \item \textbf{Lower Bound (Domain Integration Coverage and Interstitial Voids \cite{atluri2002meshless, liu2009mesh}):} Spatial integration in MLPG relies on the collection of local subdomains forming a complete cover of the physical domain, $\bigcup_{I=1}^N \Omega_s^I \supseteq \Omega$. In a regular Cartesian lattice with uniform grid spacing $h_I = h_{\mathrm{nom}}$, the maximum distance from any interior point to its closest node (the cell circumradius) is:
           \begin{equation}
               r_{\mathrm{cov}} = \frac{\sqrt{2}}{2} h_{\mathrm{nom}} \approx 0.7071 h_{\mathrm{nom}}.
               \label{eq:alpha_s_lower_bound}
           \end{equation}
-          Because the circular integration disk radius is defined locally as $r_s^I = \alpha_s h_{\mathrm{local}}(\mathbf{x}_I)$ (where $h_{\mathrm{local}}(\mathbf{x}_I) \equiv h_I = \min_{J \ne I} \|\mathbf{x}_J - \mathbf{x}_I\|$ equals $h_{\mathrm{nom}}$ on regular lattices), global domain coverage requires $r_s \ge r_{\mathrm{cov}}$, which yields the classical threshold $\alpha_s \ge \sqrt{2}/2 \approx 0.7071$ \cite{atluri2002meshless, liu2009mesh}. If $\alpha_s < \sqrt{2}/2$, unintegrated voids or interstitial gaps emerge between adjacent circular subdomains. As demonstrated in Fig.~\ref{fig:alpha_s_sensitivity}(a), on a regular lattice ($0\%$ jitter), full coverage ($100\%$) is reached at $\alpha_s \ge 0.75$, whereas below $0.7071$ coverage drops precipitously to $95.7\%$ at $\alpha_s = 0.60$, $78.9\%$ at $\alpha_s = 0.50$, and $29.4\%$ at $\alpha_s = 0.30$. Under nodal perturbations ($25\%$ jitter), localized pairwise node clustering shrinks the minimum nearest-neighbor distance $h_I$ for closely paired nodes while adjacent regions dilate: at $\alpha_s = 0.80$, coverage is $94.4\%$ for $25\%$ jitter, reaching asymptotic saturation ($\ge 95\%$) for $\alpha_s \ge 0.85\text{--}1.00$ (which can be further smoothed toward $100\%$ if $h_I$ is alternatively defined as the stencil-averaged neighbor distance).
+          Because $r_s^I = \alpha_s h_{\mathrm{nom}}$ on regular lattices, full domain coverage ($100\%$) strictly requires $\alpha_s \ge \sqrt{2}/2 \approx 0.7071$. If $\alpha_s < \sqrt{2}/2$, unintegrated interstitial gaps emerge between adjacent circular disks. As shown in Fig.~\ref{fig:alpha_s_sensitivity}(a), on a regular grid ($0\%$ jitter), $100\%$ coverage is achieved for all $\alpha_s \ge 0.75$ (providing a $13\%$ geometric buffer at $\alpha_s = 0.80$), whereas below $0.7071$ coverage drops precipitously to $95.7\%$ at $\alpha_s = 0.60$, $78.9\%$ at $\alpha_s = 0.50$, and $29.4\%$ at $\alpha_s = 0.30$.
+          
+          Under stochastic nodal perturbations ($25\%$ jitter), however, localized pairwise node clustering causes the nearest-neighbor distance $h_I$ to shrink for closely paired nodes, reducing their integration radii $r_s^I = \alpha_s h_I$, while neighboring regions become locally dilated. Consequently, with the baseline nearest-neighbor definition of $h_I$ and $\alpha_s = 0.80$, the measured coverage on the $25\%$ perturbed cloud is \textbf{$94.4\%$}, leaving $5.6\%$ of the physical domain in unintegrated interstitial voids.
+          
+          We must analyze the mathematical consequence of this partial coverage: if $5.6\%$ of the domain is not covered by any integration disk, the discrete variational formulation does not integrate the field equations over these interstitial voids. This omission acts as a non-conforming variational consistency perturbation, which can affect solution accuracy in clouds containing pronounced locally rarefied regions. 
+          To restore full coverage on arbitrary unstructured or disordered point clouds, two methodological pathways are available:
+          \begin{itemize}
+              \item \emph{Adaptive Spacing Estimation:} Defining $h_I$ using a spatial metric less sensitive to localized pairing, such as the mean distance to the $k$ nearest neighbors ($h_I^{(k)} = \frac{1}{k}\sum_{j=1}^k \|\mathbf{x}_{(j)} - \mathbf{x}_I\|$) or the equivalent Voronoi cell radius ($h_I^{\mathrm{Vor}} = 2\sqrt{A_I/\pi}$), dilates subdomains in rarefied zones and drives coverage toward $100\%$.
+              \item \emph{Moderate Subdomain Dilation ($\alpha_s \in [0.85, 1.00]$):} As shown in Fig.~\ref{fig:alpha_s_sensitivity}(a), increasing $\alpha_s$ into the interval $[0.85, 1.00]$ raises coverage saturation to $\ge 95\%\text{--}98\%$ even with nearest-neighbor $h_I$, while still remaining safely below the stencil containment limit ($\alpha_s \le 1.15$).
+          \end{itemize}
     \item \textbf{Upper Bound (6-Node Vector Stencil Containment):} Each node $\mathbf{x}_I$ constructs its VNMM trial vector field $\vec{E}^h$ over a 6-node directional stencil $\Omega_u^I$ whose spatial support radius is $r_u^I = \max_{k \in \Omega_u^I} \|\mathbf{x}_k - \mathbf{x}_I\|$. For a regular or perturbed Cartesian grid, a 6-node stencil includes nearest neighbors at distance $h_{\mathrm{local}} \approx h_{\mathrm{nom}}$ and diagonal neighbors at distance $\sqrt{2}h_{\mathrm{nom}}$, giving an average support radius $r_u \approx 1.15\text{--}1.20 h_{\mathrm{nom}}$. If $\alpha_s$ is enlarged beyond this limit ($r_s^I > r_u^I$), the integration disk $\Omega_s^I$ spills outside the convex hull of its generating stencil. In this extrapolation regime, polynomial shape functions $\vec{W}_k^I(\mathbf{x})$ grow rapidly outside their interpolating cloud, causing numerical degradation. Geometric analysis confirms that support domain violations ($r_s^I > r_u^I$) remain strictly zero for all $\alpha_s \le 1.10$ across both regular and perturbed clouds ($0\%$ and $25\%$ jitter), initiating only when $\alpha_s \approx 1.15\text{--}1.20$ and growing systematically for larger subdomains.
 \end{enumerate}
 
@@ -1378,13 +1505,13 @@ To quantify these geometric bounds, Fig.~\ref{fig:alpha_s_sensitivity}(b) illust
     \item \textbf{MMS Convergence Accuracy:} For the MMS benchmark ($21\times 21$ grid, random directors), the relative $L^2(\vec{E})$ error exhibits a smooth, stable response across the operational interval $\alpha_s \in [0.70, 1.20]$: at $\alpha_s = 0.80$, the error is $2.94\%$ for $0\%$ jitter and $4.26\%$ for $25\%$ jitter. Beyond $\alpha_s > 1.20$, extrapolation errors cause accuracy to degrade (reaching $4.71\%$ and $5.46\%$ at $\alpha_s = 2.00$, respectively). Notably, the apparent flattening of error below $\alpha_s < 0.70$ does not indicate enhanced physical accuracy, but rather an unphysical plateau caused by extensive unintegrated voids (where up to $70\%\text{--}85\%$ of the domain is unrepresented by any local test subdomain).
 \end{itemize}
 
-Based on this comprehensive study across both regular and disordered clouds:
+Based on this comprehensive geometric and numerical study:
 \begin{itemize}
     \item $\alpha_s < 0.70$ suffers from severe under-integration voids, failing to capture the global field dynamics across the physical domain.
     \item $\alpha_s > 1.20$ triggers polynomial extrapolation beyond stencil support radii, leading to systematic error amplification.
-    \item $\alpha_s = 0.80$ provides a well-balanced trade-off: on regular lattices, it ensures complete ($100\%$) domain coverage with a $13\%$ safety buffer above $\sqrt{2}/2$, maintains high coverage on perturbed clouds ($94.4\%$ at $25\%$ jitter), and stays comfortably below the extrapolation boundary ($r_s^I \approx 0.72 r_u^I < r_u^I$) with exactly $0\%$ containment violations.
+    \item $\alpha_s = 0.80$ provides a well-balanced operational baseline: on regular lattices, it ensures complete ($100\%$) domain coverage with a $13\%$ safety buffer above $\sqrt{2}/2$; while on $25\%$ perturbed clouds it achieves $94.4\%$ coverage (confining interstitial voids to $5.6\%$) while strictly avoiding trial support containment violations ($r_s^I \approx 0.72 r_u^I < r_u^I$, exactly $0\%$ extrapolation).
 \end{itemize}
-In addition, choosing $\alpha_s = 0.80$ mirrors the scale-invariant stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ established in Section~\ref{subsec:stencil_selection}. Adopting $\alpha_s = 0.80$ as the single, universal operating standard throughout all simulations in this paper establishes parameter economy, eliminating problem-dependent empirical tuning while guaranteeing domain coverage, strict support containment, and accuracy across regular and perturbed nodal distributions.
+In addition, choosing $\alpha_s = 0.80$ mirrors the scale-invariant stencil qualification threshold $\widehat{\mathrm{Tol}} = 0.80$ established in Section~\ref{subsec:stencil_selection}. Adopting $\alpha_s = 0.80$ as the operational baseline throughout all simulations in this paper establishes parameter economy and preserves benchmarking conformity with classical MLPG/LPIM literature, confirming that even in the presence of $5.6\%$ unintegrated voids under $25\%$ jitter, the stabilized formulation remains robust, stable, and convergent.
 
 \begin{remark}[Geometric Invariance of $\alpha_s$ under Energy Stabilization]
     The bounding limits $\alpha_s \ge \sqrt{2}/2 \approx 0.7071$ (domain integration coverage) and $\alpha_s \le 1.15$ (support domain containment) are purely geometric invariants of the local partition and trial stencils, completely independent of algebraic operator modifications. Repeating the parametric MMS sweep of Fig.~\ref{fig:alpha_s_sensitivity}(b) with the orthogonal energy stabilization operator $\mathbf{K}_{\mathrm{stab}}$ activated ($\alpha_{\mathrm{stab}} \propto (h_{\mathrm{nom}}/L)^2$, Section~\ref{subsec:rank_deficiency_stabilization}) reveals an identical flat error profile across $\alpha_s \in [0.70, 1.20]$ (with variations below $0.3\%$). Because algebraic stabilization acts strictly within existing test disks and cannot integrate unrepresented physical voids, the selection $\alpha_s = 0.80$ remains a robust, canonical geometric foundation whether energy stabilization is active or inactive.
@@ -1511,30 +1638,39 @@ To understand the origin of this spectral stagnation, we analyze the discrete ba
     \item \textbf{Expansion of the Discrete Irrotational Nullspace:} In the continuous domain, physical solenoidal cavity fields satisfy $\nabla \cdot \vec{E} = 0$, rendering the exact cutoff spectrum independent of $s_{\mathrm{div}}$. In the discrete setting with linear polynomial trial functions ($\mathcal{P}^1$), however, the discrete divergence residue $\nabla \cdot \vec{E}_h$ is piecewise constant and non-zero. As the nominal mesh spacing $h_{\mathrm{nom}} \to 0$, the dimension of the discrete irrotational vector space expands as $\mathcal{O}(h_{\mathrm{nom}}^{-2})$.
     \item \textbf{Constraint-to-DoF Ratio in Gauss vs. MLPG:} A fundamental structural distinction separates cell-based Gauss integration from cell-free MLPG. In the cell-based VNMM-Gauss \cite{stable_vnmm2d_2026}, resolution-matched $3 \times 3$ Gauss points per quadrilateral cell evaluate the weak form at $9(N_x-1)^2$ discrete points. This provides an intrinsic over-constraint ratio of $\approx 9:1$ relative to the active interior degrees of freedom, which inherently stiffens $\mathbf{K}_{\mathrm{curl}}$ and maintains monotonic convergence even with a fixed penalty $s_{\mathrm{div}} = 6.0$. In contrast, cell-free VNMM-MLPG employs exactly one integration subdomain $\Omega_s^I$ per node. Because $\nabla \times \vec{N}$ is spatially constant on each disk under $\mathcal{P}^1$, each local stiffness matrix $\mathbf{K}_{\mathrm{curl}}^I$ contributes rank 1. The effective constraint-to-DoF ratio is therefore only $\approx 1.1:1$.
     \item \textbf{Compliance and Discrete Relaxation on Dense Meshes:} Holding $s_{\mathrm{div}}$ fixed (whether at $6.0$ or $15.0$) while refining the cloud causes the divergence constraint to become comparatively compliant relative to the expanding nullspace. The discrete eigensolver relaxes into quasi-solenoidal directions, producing the observed error plateau. Evaluating the Rayleigh quotient on the exact continuous eigenmode $\vec{E}^*$ yields $\mathbf{e}^{*T} \mathbf{K}_{\mathrm{curl}} \mathbf{e}^* / (\mathbf{e}^{*T} \mathbf{M} \mathbf{e}^*) = 0.9987$ on the $43 \times 43$ grid (an error of only $0.13\%$), demonstrating that the MLPG operators themselves represent physical fields with high fidelity.
-    \item \textbf{Theoretical Justification and Admissible Exponent Range for Superlinear Penalty Scaling ($s_{\mathrm{div}} \propto h_{\mathrm{nom}}^{-\beta}$):}
-    To maintain uniform spectral separation between discrete physical curl modes and non-physical gradient modes without locking, the penalty parameter must scale with resolution as $s_{\mathrm{div}}(h_{\mathrm{nom}}) \propto h_{\mathrm{nom}}^{-\beta}$. A rigorous functional analysis establishes that the admissible exponent is tightly bounded:
+    \item \textbf{Asymptotic Scaling Law and Admissible Exponent Range for Superlinear Penalty ($s_{\mathrm{div}} \propto h_{\mathrm{nom}}^{-\beta}$):}
+    To maintain spectral separation between discrete physical curl modes and non-physical gradient modes without inducing volumetric locking, we examine the asymptotic behavior of the divergence penalty under a power-law scaling $s_{\mathrm{div}}(h_{\mathrm{nom}}) \propto h_{\mathrm{nom}}^{-\beta}$. Rather than asserting an exact mathematically proven optimum, the admissible exponent range $1 < \beta < 2$ is motivated by dimensional balance and asymptotic energy arguments, and subsequently verified through systematic eigenvalue computations:
     \begin{itemize}
-        \item \emph{Lower Bound ($\beta > 1.0$ to prevent nullspace compliance):} In the continuous setting, Nitsche-type trace penalties scale linearly as $\mathcal{O}(h_{\mathrm{nom}}^{-1})$ \cite{nitsche1971uber, juntunen2009nitsche}. However, in 2D cell-free MLPG, the dimension of the discrete irrotational gradient subspace $\mathcal{V}_{\mathrm{grad}, h} = \{ \nabla \phi_h \}$ expands quadratically with the node count ($\dim \mathcal{V}_{\mathrm{grad}, h} \propto N \propto h_{\mathrm{nom}}^{-2}$). If $\beta \le 1.0$, the penalty stiffness $s_{\mathrm{div}} \|\nabla \cdot \vec{E}_h\|^2$ grows too slowly relative to this expanding subspace, allowing higher-order discrete gradient modes to contaminate the lower operational spectrum and causing the error stagnation observed for fixed $s_{\mathrm{div}}$ on dense meshes ($N_x \ge 29$).
-        \item \emph{Upper Bound ($\beta < 2.0$ to prevent volumetric locking):} Conversely, for any discrete vector field $\vec{E}_h \in \mathbf{V}_h$ approximating a continuous solenoidal physical eigenmode $\vec{E}^*$ ($\nabla \cdot \vec{E}^* \equiv 0$), the discrete divergence error scales as $\|\nabla \cdot \vec{E}_h\|_{\boldsymbol{L}^2(\Omega)} \le C h_{\mathrm{nom}} \|\vec{E}^*\|_{\boldsymbol{H}^2(\Omega)}$ (Eq.~\eqref{eq:local_taylor_bounds}). The artificial penalty energy injected into physical modes scales as:
+        \item \emph{Lower Limit ($\beta > 1.0$ to mitigate discrete nullspace relaxation):} In standard penalty or Nitsche-type boundary formulations, penalty parameters scale linearly as $\mathcal{O}(h_{\mathrm{nom}}^{-1})$ \cite{nitsche1971uber, juntunen2009nitsche}. In the present 2D cell-free MLPG setting, however, the dimension of the discrete irrotational gradient subspace $\mathcal{V}_{\mathrm{grad}, h} \subset \mathbf{V}_h$ expands quadratically with the total node count ($\dim \mathcal{V}_{\mathrm{grad}, h} \propto N \propto h_{\mathrm{nom}}^{-2}$). If $\beta \le 1.0$, the discrete divergence penalty stiffness $s_{\mathrm{div}} \|\nabla \cdot \vec{E}_h\|^2$ grows too slowly relative to this expanding discrete gradient space. While this dimensional scaling argument does not constitute a full quantitative spectral proof---which would require explicitly characterizing the smallest eigenvalue of the discrete gradient modes, the spectral gap to the physical modes, and their dependence on the cloud geometry and director orientations---it provides clear dimensional insight into why fixed ($\beta = 0$) or linear penalties allow higher-order discrete gradient modes to soften and pollute the operational band, leading to the error plateau observed on dense grids ($N_x \ge 29$).
+        \item \emph{Upper Bound ($\beta < 2.0$ to prevent volumetric locking):} Conversely, an upper limit is dictated by the requirement that the artificial penalty energy injected into continuous physical solenoidal eigenmodes ($\nabla \cdot \vec{E}^* \equiv 0$) must vanish in the asymptotic limit $h_{\mathrm{nom}} \to 0$. Under the local Taylor polynomial approximation (Eq.~\eqref{eq:local_taylor_bounds}), any discrete interpolant $\vec{E}_h \in \mathbf{V}_h$ approximating a smooth solenoidal mode satisfies $\|\nabla \cdot \vec{E}_h\|_{\boldsymbol{L}^2(\Omega)} \le C h_{\mathrm{nom}} \|\vec{E}^*\|_{\boldsymbol{H}^2(\Omega)}$. Consequently, the discrete divergence penalty energy scales as:
         \begin{equation}
             \Pi_{\mathrm{pen}}(\vec{E}_h) = \frac{s_{\mathrm{div}}}{2\mu_r} \|\nabla \cdot \vec{E}_h\|_{\boldsymbol{L}^2}^2 \le C' h_{\mathrm{nom}}^{-\beta} \cdot h_{\mathrm{nom}}^2 = \mathcal{O}(h_{\mathrm{nom}}^{2 - \beta}).
         \end{equation}
-        If $\beta \ge 2.0$ (e.g., quadratic penalty $\beta = 2.0$), $\Pi_{\mathrm{pen}} \sim \mathcal{O}(1)$ fails to vanish asymptotically, over-stiffening physical solenoidal modes and inducing severe volumetric locking.
-        \item \emph{Optimal Compromise ($\beta = 1.5$):} The theoretical sweet spot is the exact geometric midpoint between the lower bound ($\beta = 1.0$) and the upper locking threshold ($\beta = 2.0$):
+        If $\beta \ge 2.0$ (e.g., quadratic penalty $\beta = 2.0$), $\Pi_{\mathrm{pen}} \sim \mathcal{O}(1)$ fails to diminish under mesh refinement, artificially over-stiffening solenoidal deformations and inducing severe volumetric locking.
+        \item \emph{Empirical Midpoint Parameterization ($\beta = 1.5$):} Balancing the dimensional need for superlinear penalty growth ($\beta > 1.0$) against the locking threshold ($\beta < 2.0$) suggests the midpoint exponent:
         \begin{equation}
             \beta = \frac{1.0 + 2.0}{2} = 1.5 \implies s_{\mathrm{div}}(h_{\mathrm{nom}}) = s_{\mathrm{div}}^{(0)} \left( \frac{h_0}{h_{\mathrm{nom}}} \right)^{1.5},
             \label{eq:s_div_scaling}
         \end{equation}
-        anchored to the baseline $21 \times 21$ grid ($s_{\mathrm{div}}^{(0)} = 15.0$ at $h_0 = \pi/20\text{ m}$). This choice balances progressive suppression of the discrete nullspace against the complete avoidance of volumetric locking ($\Pi_{\mathrm{pen}} \sim \mathcal{O}(h_{\mathrm{nom}}^{0.5}) \to 0$).
+        anchored to the baseline $21 \times 21$ grid ($s_{\mathrm{div}}^{(0)} = 15.0$ at $h_0 = \pi/20\text{ m}$). We emphasize that $\beta = 1.5$ is adopted here as an asymptotic scaling law motivated by dimensional analysis and confirmed by numerical testing, rather than a theoretically unique or closed-form optimal exponent.
     \end{itemize}
 
-    \item \textbf{General Formulation for Irregular, Perturbed, and Adaptive Point Clouds:}
-    Importantly, the power law \eqref{eq:s_div_scaling} is not restricted to structured Cartesian grids. For disordered clouds (such as the 25\% perturbed clouds investigated in Section~\ref{subsubsec:cavity_jitter_error}) or locally refined clouds, $h_{\mathrm{nom}}$ is directly replaced by the local nodal spacing $h_I = \min_{J \ne I} \|\mathbf{x}_I - \mathbf{x}_J\|_2$ on each disk:
-    \begin{equation}
-        s_{\mathrm{div}}^I = s_{\mathrm{div}}^{(0)} \left( \frac{h_0}{h_I} \right)^{1.5},
-        \label{eq:s_div_local_unstructured}
-    \end{equation}
-    or by the global cloud average $\overline{h} = \frac{1}{N}\sum_{I=1}^N h_I$, ensuring full geometric objectivity across arbitrary point distributions.
+    \item \textbf{Global Characteristic Spacing Definition and Computational Implementation:}
+    To resolve any ambiguity regarding how the scaling law is applied across structured and unstructured configurations, we clearly specify the characteristic spacing definition employed in our implementation:
+    \begin{itemize}
+        \item \emph{Uniform Global Penalty Parameterization:} In the computational implementation and across all benchmark experiments reported in this work (both for regular Cartesian grids and for perturbed point clouds with nodal jitter), $s_{\mathrm{div}}$ is evaluated as a \textbf{single, spatially uniform global scalar} across the entire computational domain:
+        \begin{equation}
+            s_{\mathrm{div}} = s_{\mathrm{div}}^{(0)} \left( \frac{h_0}{h_{\mathrm{char}}} \right)^{1.5},
+            \label{eq:s_div_scaling_global}
+        \end{equation}
+        where $h_{\mathrm{char}}$ is the characteristic nodal spacing of the cloud. For regular Cartesian grids, $h_{\mathrm{char}} \equiv h_{\mathrm{nom}} = L/(N_x - 1)$. For perturbed or irregular point clouds, $h_{\mathrm{char}}$ is defined as the domain-averaged nearest-neighbor distance:
+        \begin{equation}
+            \overline{h} = \frac{1}{N} \sum_{I=1}^N h_I, \qquad h_I = \min_{J \ne I} \|\mathbf{x}_I - \mathbf{x}_J\|_2.
+            \label{eq:h_mean_definition}
+        \end{equation}
+        This global formulation ensures that the discrete div-curl variational operator remains spatially homogeneous and strictly symmetric, avoiding unphysical local penalty jumps between adjacent subdomains of slightly different spacing.
+        \item \emph{Local Nodal Variant (Perspective for Adaptive Refinement):} While one could conceptually define a pointwise local penalty $s_{\mathrm{div}}^I = s_{\mathrm{div}}^{(0)} (h_0 / h_I)^{1.5}$ inside each disk $\Omega_s^I$ for highly non-uniform $h$-adaptive clouds, all numerical simulations and benchmarks reported in this paper strictly employ the uniform global characteristic parameterization \eqref{eq:s_div_scaling_global} with $h_{\mathrm{char}} = h_{\mathrm{nom}}$ (regular grids) or $h_{\mathrm{char}} = \overline{h}$ (jittered clouds), fully matching the open-source implementation.
+    \end{itemize}
 
     \item \textbf{Spectral Conditioning ($\mathcal{O}(h_{\mathrm{nom}}^{-3.5})$) and Shift-and-Invert Eigensolver Efficiency:}
     A critical consequence of superlinear penalty scaling is its effect on matrix conditioning.
@@ -1657,7 +1793,10 @@ The numerical results in Table~\ref{tab:cavity_convergence_stabilization} and Fi
 \begin{enumerate}
     \item \textbf{Restoration of Monotonic Quadratic Convergence:} As illustrated in Fig.~\ref{fig:mlpg_cavity_stabilization}(a), increasing the dimensionless stabilization parameter systematically accelerates the empirical convergence rate $p$ from sublinear ($p = 0.53$ at $c_{\mathrm{stab}} = 0$) through linear ($p = 1.06$ at $c_{\mathrm{stab}} = 20$) and superlinear ($p = 1.64$ at $c_{\mathrm{stab}} = 40$, $p = 2.15$ at $c_{\mathrm{stab}} = 70$) up to quadratic asymptotic convergence ($p = 2.39$ at $c_{\mathrm{stab}} = 100$). This restores the asymptotic rate achieved by the cell-based VNMM-Gauss ($p = 2.25$ in Table~\ref{tab:jitter_benchmark_comparison}).
     \item \textbf{Attainment of High Spectral Accuracy on Fine Meshes:} On the dense $49 \times 49$ grid, where the unstabilized formulation was stalled at $2.32\%$, orthogonal stabilization drives the mean error down to $1.29\%$ ($c_{\mathrm{stab}} = 70$) and $\mathbf{1.17\%}$ ($c_{\mathrm{stab}} = 100$). This surpasses the finest-grid accuracy of VNMM-Gauss ($1.53\%$).
-    \item \textbf{Coarse-Grid Stiffness vs. Fine-Grid Asymptotics:} The parametric variation reveals the trade-off inherent in quadratic subgrid scaling: on very coarse grids ($15 \times 15$), where $h_{\mathrm{nom}}/L$ is relatively large ($h_{\mathrm{nom}}/L \approx 0.071$), a high value such as $c_{\mathrm{stab}} = 100$ injects non-negligible artificial stiffness ($\alpha_{\mathrm{stab}} \approx 0.51$), raising the coarse-grid error to $23.81\%$. Conversely, moderate constants such as $c_{\mathrm{stab}} \in [20, 40]$ keep the coarse-grid error well-contained ($6.69\%$ and $11.14\%$) while still significantly lowering errors on intermediate grids. For $c_{\mathrm{stab}} = 100$, as soon as the grid reaches $29 \times 29$, the quadratic $\mathcal{O}((h_{\mathrm{nom}}/L)^2)$ decay rapidly reduces the stabilization magnitude ($\alpha_{\mathrm{stab}} \le 0.13$), allowing physical modes to dominate and yielding the highest asymptotic accuracy.
+    \item \textbf{Coarse-Grid Artificial Stiffness vs. Fine-Grid Asymptotic Rate (Engineering Trade-Off):} The parametric progression in Table~\ref{tab:cavity_convergence_stabilization} reveals a pronounced trade-off inherent to quadratic subgrid energy stabilization on coarse discretizations. On the coarsest $15 \times 15$ grid ($h_{\mathrm{nom}}/L \approx 0.071$), the unstabilized formulation ($c_{\mathrm{stab}} = 0$) achieves an initial cutoff error of only $3.87\%$. Introducing stabilization adds non-negligible artificial stiffness when $h_{\mathrm{nom}}$ is large, progressively elevating the coarse-grid error to $6.69\%$ ($c_{\mathrm{stab}} = 20$), $11.14\%$ ($c_{\mathrm{stab}} = 40$), $17.67\%$ ($c_{\mathrm{stab}} = 70$), and peaking at $23.81\%$ for $c_{\mathrm{stab}} = 100$ ($\alpha_{\mathrm{stab}} \approx 0.51$). 
+    This behavior clearly demonstrates that the stabilization operator is \emph{not} universally neutral across all resolution regimes: for large mesh spacings, penalizing the traceless strain modes $\mathbf{v}_{\mathrm{shear}}^I$ and $\mathbf{v}_{\mathrm{hyp}}^I$ injects substantial artificial strain energy into the discrete system, over-stiffening the global response. 
+    However, as the point cloud is refined, the quadratic decay $\alpha_{\mathrm{stab}} \propto (h_{\mathrm{nom}}/L)^2$ rapidly diminishes this penalty: by $29 \times 29$ ($h_{\mathrm{nom}}/L \approx 0.036$), $\alpha_{\mathrm{stab}}$ drops by a factor of 4 ($\alpha_{\mathrm{stab}} \le 0.13$ for $c_{\mathrm{stab}} = 100$ and $\le 0.09$ for $c_{\mathrm{stab}} = 70$), allowing the physical curl-div operator to dominate. On the finest $49 \times 49$ grid, this enables the stabilized formulation to overcome the convergence stall of $c_{\mathrm{stab}} = 0$ ($2.32\%$) and drive the error down to $1.29\%$ ($c_{\mathrm{stab}} = 70$) and $1.17\%$ ($c_{\mathrm{stab}} = 100$).
+    Thus, for practical applications operating strictly at low computational cost on very coarse point clouds ($15 \times 15$ to $22 \times 22$), a lower parameter such as $c_{\mathrm{stab}} \in [0, 20]$ yields superior coarse accuracy ($3.87\%\text{--}6.69\%$), albeit with compromised asymptotic convergence ($p \le 1.06$). Conversely, when consistent asymptotic refinement and high-resolution fidelity are required, higher stabilization ($c_{\mathrm{stab}} \ge 70$) is necessary to guarantee optimal quadratic rates ($p \ge 2.15$).
     \item \textbf{Robust Quadratic Convergence under Perturbed Clouds ($25\%$ Jitter):} As shown in Fig.~\ref{fig:mlpg_cavity_stabilization}(b), orthogonal energy stabilization is equally effective on disordered point clouds. Under $25\%$ jitter, the unaugmented formulation ($c_{\mathrm{stab}} = 0$) exhibits a large coarse-grid error ($12.67\%$ on $15\times 15$) and stalls at $3.95\%$ on $49 \times 49$ ($p = 0.84$). Moderate stabilization ($c_{\mathrm{stab}} = 20$ and $40$) reduces the error across every single mesh compared to $c_{\mathrm{stab}} = 0$: in particular, it lowers the coarse $15\times 15$ error by nearly $3\times$ (from $12.67\%$ down to $4.44\%$ and $5.02\%$, respectively, reaching $3.37\%$ and $2.80\%$ on $49\times 49$), which explains why the overall log-log regression slope across the 6 meshes appears flatter ($p = 0.18$ and $0.54$). When stronger stabilization is activated ($c_{\mathrm{stab}} = 100$), the asymptotic $(h_{\mathrm{nom}}/L)^2$ decay dominates intermediate and fine meshes, recovering full quadratic convergence ($p = 2.30$) and driving the mean cutoff error down to $\mathbf{1.45\%}$ on $49 \times 49$. For perturbed meshes, $c_{\mathrm{stab}} = 70$ provides the most balanced overall performance across all resolutions, achieving $p = 1.62$ and an error of $1.97\%$ on $49 \times 49$ while keeping the coarse $15 \times 15$ error down to $11.88\%$ (vs.\ $18.61\%$ for $c_{\mathrm{stab}} = 100$). This confirms that restoring full local stiffness rank eliminates discrete mode softening in both regular and disordered meshless configurations.
 \item \textbf{Impact on Individual Physical Modes vs. Mean Error:}
 A critical physical consideration raised in numerical eigenvalue analysis is whether the stabilization uniformly improves individual physical modes or merely reduces the global average error at the expense of certain modes.
@@ -1670,7 +1809,7 @@ Because $\mathbf{K}_{\mathrm{stab}}$ selectively penalizes the traceless strain 
 This mode-by-mode analysis confirms that the quadratic subgrid scaling law \eqref{eq:alpha_stab_vms_scaling} ensures uniform spectral convergence across all individual physical modes, without shifting physical modes or polluting the lower spectrum.
 \end{enumerate}
 
-Consequently, based on these comparative findings across regular and perturbed point distributions, $c_{\mathrm{stab}} = 70$ is adopted as the standard operational stabilization parameter for the computational benchmarks in Stage~6: while $c_{\mathrm{stab}} = 100$ achieves the steepest asymptotic slope ($p = 2.30\text{--}2.39$) and lowest error on the finest $49\times 49$ grid ($1.17\%$ regular and $1.45\%$ perturbed), $c_{\mathrm{stab}} = 70$ retains near-quadratic convergence ($p = 2.15$ regular, $1.29\%$ error on $49\times 49$) while substantially reducing artificial stiffness on coarse $15\times 15$ and $22\times 22$ point clouds.
+Consequently, based on these comparative findings across regular and perturbed point distributions, $c_{\mathrm{stab}} = 70$ is adopted as a robust practical compromise for the subsequent computational benchmarks in Stage~6. We emphasize that $c_{\mathrm{stab}} = 70$ is not a universally neutral or uniquely optimal constant across all resolution regimes, but rather an engineering trade-off: while $c_{\mathrm{stab}} = 100$ achieves the steepest asymptotic slope ($p = 2.30\text{--}2.39$) and lowest error on the finest $49\times 49$ grid ($1.17\%$ regular and $1.45\%$ perturbed) at the expense of high coarse-grid stiffness ($23.81\%$), and lower values ($c_{\mathrm{stab}} \in [0, 20]$) favor coarse-grid accuracy ($3.87\%\text{--}6.69\%$) at the cost of asymptotic stalling ($p \le 1.06$), the intermediate choice $c_{\mathrm{stab}} = 70$ strikes a balanced compromise---retaining near-quadratic asymptotic convergence ($p = 2.15$ regular, $1.29\%$ error on $49\times 49$) while moderating the coarse-grid over-stiffening to $17.67\%$.
 
 \subsection{Stage 6: Computational Benchmark: VNMM-MLPG vs. VNMM-Gauss}
 \label{subsec:stage6_benchmark}
@@ -1748,11 +1887,14 @@ The comparative results in Tables~\ref{tab:benchmark_comparison} and \ref{tab:ji
 \begin{enumerate}
     \item \textbf{Assembly Speedup ($2.0\times\text{--}3.7\times$):} By evaluating closed-form analytical formulas \eqref{eq:k_curl_analytic}--\eqref{eq:m_local_analytic} over $N$ disk subdomains instead of looping over thousands of numerical Gauss points with point-in-cell tests and $k$-d tree searches, VNMM-MLPG accelerates global matrix assembly by a factor of $1.99\times$ to $3.69\times$ (scaling from $0.062\text{ s}$ on $15 \times 15$ to $0.346\text{ s}$ on $49 \times 49$, compared to $0.124\text{ s}$ and $1.275\text{ s}$ for Gauss integration).
     \item \textbf{$20\%\text{--}24\%$ Sparser Global Operators:} In cell-based integration, a single background cell interacts with all nodes belonging to the stencils of its 9 Gauss points, inflating the sparsity pattern of $\mathbf{K}$. In VNMM-MLPG, each node $I$ interacts strictly with the 6 nodes in its own stencil $\Omega_u^I$. Consequently, global matrices contain $20\%\text{--}24\%$ fewer non-zero entries (e.g., $35,385$ vs. $44,939$ NNZ on $49 \times 49$), reducing memory consumption and improving cache locality.
-    \item \textbf{Global Spectral Accuracy and Convergence ($0\%$ Jitter):} Across every single regular grid resolution in Table~\ref{tab:jitter_benchmark_comparison}, stabilized VNMM-MLPG consistently outperforms cell-based VNMM-Gauss. On the coarsest mesh ($15 \times 15$, $h_{\mathrm{nom}} \approx 0.2244\text{ m}$), where cell-based Gauss integration suffers from severe quadrature softening and boundary truncation ($25.25\%$ error), stabilized VNMM-MLPG limits the error to $17.67\%$ ($1.43\times$ lower). As the grid is refined, stabilized VNMM-MLPG maintains its accuracy lead across all intermediate resolutions ($7.11\%$ vs. $13.46\%$ on $22\times 22$, $3.34\%$ vs. $6.18\%$ on $29\times 29$, $2.87\%$ vs. $4.22\%$ on $36\times 36$, and $1.39\%$ vs. $2.46\%$ on $43\times 43$), achieving $1.29\%$ on $49\times 49$ (surpassing the $1.53\%$ of VNMM-Gauss). Furthermore, orthogonal energy stabilization recovers near-quadratic asymptotic convergence ($p = 2.15$, matching the $p = 2.25$ of VNMM-Gauss as well as the theoretical $\mathcal{O}(h^2)$ eigenvalue convergence order of lowest-order conforming N\'{e}d\'{e}lec edge finite elements $\mathcal{ND}_1$ \cite{nedelec1980mixed, monk2003finite}), proving that discrete mode softening is eliminated while retaining all cell-free advantages.
+    \item \textbf{Global Spectral Accuracy and Convergence ($0\%$ Jitter):} Across every single regular grid resolution in Table~\ref{tab:jitter_benchmark_comparison}, stabilized VNMM-MLPG consistently outperforms cell-based VNMM-Gauss. On the coarsest mesh ($15 \times 15$, $h_{\mathrm{nom}} \approx 0.2244\text{ m}$), where cell-based Gauss integration suffers from severe quadrature softening and boundary truncation ($25.25\%$ error), stabilized VNMM-MLPG limits the error to $17.67\%$ ($1.43\times$ lower). As the grid is refined, stabilized VNMM-MLPG maintains its accuracy lead across all intermediate resolutions ($7.11\%$ vs. $13.46\%$ on $22\times 22$, $3.34\%$ vs. $6.18\%$ on $29\times 29$, $2.87\%$ vs. $4.22\%$ on $36\times 36$, and $1.39\%$ vs. $2.46\%$ on $43\times 43$), achieving $1.29\%$ on $49\times 49$ (surpassing the $1.53\%$ of VNMM-Gauss). Furthermore, orthogonal energy stabilization recovers near-quadratic convergence ($p = 2.15$, matching the $p = 2.25$ of VNMM-Gauss as well as the theoretical $\mathcal{O}(h^2)$ eigenvalue convergence order of lowest-order conforming N\'{e}d\'{e}lec edge finite elements $\mathcal{ND}_1$ \cite{nedelec1980mixed, monk2003finite}), providing strong numerical evidence that discrete mode softening is suppressed while retaining all cell-free advantages.
     \item \textbf{Resilience to Point Cloud Disorder and Coarse-Grid Robustness ($25\%$ Jitter):} Under $25\%$ stochastic nodal jitter, stabilized VNMM-MLPG outperforms cell-based VNMM-Gauss across five of the six benchmark resolutions ($15\times 15$ through $43\times 43$), exhibiting smooth monotonic convergence ($p = 1.62$) and driving the cutoff frequency error below $2\%$ ($1.77\%$ on $43\times 43$ and $1.97\%$ on $49\times 49$). 
     
     On the coarsest perturbed point cloud ($15 \times 15$, $h_{\mathrm{nom}} \approx 0.2244\text{ m}$), stabilized VNMM-MLPG yields an error of $11.88\%$, compared to $24.67\%$ for VNMM-Gauss, representing a $2.08\times$ error reduction. This difference reflects a distinct geometric mechanism: in cell-based methods, irregular nodal displacements distort the geometric alignment between background Cartesian integration cells and shifting local support stencils. At coarse resolutions, individual background cells frequently span disjoint stencils with disparate local gradient orientations, resulting in intra-cell quadrature under-integration, artificial softening, and cell-boundary clipping. In contrast, VNMM-MLPG integrates the weak form over autonomous circular subdomains $\Omega_s^I$ centered directly at each physical node $\mathbf{x}_I$. Because each local disk is integrated in closed form using the unique, non-switching polynomial stencil $\Omega_u^I$ associated with node $I$, the discrete energy evaluation is entirely immune to cell-mesh skewness, element aspect-ratio degradation, and intra-cell stencil transitions. This confirms that VNMM-MLPG is inherently more robust against point-cloud disorder on coarse configurations than conventional cell-based quadrature schemes. While cell-based Gauss exhibits a marginally steeper asymptotic slope ($p = 2.29$) due to background grid rigidity on very fine meshes ($49\times 49$), it incurs a $2.0\times\text{--}3.7\times$ assembly time penalty and generates $20\%\text{--}24\%$ denser global operators. Overall, VNMM-MLPG delivers consistently superior accuracy across coarse-to-intermediate resolutions with substantial computational speedups and complete freedom from background integration grids.
 \end{enumerate}
+
+\paragraph{Methodological Note on Convergence Rates across Six Grid Resolutions:}
+We emphasize that the empirical convergence rates $p$ reported in Table~\ref{tab:jitter_benchmark_comparison} are determined via linear regression of $\log(\overline{\varepsilon}_{k_c})$ versus $\log(h_{\mathrm{nom}})$ across the six standardized grid resolutions ($15\times 15$ to $49\times 49$) for a single randomized seed ($\text{seed}=42$). While these rates provide strong numerical evidence of convergence behavior compatible with near-quadratic ($p = 2.15$) and superlinear ($p = 1.62$) rates, they represent empirical performance trends rather than formal proofs of asymptotic rates. A comprehensive asymptotic confirmation would ideally require significantly deeper spatial refinements and statistical ensemble averages over multiple stochastic cloud realizations.
 
 %% =========================================================================
 %% SECTION 4: DISCUSSION
@@ -1767,7 +1909,7 @@ Table~\ref{tab:method_comparison} compares the features of VNMM-MLPG against the
 \begin{itemize}
     \item \textbf{Freedom from Mesh Scaffolding:} The method is truly cell-free. Decoupling spatial integration from background grids eliminates the risk of geometric meshing failures.
     \item \textbf{Closed-Form Integration:} Numerical quadrature under-integration traps and artificial softening across stencil transitions are eliminated.
-    \item \textbf{Symmetric Operators:} Unlike standard Petrov--Galerkin and LPIM formulations that produce unsymmetric matrices via row-by-row assembly, the proposed Symmetric Subdomain Galerkin scheme yields strictly symmetric positive-semidefinite operators, precluding unphysical complex-conjugate eigenvalue pairs and restoring discrete self-adjointness (while real gradient spurious modes are independently eliminated by the superlinear divergence penalty).
+    \item \textbf{Symmetric Operators:} Unlike standard Petrov--Galerkin and LPIM formulations that produce unsymmetric matrices via row-by-row assembly, the proposed Symmetric Subdomain Galerkin scheme yields strictly symmetric positive-semidefinite operators, precluding unphysical complex-conjugate eigenvalue pairs and restoring discrete self-adjointness (while real gradient spurious modes are shifted outside the operational spectrum by the superlinear divergence penalty).
     \item \textbf{Orthogonal Energy Stabilization:} Augmenting local linear stiffness with an analytical subgrid projection operator $\mathbf{K}_{\mathrm{stab}}^I$ scaled via VMS principles as $\alpha_{\mathrm{stab}} = c_{\mathrm{stab}}(h_{\mathrm{nom}}/L)^2$ overcomes the localized rank-2 deficiency of linear fields on circular disks (restoring full rank 4 over the linear deformation subspace), eliminating discrete mode softening and restoring superlinear-to-quadratic spectral convergence ($p = 2.15\text{--}2.39$ on regular grids and $p = 1.62$ under $25\%$ jitter).
     \item \textbf{Enhanced Spectral Accuracy:} Stabilized VNMM-MLPG ($c_{\mathrm{stab}} = 70$) outperforms cell-based VNMM-Gauss across all six regular benchmark resolutions (from $15\times 15$ to $49\times 49$, achieving $1.29\%$ error on $49\times 49$) and in five of the six perturbed configurations (achieving a $2.08\times$ error reduction on coarse $15\times 15$ clouds).
 \end{itemize}
@@ -1818,9 +1960,9 @@ This work presented the formulation, implementation, and systematic validation o
 Key achievements of the proposed VNMM-MLPG include:
 \begin{enumerate}
     \item \textbf{Closed-Form Analytical Operator Formulation:} Derived closed-form analytical expressions for local curl, divergence, and mass matrices on interior disks and boundary-truncated circular segments in terms of the directional inverse collocation matrix $\boldsymbol{\beta}^I$ and exact geometric moments, eliminating numerical quadrature error and lens-intersection cubatures.
-    \item \textbf{Overlapping Symmetric Subdomain Galerkin Assembly and Coercivity:} Overcame the structural asymmetry and loss of discrete coercivity of classical row-by-row MLPG/LPIM by formulating an additive overlapping-subdomain energy assembly, guaranteeing symmetric positive-semidefinite global operators, characterizing the 2D rigid translation kernel, and proving strict positive-definiteness after PEC boundary reduction.
+    \item \textbf{Overlapping Symmetric Subdomain Galerkin Assembly and Positive Definiteness:} Overcame the structural asymmetry and loss of stability of classical row-by-row MLPG/LPIM by formulating an additive overlapping-subdomain energy assembly, guaranteeing symmetric positive-semidefinite global operators, characterizing the 2D rigid translation kernel, proving strict positive-definiteness on fixed meshes after PEC boundary reduction, and properly framing uniform asymptotic coercivity as a conditional stability hypothesis.
     \item \textbf{Machine-Precision Linear Consistency:} Verified linear reproduction via the Galerkin patch test across seven affine vector states on regular and 25\% perturbed point clouds, achieving interior errors on the order of $\sim 10^{-14}\text{--}10^{-15}$ ($\le 1.29 \times 10^{-13}$).
-    \item \textbf{MMS Convergence and Subdomain Containment Verification:} Confirmed monotonic convergence with rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.93})$ (pure Dirichlet) and $\mathcal{O}(h_{\mathrm{nom}}^{1.85})$ (mixed Dirichlet--Neumann) in $L^2(\vec{E})$, and $\mathcal{O}(h_{\mathrm{nom}}^{1.05})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.02})$ in the broken $H(\mathbf{curl})$ semi-norm, while verifying that the classical MLPG/LPIM subdomain scaling $\alpha_s = 0.80$ \cite{atluri2002meshless, liu2009mesh} satisfies both global coverage ($\alpha_s \ge \sqrt{2}/2$) and 6-node directional stencil containment ($\alpha_s \le 1.15$).
+    \item \textbf{MMS Convergence and Subdomain Containment Verification:} Confirmed monotonic convergence with rates of $\mathcal{O}(h_{\mathrm{nom}}^{1.93})$ (pure Dirichlet) and $\mathcal{O}(h_{\mathrm{nom}}^{1.85})$ (mixed Dirichlet--Neumann) in $L^2(\vec{E})$, and $\mathcal{O}(h_{\mathrm{nom}}^{1.05})$ and $\mathcal{O}(h_{\mathrm{nom}}^{1.02})$ in the broken $H(\mathbf{curl})$ semi-norm, while verifying that the classical MLPG/LPIM subdomain scaling $\alpha_s = 0.80$ \cite{atluri2002meshless, liu2009mesh} satisfies complete global coverage ($\alpha_s \ge \sqrt{2}/2$) on regular lattices (and $94.4\%$ coverage under $25\%$ jitter) alongside strict 6-node directional stencil containment ($\alpha_s \le 1.15$).
     \item \textbf{Directional Modal Projection and VMS-Inspired Orthogonal Stabilization:} Showed that single-disk integration leaves two harmonic zero-energy deformation modes ($\mathbf{v}_{\mathrm{shear}}^I, \mathbf{v}_{\mathrm{hyp}}^I$) in the local div-curl kernel, projected them analytically onto the directional degrees of freedom, and formulated a VMS-inspired Orthogonal Energy Stabilization operator ($\alpha_{\mathrm{stab}} \propto h_{\mathrm{nom}}^2$) coupled with superlinear divergence penalty scaling ($s_{\mathrm{div}} \propto h_{\mathrm{nom}}^{-1.5}$). This restores full rank 4 over the linear deformation subspace, eliminates mode softening, recovers near-quadratic spectral convergence ($p = 2.15$ on regular grids, driving fine-grid error down to $1.29\%$ on $49\times 49$), and shifts all non-physical gradient modes outside the operational spectrum ($s_{\mathrm{div}} \ge 4$).
     \item \textbf{Benchmark Accuracy and Computational Efficiency:} Setting $c_{\mathrm{stab}} = 70$, stabilized VNMM-MLPG outperforms cell-based VNMM-Gauss across all six regular benchmark resolutions ($15\times 15$ to $49\times 49$) and five of the six perturbed resolutions ($11.88\%$ vs.\ $24.67\%$ on coarse $15\times 15$ clouds), while delivering $2.0\times\text{--}3.7\times$ faster matrix assembly and $20\%\text{--}24\%$ sparser global operators.
 \end{enumerate}
