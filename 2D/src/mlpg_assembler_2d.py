@@ -137,34 +137,32 @@ def compute_subdomain_geometric_moments(
     cross_bot = dy_bot < r_s - tol and dy_top >= r_s and dx_left >= r_s and dx_right >= r_s
     cross_top = dy_top < r_s - tol and dy_bot >= r_s and dx_left >= r_s and dx_right >= r_s
 
-    def cap_moments(d: float) -> Tuple[float, float]:
+    def cap_moments(d: float) -> Tuple[float, float, float, float]:
         d_c = max(0.0, min(r_s, d))
         th = np.arccos(d_c / r_s)
         a_cap = (r_s ** 2) * (th - (d_c / r_s) * np.sqrt(max(0.0, 1.0 - (d_c / r_s) ** 2)))
         x0 = np.sqrt(max(0.0, r_s ** 2 - d_c ** 2))
         s1_cap = (2.0 / 3.0) * (x0 ** 3)
-        return a_cap, s1_cap
+        s2_par = i2_full - (0.25 * (r_s ** 4) * th - (d_c * x0 / 12.0) * (5.0 * (r_s ** 2) - 2.0 * (d_c ** 2)))
+        s2_perp = i2_full - (0.25 * (r_s ** 4) * th + (d_c * x0 / 4.0) * ((r_s ** 2) - 2.0 * (d_c ** 2)))
+        return a_cap, s1_cap, s2_par, s2_perp
 
     if cross_bot:
-        a_cap, s1_cap = cap_moments(dy_bot)
+        a_cap, s1_cap, s2_par, s2_perp = cap_moments(dy_bot)
         s0 = full_area - a_cap
-        eta = s0 / full_area
-        return s0, 0.0, s1_cap, eta * i2_full, eta * i2_full, 0.0
+        return s0, 0.0, s1_cap, s2_par, s2_perp, 0.0
     if cross_top:
-        a_cap, s1_cap = cap_moments(dy_top)
+        a_cap, s1_cap, s2_par, s2_perp = cap_moments(dy_top)
         s0 = full_area - a_cap
-        eta = s0 / full_area
-        return s0, 0.0, -s1_cap, eta * i2_full, eta * i2_full, 0.0
+        return s0, 0.0, -s1_cap, s2_par, s2_perp, 0.0
     if cross_left:
-        a_cap, s1_cap = cap_moments(dx_left)
+        a_cap, s1_cap, s2_par, s2_perp = cap_moments(dx_left)
         s0 = full_area - a_cap
-        eta = s0 / full_area
-        return s0, s1_cap, 0.0, eta * i2_full, eta * i2_full, 0.0
+        return s0, s1_cap, 0.0, s2_perp, s2_par, 0.0
     if cross_right:
-        a_cap, s1_cap = cap_moments(dx_right)
+        a_cap, s1_cap, s2_par, s2_perp = cap_moments(dx_right)
         s0 = full_area - a_cap
-        eta = s0 / full_area
-        return s0, -s1_cap, 0.0, eta * i2_full, eta * i2_full, 0.0
+        return s0, -s1_cap, 0.0, s2_perp, s2_par, 0.0
 
     # General truncated subdomains (Case 3B, Case 2B near corners):
     # Evaluated via Gauss-Legendre quadrature clipped to domain bounds
