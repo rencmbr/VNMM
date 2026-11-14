@@ -166,12 +166,12 @@ class TestPECCavityEigenvalueSolver3D(unittest.TestCase):
         """
         a, b, c = 1.00, 0.50, 0.75
         res = solve_cavity_eigenvalues_3d(
-            Nx=5, Ny=5, Nz=5,
+            Nx=7, Ny=7, Nz=7,
             Lx=a, Ly=b, Lz=c,
             num_eigenvalues=5,
-            s_div=6.0,
+            s_div=2.0,
             points_per_dir=2,
-            support_mode="cell_center"
+            support_mode="gauss_point"
         )
         kc_ref = np.array([5.2360, 7.0248, 7.5514, 7.5514, 8.1789])
         kc_num = res['numerical_kc']
@@ -179,6 +179,7 @@ class TestPECCavityEigenvalueSolver3D(unittest.TestCase):
         self.assertEqual(len(kc_num), 5)
         self.assertTrue(np.all(kc_num > 0.0), "Computed wavenumbers must be strictly positive.")
         self.assertTrue(np.all(np.diff(kc_num) >= -1e-6), "Wavenumbers must be in non-decreasing order.")
+        self.assertLess(res['mean_error_kc_pct'], 5.0, f"Mean kc error too high: {res['mean_error_kc_pct']:.2f}%")
 
 
 if __name__ == "__main__":

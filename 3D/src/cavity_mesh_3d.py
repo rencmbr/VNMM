@@ -11,9 +11,9 @@ def generate_cavity_mesh_3d(
     Nx=7,
     Ny=7,
     Nz=7,
-    Lx=np.pi,
-    Ly=np.pi,
-    Lz=np.pi,
+    Lx=1.00,
+    Ly=0.50,
+    Lz=0.75,
     interior_type="alternating",
     jitter_frac=0.0,
     seed=42,
@@ -75,12 +75,52 @@ def generate_cavity_mesh_3d(
         mode = "cartesian"
     elif type_str in ["random", "aleatorio"]:
         mode = "random"
+    elif type_str in ["triad", "triade", "orthogonal_triad"]:
+        mode = "triad"
     else:
         raise ValueError(f"Unknown interior_type: '{interior_type}'")
 
     coords_list = []
     vectors_list = []
     is_boundary_list = []
+
+    if mode == "triad":
+        # Complete 3-DoF orthogonal vector triad (Ex, Ey, Ez) at each 3D grid vertex
+        # with exact tangential PEC boundary condition (n x E = 0) on all 6 faces and 12 edges
+        for k in range(Nz):
+            for j in range(Ny):
+                for i in range(Nx):
+                    x = i * dx
+                    y = j * dy
+                    z = k * dz
+                    if jitter_frac > 0.0 and (0 < i < Nx - 1) and (0 < j < Ny - 1) and (0 < k < Nz - 1):
+                        jx = np.random.uniform(-jitter_frac * dx, jitter_frac * dx)
+                        jy = np.random.uniform(-jitter_frac * dy, jitter_frac * dy)
+                        jz = np.random.uniform(-jitter_frac * dz, jitter_frac * dz)
+                        pos = np.array([x + jx, y + jy, z + jz], dtype=float)
+                    else:
+                        pos = np.array([x, y, z], dtype=float)
+
+                    # Ex degree of freedom: tangent to y-walls (j=0, Ny-1) and z-walls (k=0, Nz-1)
+                    coords_list.append(pos)
+                    vectors_list.append(np.array([1.0, 0.0, 0.0], dtype=float))
+                    is_boundary_list.append(bool(j == 0 or j == Ny - 1 or k == 0 or k == Nz - 1))
+
+                    # Ey degree of freedom: tangent to x-walls (i=0, Nx-1) and z-walls (k=0, Nz-1)
+                    coords_list.append(pos)
+                    vectors_list.append(np.array([0.0, 1.0, 0.0], dtype=float))
+                    is_boundary_list.append(bool(i == 0 or i == Nx - 1 or k == 0 or k == Nz - 1))
+
+                    # Ez degree of freedom: tangent to x-walls (i=0, Nx-1) and y-walls (j=0, Ny-1)
+                    coords_list.append(pos)
+                    vectors_list.append(np.array([0.0, 0.0, 1.0], dtype=float))
+                    is_boundary_list.append(bool(i == 0 or i == Nx - 1 or j == 0 or j == Ny - 1))
+
+        return (
+            np.array(coords_list, dtype=float),
+            np.array(vectors_list, dtype=float),
+            np.array(is_boundary_list, dtype=bool)
+        )
 
     # 1. Interior nodes (1 <= i < Nx-1, 1 <= j < Ny-1, 1 <= k < Nz-1)
     sq3 = 1.0 / np.sqrt(3.0)

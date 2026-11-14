@@ -2,7 +2,7 @@
 Manufactured Solution (MMS) Galerkin Source Problem for VNMM 3D.
 Solves the inhomogeneous vector Helmholtz equation with volumetric divergence regularization:
     curl(curl E) - s_div * grad(div E) + kappa * E = f(x, y, z) on [0, pi]^3
-with homogeneous essential Dirichlet boundary conditions on PEC walls.
+with inhomogeneous essential Dirichlet boundary conditions e_k = E*(x_k) . t_k on dOmega.
 
 Tests asymptotic convergence orders in L2, H(curl), and discrete DoF norms.
 """
@@ -25,35 +25,38 @@ for p in [DIR_3D, ROOT_DIR, CURRENT_DIR, SRC_DIR]:
 from src.cavity_mesh_3d import generate_cavity_mesh_3d
 from src.gauss_quadrature_3d import get_gauss_points_weights_1d
 from scripts.support_nodes_vnmm_3d_12_p1 import support_nodes_vnmm_3d_12_p1
+from scripts.support_nodes_vnmm_3d_6_l1 import support_nodes_vnmm_3d_6_l1
 
 
 def exact_solution_mms_3d(x, y, z):
     """
-    Exact divergence-free vector field E*(x, y, z) on [0, pi]^3 satisfying PEC boundary conditions:
-        Ex =  cos(x) * sin(y) * sin(z)
-        Ey =  sin(x) * cos(y) * sin(z)
-        Ez = -2 * sin(x) * sin(y) * cos(z)
+    Exact divergence-free vector field E*(x, y, z) on [0, pi]^3 with vanishing
+    tangential curl flux n x (curl E*) = 0 identically on all 6 faces of dOmega:
+        Ex =  sin(x) * cos(y) * cos(z)
+        Ey =  cos(x) * sin(y) * cos(z)
+        Ez = -2 * cos(x) * cos(y) * sin(z)
     div(E*) = 0 everywhere.
     curl(curl E*) = 3 * E*.
     """
     return np.array([
-        np.cos(x) * np.sin(y) * np.sin(z),
-        np.sin(x) * np.cos(y) * np.sin(z),
-        -2.0 * np.sin(x) * np.sin(y) * np.cos(z)
+        np.sin(x) * np.cos(y) * np.cos(z),
+        np.cos(x) * np.sin(y) * np.cos(z),
+        -2.0 * np.cos(x) * np.cos(y) * np.sin(z)
     ])
 
 
 def exact_curl_mms_3d(x, y, z):
     """
     curl(E*) for the manufactured 3D field:
-        (curl E*)_x = -3 * sin(x) * cos(y) * cos(z)
-        (curl E*)_y =  3 * cos(x) * sin(y) * cos(z)
+        (curl E*)_x =  3 * cos(x) * sin(y) * sin(z)
+        (curl E*)_y = -3 * sin(x) * cos(y) * sin(z)
         (curl E*)_z =  0
+    Satisfies n x (curl E*) = 0 on x in {0, pi}, y in {0, pi}, and z in {0, pi}.
     """
     return np.array([
-        -3.0 * np.sin(x) * np.cos(y) * np.cos(z),
-         3.0 * np.cos(x) * np.sin(y) * np.cos(z),
-         0.0
+        3.0 * np.cos(x) * np.sin(y) * np.sin(z),
+        -3.0 * np.sin(x) * np.cos(y) * np.sin(z),
+        0.0
     ])
 
 
@@ -71,6 +74,7 @@ def assemble_and_solve_mms_3d(
     coords,
     vectors,
     is_boundary,
+    basis="P1",
     s_div=6.0,
     kappa=1.0,
     Ncx=None,
@@ -80,7 +84,8 @@ def assemble_and_solve_mms_3d(
     Ly=np.pi,
     Lz=np.pi,
     points_per_dir=2,
-    det_tolerance=1e-6
+    det_tolerance=1e-6,
+    sri_div=True
 ):
     """
     Assembles Galerkin system matrices and load vector for 3D MMS source problem:
@@ -91,12 +96,16 @@ def assemble_and_solve_mms_3d(
     total_nodes = len(coords)
     tree = KDTree(coords)
 
-    side_nodes = int(np.round(total_nodes ** (1.0 / 3.0)))
+    is_P1 = basis.upper() in ["P1", "12_P1", "12NOS"]
+    n_supp = 12 if is_P1 else 6
+
+    unique_x = len(np.unique(np.round(coords[:, 0], 6)))
+    side_nodes = unique_x if unique_x >= 3 else int(np.round(total_nodes ** (1.0 / 3.0)))
     if Ncx is None: Ncx = max(3, side_nodes - 1)
     if Ncy is None: Ncy = max(3, side_nodes - 1)
     if Ncz is None: Ncz = max(3, side_nodes - 1)
 
-    h_char = max(Lx / max(side_nodes - 1, 1), Ly / max(side_nodes - 1, 1), Lz / max(side_nodes - 1, 1))
+    h_char = max(Lx / max(Ncx, 1), Ly / max(Ncy, 1), Lz / max(Ncz, 1))
 
     x_edges = np.linspace(0.0, Lx, Ncx + 1)
     y_edges = np.linspace(0.0, Ly, Ncy + 1)
@@ -122,6 +131,8 @@ def assemble_and_solve_mms_3d(
                 dx = x1 - x0
                 xc = 0.5 * (x0 + x1)
                 det_J = 0.125 * dx * dy * dz
+                vol_cell = dx * dy * dz
+                cell_div_nodes = {}
 
                 for wk, zeta in zip(w_1d, xi_1d):
                     zg = zc + 0.5 * dz * zeta
@@ -132,24 +143,40 @@ def assemble_and_solve_mms_3d(
                             Pg = np.array([xg, yg, zg])
                             wg = wi * wj * wk * det_J
 
-                            supp_nodes, det_val, A_mat, _ = support_nodes_vnmm_3d_12_p1(
-                                P=Pg,
-                                nodes_coords=coords,
-                                nodes_vectors=vectors,
-                                search_tree=tree,
-                                K=24,
-                                Tol_det=det_tolerance,
-                                adaptive=True,
-                                step_K=6
-                            )
-                            beta = np.linalg.inv(A_mat)
+                            if is_P1:
+                                supp_nodes, det_val, A_mat, _ = support_nodes_vnmm_3d_12_p1(
+                                    P=Pg,
+                                    nodes_coords=coords,
+                                    nodes_vectors=vectors,
+                                    search_tree=tree,
+                                    K=24,
+                                    Tol_det=det_tolerance,
+                                    adaptive=True,
+                                    step_K=6
+                                )
+                                beta = np.linalg.inv(A_mat)
 
-                            Phi_g = beta[0:3, :]
-                            curl_Phi = np.empty((3, 12), dtype=float)
-                            curl_Phi[0, :] = beta[8, :] - beta[10, :]
-                            curl_Phi[1, :] = beta[9, :] - beta[5, :]
-                            curl_Phi[2, :] = beta[4, :] - beta[6, :]
-                            div_Phi = beta[3, :] + beta[7, :] + beta[11, :]
+                                Phi_g = beta[0:3, :]
+                                curl_Phi = np.empty((3, 12), dtype=float)
+                                curl_Phi[0, :] = beta[8, :] - beta[10, :]
+                                curl_Phi[1, :] = beta[9, :] - beta[5, :]
+                                curl_Phi[2, :] = beta[4, :] - beta[6, :]
+                                div_Phi = beta[3, :] + beta[7, :] + beta[11, :]
+                            else:
+                                supp_nodes, det_val, A_mat, _ = support_nodes_vnmm_3d_6_l1(
+                                    P=Pg,
+                                    nodes_coords=coords,
+                                    nodes_vectors=vectors,
+                                    search_tree=tree,
+                                    K=14,
+                                    Tol_det=det_tolerance,
+                                    adaptive=True,
+                                    step_K=4
+                                )
+                                beta = np.linalg.inv(A_mat)
+                                Phi_g = beta[0:3, :]
+                                curl_Phi = 2.0 * beta[3:6, :].copy()
+                                div_Phi = np.zeros(6, dtype=float)
 
                             gauss_info.append({
                                 'Pg': Pg,
@@ -161,31 +188,40 @@ def assemble_and_solve_mms_3d(
                             })
 
                             rot_mat = (curl_Phi.T @ curl_Phi) * wg
-                            div_mat = np.outer(div_Phi, div_Phi) * (s_div * wg)
                             mass_mat = (Phi_g.T @ Phi_g) * (kappa * wg)
-                            A_local = rot_mat + div_mat + mass_mat
+                            if sri_div and is_P1:
+                                A_local = rot_mat + mass_mat
+                                for a in range(n_supp):
+                                    Ia = supp_nodes[a]
+                                    cell_div_nodes[Ia] = cell_div_nodes.get(Ia, 0.0) + div_Phi[a] * (wg / vol_cell)
+                            else:
+                                div_mat = np.outer(div_Phi, div_Phi) * (s_div * wg)
+                                A_local = rot_mat + div_mat + mass_mat
 
                             f_val = source_mms_3d(xg, yg, zg, kappa=kappa)
                             f_local = (Phi_g.T @ f_val) * wg
+                            F[supp_nodes] += f_local
 
-                            for a in range(12):
-                                Ia = supp_nodes[a]
-                                F[Ia] += f_local[a]
-                                for b in range(12):
-                                    Ib = supp_nodes[b]
-                                    val = A_local[a, b]
-                                    if abs(val) > 1e-18:
-                                        rows_A.append(Ia)
-                                        cols_A.append(Ib)
-                                        data_A.append(val)
+                            r_idx = np.repeat(supp_nodes, n_supp)
+                            c_idx = np.tile(supp_nodes, n_supp)
+                            rows_A.append(r_idx)
+                            cols_A.append(c_idx)
+                            data_A.append(A_local.ravel())
 
-    A = coo_matrix((data_A, (rows_A, cols_A)), shape=(total_nodes, total_nodes)).tocsr()
+                if sri_div and is_P1 and cell_div_nodes:
+                    c_nodes = np.array(list(cell_div_nodes.keys()), dtype=int)
+                    c_vals = np.array(list(cell_div_nodes.values()), dtype=float)
+                    div_cell_mat = np.outer(c_vals, c_vals) * (s_div * vol_cell)
+                    rows_A.append(np.repeat(c_nodes, len(c_nodes)))
+                    cols_A.append(np.tile(c_nodes, len(c_nodes)))
+                    data_A.append(div_cell_mat.ravel())
+
+    A = coo_matrix((np.concatenate(data_A), (np.concatenate(rows_A), np.concatenate(cols_A))), shape=(total_nodes, total_nodes)).tocsr()
     A = 0.5 * (A + A.T)
 
     interior_idx = np.where(~is_boundary)[0]
     boundary_idx = np.where(is_boundary)[0]
 
-    # Exact boundary condition e_b = 0
     e_exact = np.zeros(total_nodes, dtype=float)
     for idx in range(total_nodes):
         E_pt = exact_solution_mms_3d(coords[idx, 0], coords[idx, 1], coords[idx, 2])
@@ -202,11 +238,12 @@ def assemble_and_solve_mms_3d(
     e_num[boundary_idx] = e_b
     e_num[interior_idx] = e_i
 
-    # Compute L2 and curl error norms
+    # Compute L2, curl, DoF, and divergence error norms
     sum_err_L2 = 0.0
     sum_exact_L2 = 0.0
     sum_err_curl = 0.0
     sum_exact_curl = 0.0
+    sum_div_sq = 0.0
 
     for g in gauss_info:
         Pg = g['Pg']
@@ -214,9 +251,11 @@ def assemble_and_solve_mms_3d(
         supp = g['nodes']
         Phi_g = g['Phi_g']
         curl_Phi = g['curl_Phi']
+        div_Phi = g['div_Phi']
 
         E_num_pt = Phi_g @ e_num[supp]
         curl_num_pt = curl_Phi @ e_num[supp]
+        div_num_pt = float(div_Phi @ e_num[supp])
 
         E_ex_pt = exact_solution_mms_3d(Pg[0], Pg[1], Pg[2])
         curl_ex_pt = exact_curl_mms_3d(Pg[0], Pg[1], Pg[2])
@@ -228,13 +267,18 @@ def assemble_and_solve_mms_3d(
         sum_exact_L2 += np.dot(E_ex_pt, E_ex_pt) * wg
         sum_err_curl += np.dot(diff_curl, diff_curl) * wg
         sum_exact_curl += np.dot(curl_ex_pt, curl_ex_pt) * wg
+        sum_div_sq += (div_num_pt ** 2) * wg
 
     err_L2_E_rel = float(np.sqrt(sum_err_L2) / np.sqrt(sum_exact_L2))
     err_L2_curl_rel = float(np.sqrt(sum_err_curl) / np.sqrt(sum_exact_curl))
+    dof_diff = np.abs(e_num[interior_idx] - e_exact[interior_idx])
+    err_dof_inf_rel = float(np.max(dof_diff) / max(float(np.max(np.abs(e_exact[interior_idx]))), 1e-12))
 
     return {
         "err_L2_E_rel": err_L2_E_rel,
         "err_L2_curl_rel": err_L2_curl_rel,
+        "err_dof_inf_rel": err_dof_inf_rel,
+        "norm_L2_div": float(np.sqrt(sum_div_sq)),
         "h": h_char,
         "total_nodes": total_nodes,
         "active_dofs": len(interior_idx)
@@ -242,7 +286,6 @@ def assemble_and_solve_mms_3d(
 
 
 if __name__ == "__main__":
-    coords, vectors, is_bnd = generate_cavity_mesh_3d(Nx=5, Ny=5, Nz=5)
+    coords, vectors, is_bnd = generate_cavity_mesh_3d(Nx=7, Ny=7, Nz=7, Lx=np.pi, Ly=np.pi, Lz=np.pi, interior_type="cartesian")
     res = assemble_and_solve_mms_3d(coords, vectors, is_bnd)
     print("MMS 3D L2 Error:", res["err_L2_E_rel"])
-

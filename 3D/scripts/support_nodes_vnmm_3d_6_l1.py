@@ -112,11 +112,23 @@ def support_nodes_vnmm_3d_6_l1(
         local_coords = nodes_coords[neighbor_indices] - P
         vecs = nodes_vectors[neighbor_indices]
 
+        dists_loc = np.linalg.norm(local_coords, axis=1)
+        pos_d = dists_loc[dists_loc > 1e-10]
+        h_c = float(np.median(pos_d)) if len(pos_d) > 0 else 1.0
+        local_hat = local_coords / h_c
+        d_hat2 = (dists_loc / h_c) ** 2
+
         M = build_placement_matrix_3d_l1(local_coords, vecs)
+        M_hat = build_placement_matrix_3d_l1(local_hat, vecs)
 
         if method == "pivoted_qr" or current_K > 12:
             try:
-                Q, R, piv = la.qr(M.T, pivoting=True)
+                row_norms = la.norm(M_hat, axis=1, keepdims=True)
+                M_unit = M_hat / np.where(row_norms > 1e-15, row_norms, 1.0)
+                weights = (1.0 + d_hat2) ** (-1.0)
+                M_weighted = M_unit * weights[:, None]
+
+                Q, R, piv = la.qr(M_weighted.T, pivoting=True)
                 candidate_local = piv[:6]
                 candidate_sextet = [neighbor_indices[idx] for idx in candidate_local]
                 A = M[candidate_local, :]

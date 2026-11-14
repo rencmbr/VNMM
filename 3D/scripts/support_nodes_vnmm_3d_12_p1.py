@@ -61,6 +61,7 @@ def support_nodes_vnmm_3d_12_p1(
     step_K=6,
     K_max=None,
     method="pivoted_qr",
+    scales=None,
     # Compatibility aliases
     arvore_busca=None,
     adaptativo=None,
@@ -104,6 +105,8 @@ def support_nodes_vnmm_3d_12_p1(
         search_tree = KDTree(nodes_coords)
 
     P = np.asarray(P, dtype=float)
+    scales_arr = np.asarray(scales, dtype=float) if scales is not None else None
+    query_pt = P / scales_arr if scales_arr is not None else P
     total_nodes = len(nodes_coords)
     limit_K = total_nodes if K_max is None else min(K_max, total_nodes)
     current_K = min(max(K, 12), total_nodes)
@@ -114,7 +117,7 @@ def support_nodes_vnmm_3d_12_p1(
     best_effective_k = 0
 
     while True:
-        distances, neighbor_indices = search_tree.query(P, k=current_K)
+        distances, neighbor_indices = search_tree.query(query_pt, k=current_K)
         if current_K == 1:
             neighbor_indices = [neighbor_indices]
         else:
@@ -123,16 +126,57 @@ def support_nodes_vnmm_3d_12_p1(
         local_coords = nodes_coords[neighbor_indices] - P
         vecs = nodes_vectors[neighbor_indices]
 
+        if scales_arr is not None:
+            loc_scales = scales_arr
+        else:
+            abs_dx = np.abs(local_coords[:, 0])
+            abs_dy = np.abs(local_coords[:, 1])
+            abs_dz = np.abs(local_coords[:, 2])
+            hx = float(np.median(abs_dx[abs_dx > 1e-10])) if np.any(abs_dx > 1e-10) else 1.0
+            hy = float(np.median(abs_dy[abs_dy > 1e-10])) if np.any(abs_dy > 1e-10) else 1.0
+            hz = float(np.median(abs_dz[abs_dz > 1e-10])) if np.any(abs_dz > 1e-10) else 1.0
+            loc_scales = np.array([hx, hy, hz], dtype=float)
+
+        local_hat = local_coords / loc_scales
+        d_hat2 = np.sum(local_hat ** 2, axis=1)
+
         M = build_placement_matrix_3d(local_coords, vecs)
+        M_hat = build_placement_matrix_3d(local_hat, vecs)
 
         if method == "pivoted_qr" or current_K > 14:
-            # Rank-revealing column-pivoted QR on M^T (shape 12 x current_K)
+            # Locality-preserving distance-weighted QR on dimensionless placement matrix M_hat
             try:
-                Q, R, piv = la.qr(M.T, pivoting=True)
-                candidate_local = piv[:12]
+                row_norms = la.norm(M_hat, axis=1, keepdims=True)
+                M_unit = M_hat / np.where(row_norms > 1e-15, row_norms, 1.0)
+                weights = (1.0 + d_hat2) ** (-3.0)
+                M_weighted = M_unit * weights[:, None]
+
+                Q, R, piv = la.qr(M_weighted.T, pivoting=True)
+                candidate_local = list(piv[:12])
+                A_hat = M_hat[candidate_local, :]
+                if np.linalg.cond(A_hat) > 30.0:
+                    # Distance-ordered orthogonal Gram-Schmidt filter to reject near-coplanar jittered nodes
+                    for tau_orth in (0.22, 0.16, 0.10):
+                        Q_orth = np.zeros((0, 12), dtype=float)
+                        gs_cand = []
+                        for idx_n in range(len(neighbor_indices)):
+                            r_u = M_unit[idx_n]
+                            proj = r_u - Q_orth.T @ (Q_orth @ r_u) if gs_cand else r_u
+                            nrm = float(np.linalg.norm(proj))
+                            if nrm > tau_orth:
+                                gs_cand.append(idx_n)
+                                Q_orth = np.vstack([Q_orth, proj / nrm])
+                                if len(gs_cand) == 12:
+                                    break
+                        if len(gs_cand) == 12 and np.linalg.cond(M_hat[gs_cand, :]) < np.linalg.cond(A_hat):
+                            candidate_local = gs_cand
+                            A_hat = M_hat[candidate_local, :]
+                            break
+
                 candidate_dodecet = [neighbor_indices[idx] for idx in candidate_local]
                 A = M[candidate_local, :]
                 det_A = float(np.abs(np.linalg.det(A)))
+                det_hat = float(np.abs(np.linalg.det(A_hat)))
 
                 if det_A > best_det:
                     best_det = det_A
@@ -140,7 +184,7 @@ def support_nodes_vnmm_3d_12_p1(
                     best_A = A
                     best_effective_k = int(np.max(candidate_local)) + 1
 
-                if det_A >= Tol_det:
+                if det_A >= Tol_det or det_hat >= 1e-5:
                     return candidate_dodecet, det_A, A, best_effective_k
             except Exception:
                 pass

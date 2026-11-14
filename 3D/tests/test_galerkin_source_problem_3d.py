@@ -21,7 +21,9 @@ from scripts.galerkin_source_problem_3d import assemble_and_solve_mms_3d
 class TestGalerkinSourceProblem3D(unittest.TestCase):
     def test_mms_source_problem_3d_solvability(self):
         """Verifies solvability and error boundedness of 3D MMS source problem."""
-        coords, vectors, is_bnd = generate_cavity_mesh_3d(Nx=5, Ny=5, Nz=5, jitter_frac=0.0)
+        coords, vectors, is_bnd = generate_cavity_mesh_3d(
+            Nx=5, Ny=5, Nz=5, Lx=np.pi, Ly=np.pi, Lz=np.pi, jitter_frac=0.0
+        )
         res = assemble_and_solve_mms_3d(
             coords=coords,
             vectors=vectors,

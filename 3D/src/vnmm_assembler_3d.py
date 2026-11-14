@@ -37,12 +37,14 @@ def assemble_vnmm_matrices_3d(
     Ncx=None,
     Ncy=None,
     Ncz=None,
-    Lx=np.pi,
-    Ly=np.pi,
-    Lz=np.pi,
+    Lx=1.00,
+    Ly=0.50,
+    Lz=0.75,
     points_per_dir=2,
     support_mode="gauss_point",
     return_support_details=False,
+    sri_div=True,
+    return_components=False,
     # Compatibility aliases
     base=None,
     tolerancia_det=None,
@@ -67,7 +69,6 @@ def assemble_vnmm_matrices_3d(
     if modo_suporte is not None: support_mode = modo_suporte
 
     total_nodes = len(coords)
-    tree = KDTree(coords)
 
     inv_mu = 1.0 / mu_r
     eps = epsilon_r
@@ -75,10 +76,15 @@ def assemble_vnmm_matrices_3d(
     is_P1 = basis.upper() in ["P1", "12_P1", "12NOS"]
     n_supp = 12 if is_P1 else 6
 
-    side_nodes = int(np.round(total_nodes ** (1.0 / 3.0)))
+    # Estimate number of distinct grid divisions per axis
+    unique_x = len(np.unique(np.round(coords[:, 0], 7)))
+    side_nodes = unique_x if unique_x >= 3 else int(np.round(total_nodes ** (1.0 / 3.0)))
     if Ncx is None: Ncx = max(3, side_nodes - 1)
     if Ncy is None: Ncy = max(3, side_nodes - 1)
     if Ncz is None: Ncz = max(3, side_nodes - 1)
+
+    scales = np.array([Lx / max(Ncx, 1), Ly / max(Ncy, 1), Lz / max(Ncz, 1)], dtype=float)
+    tree = KDTree(coords / scales) if is_P1 else KDTree(coords)
 
     h_char = max(Lx / max(side_nodes - 1, 1), Ly / max(side_nodes - 1, 1), Lz / max(side_nodes - 1, 1))
     h_ref = np.pi / 10.0
@@ -114,13 +120,14 @@ def assemble_vnmm_matrices_3d(
                 xc = 0.5 * (x0 + x1)
 
                 det_J = 0.125 * dx * dy * dz
+                vol_cell = dx * dy * dz
 
                 if is_cell_center:
                     Pc = np.array([xc, yc, zc])
                     if is_P1:
                         supp_nodes, det_val, A_mat, _ = support_nodes_vnmm_3d_12_p1(
                             P=Pc, nodes_coords=coords, nodes_vectors=vectors,
-                            search_tree=tree, K=24, Tol_det=det_tolerance, adaptive=True, step_K=6
+                            search_tree=tree, K=24, Tol_det=det_tolerance, adaptive=True, step_K=6, scales=scales
                         )
                         beta = np.linalg.inv(A_mat)
                         curl_Phi = np.empty((3, 12), dtype=float)
@@ -136,6 +143,9 @@ def assemble_vnmm_matrices_3d(
                         beta = np.linalg.inv(A_mat)
                         curl_Phi = 2.0 * beta[3:6, :].copy()
                         div_Phi = np.zeros(6, dtype=float)
+
+                    r_idx = np.repeat(supp_nodes, n_supp)
+                    c_idx = np.tile(supp_nodes, n_supp)
 
                     for wk, zeta in zip(w_1d, xi_1d):
                         zg = zc + 0.5 * dz * zeta
@@ -163,28 +173,12 @@ def assemble_vnmm_matrices_3d(
                                 div_mat = np.outer(div_Phi, div_Phi) * (inv_mu * wg)
                                 mass_mat = (Phi_g.T @ Phi_g) * (eps * wg)
 
-                                for a in range(n_supp):
-                                    Ia = supp_nodes[a]
-                                    for b in range(n_supp):
-                                        Ib = supp_nodes[b]
-                                        val_kc = rot_mat[a, b]
-                                        val_kd = div_mat[a, b]
-                                        val_m = mass_mat[a, b]
-
-                                        if abs(val_kc) > 1e-18:
-                                            rows_Kc.append(Ia)
-                                            cols_Kc.append(Ib)
-                                            data_Kc.append(val_kc)
-                                        if abs(val_kd) > 1e-18:
-                                            rows_Kd.append(Ia)
-                                            cols_Kd.append(Ib)
-                                            data_Kd.append(val_kd)
-                                        if abs(val_m) > 1e-18:
-                                            rows_M.append(Ia)
-                                            cols_M.append(Ib)
-                                            data_M.append(val_m)
+                                rows_Kc.append(r_idx); cols_Kc.append(c_idx); data_Kc.append(rot_mat.ravel())
+                                rows_Kd.append(r_idx); cols_Kd.append(c_idx); data_Kd.append(div_mat.ravel())
+                                rows_M.append(r_idx); cols_M.append(c_idx); data_M.append(mass_mat.ravel())
                 else:
                     # support_mode == 'gauss_point'
+                    cell_div_nodes = {}
                     for wk, zeta in zip(w_1d, xi_1d):
                         zg = zc + 0.5 * dz * zeta
                         for wj, eta in zip(w_1d, xi_1d):
@@ -197,7 +191,7 @@ def assemble_vnmm_matrices_3d(
                                 if is_P1:
                                     supp_nodes, det_val, A_mat, _ = support_nodes_vnmm_3d_12_p1(
                                         P=Pg, nodes_coords=coords, nodes_vectors=vectors,
-                                        search_tree=tree, K=24, Tol_det=det_tolerance, adaptive=True, step_K=6
+                                        search_tree=tree, K=24, Tol_det=det_tolerance, adaptive=True, step_K=6, scales=scales
                                     )
                                     beta = np.linalg.inv(A_mat)
                                     Phi_g = beta[0:3, :]
@@ -216,34 +210,46 @@ def assemble_vnmm_matrices_3d(
                                     curl_Phi = 2.0 * beta[3:6, :].copy()
                                     div_Phi = np.zeros(6, dtype=float)
 
+                                r_idx = np.repeat(supp_nodes, n_supp)
+                                c_idx = np.tile(supp_nodes, n_supp)
+
                                 rot_mat = (curl_Phi.T @ curl_Phi) * (inv_mu * wg)
-                                div_mat = np.outer(div_Phi, div_Phi) * (inv_mu * wg)
                                 mass_mat = (Phi_g.T @ Phi_g) * (eps * wg)
 
-                                for a in range(n_supp):
-                                    Ia = supp_nodes[a]
-                                    for b in range(n_supp):
-                                        Ib = supp_nodes[b]
-                                        val_kc = rot_mat[a, b]
-                                        val_kd = div_mat[a, b]
-                                        val_m = mass_mat[a, b]
+                                rows_Kc.append(r_idx); cols_Kc.append(c_idx); data_Kc.append(rot_mat.ravel())
+                                rows_M.append(r_idx); cols_M.append(c_idx); data_M.append(mass_mat.ravel())
 
-                                        if abs(val_kc) > 1e-18:
-                                            rows_Kc.append(Ia)
-                                            cols_Kc.append(Ib)
-                                            data_Kc.append(val_kc)
-                                        if abs(val_kd) > 1e-18:
-                                            rows_Kd.append(Ia)
-                                            cols_Kd.append(Ib)
-                                            data_Kd.append(val_kd)
-                                        if abs(val_m) > 1e-18:
-                                            rows_M.append(Ia)
-                                            cols_M.append(Ib)
-                                            data_M.append(val_m)
+                                if sri_div and is_P1:
+                                    for a in range(n_supp):
+                                        Ia = supp_nodes[a]
+                                        cell_div_nodes[Ia] = cell_div_nodes.get(Ia, 0.0) + div_Phi[a] * (wg / vol_cell)
+                                else:
+                                    div_mat = np.outer(div_Phi, div_Phi) * (inv_mu * wg)
+                                    rows_Kd.append(r_idx); cols_Kd.append(c_idx); data_Kd.append(div_mat.ravel())
 
-    K_curl = coo_matrix((data_Kc, (rows_Kc, cols_Kc)), shape=(total_nodes, total_nodes)).tocsr()
-    K_div = coo_matrix((data_Kd, (rows_Kd, cols_Kd)), shape=(total_nodes, total_nodes)).tocsr()
-    M = coo_matrix((data_M, (rows_M, cols_M)), shape=(total_nodes, total_nodes)).tocsr()
+                    if sri_div and is_P1 and cell_div_nodes:
+                        c_nodes = np.array(list(cell_div_nodes.keys()), dtype=int)
+                        c_vals = np.array(list(cell_div_nodes.values()), dtype=float)
+                        div_cell_mat = np.outer(c_vals, c_vals) * (inv_mu * vol_cell)
+                        rows_Kd.append(np.repeat(c_nodes, len(c_nodes)))
+                        cols_Kd.append(np.tile(c_nodes, len(c_nodes)))
+                        data_Kd.append(div_cell_mat.ravel())
+
+    rows_Kc_arr = np.concatenate(rows_Kc) if rows_Kc else np.array([], dtype=int)
+    cols_Kc_arr = np.concatenate(cols_Kc) if cols_Kc else np.array([], dtype=int)
+    data_Kc_arr = np.concatenate(data_Kc) if data_Kc else np.array([], dtype=float)
+
+    rows_Kd_arr = np.concatenate(rows_Kd) if rows_Kd else np.array([], dtype=int)
+    cols_Kd_arr = np.concatenate(cols_Kd) if cols_Kd else np.array([], dtype=int)
+    data_Kd_arr = np.concatenate(data_Kd) if data_Kd else np.array([], dtype=float)
+
+    rows_M_arr = np.concatenate(rows_M) if rows_M else np.array([], dtype=int)
+    cols_M_arr = np.concatenate(cols_M) if cols_M else np.array([], dtype=int)
+    data_M_arr = np.concatenate(data_M) if data_M else np.array([], dtype=float)
+
+    K_curl = coo_matrix((data_Kc_arr, (rows_Kc_arr, cols_Kc_arr)), shape=(total_nodes, total_nodes)).tocsr()
+    K_div = coo_matrix((data_Kd_arr, (rows_Kd_arr, cols_Kd_arr)), shape=(total_nodes, total_nodes)).tocsr()
+    M = coo_matrix((data_M_arr, (rows_M_arr, cols_M_arr)), shape=(total_nodes, total_nodes)).tocsr()
 
     K_curl = 0.5 * (K_curl + K_curl.T)
     K_div = 0.5 * (K_div + K_div.T)
@@ -251,6 +257,8 @@ def assemble_vnmm_matrices_3d(
 
     K = K_curl + s_div * K_div
 
+    if return_components:
+        return K, M, K_curl, K_div
     return K, M
 
 

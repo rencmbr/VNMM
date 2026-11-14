@@ -33,9 +33,9 @@ def get_gauss_points_weights_1d(num_points=2, n_pontos=None):
 
 
 def generate_quadrature_cells_3d(
-    Lx=np.pi,
-    Ly=np.pi,
-    Lz=np.pi,
+    Lx=1.00,
+    Ly=0.50,
+    Lz=0.75,
     Ncx=4,
     Ncy=4,
     Ncz=4,

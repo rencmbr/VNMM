@@ -18,12 +18,14 @@ for p in [DIR_3D, ROOT_DIR, CURRENT_DIR, SRC_DIR]:
 from src.eigen_solver_cavity_3d import solve_cavity_eigenvalues_3d
 
 
-def run_cavity_convergence_analysis_3d(grid_resolutions=[5, 7], num_modes=6):
+def run_cavity_convergence_analysis_3d(grid_resolutions=[5, 7, 9], num_modes=5):
     """
-    Runs cavity eigenvalue convergence sweeps across multiple 3D resolutions.
+    Runs cavity eigenvalue convergence sweeps across multiple 3D resolutions
+    for the rectangular cavity a = 1.00 cm, b = 0.50 cm, c = 0.75 cm (Section 6.2).
     """
     print("=" * 75)
     print("      VNMM 3D CAVITY RESONANT FREQUENCY CONVERGENCE STUDY")
+    print("      Cavity Dimensions: a = 1.00 cm, b = 0.50 cm, c = 0.75 cm")
     print("=" * 75)
 
     results = []
@@ -31,20 +33,23 @@ def run_cavity_convergence_analysis_3d(grid_resolutions=[5, 7], num_modes=6):
         print(f"\n--- Running resolution {N}x{N}x{N} ---")
         res = solve_cavity_eigenvalues_3d(
             Nx=N, Ny=N, Nz=N,
+            Lx=1.00, Ly=0.50, Lz=0.75,
             num_eigenvalues=num_modes,
-            s_div=6.0,
-            points_per_dir=2
+            s_div=2.0,
+            points_per_dir=2,
+            support_mode="gauss_point"
         )
         results.append(res)
         print(f"Total Nodes: {res['total_nodes']} | Active DoFs: {res['active_dofs']}")
         print(f"Mean kc Error: {res['mean_error_kc_pct']:.2f}% | Max kc Error: {res['max_error_kc_pct']:.2f}%")
         print("Mode Comparison (kc_num vs kc_ref):")
         for i in range(len(res['numerical_kc'])):
-            print(f"  Mode {i+1}: num = {res['numerical_kc'][i]:.4f}, ref = {res['analytical_kc'][i]:.4f} (err = {res['error_kc_pct'][i]:.2f}%)")
+            m_idx = res['mode_indices'][i]
+            print(f"  Mode {i+1} {m_idx}: kc_num = {res['numerical_kc'][i]:.4f}, kc_ref = {res['analytical_kc'][i]:.4f} (err = {res['error_kc_pct'][i]:.2f}%)")
 
     return results
 
 
 if __name__ == "__main__":
-    run_cavity_convergence_analysis_3d(grid_resolutions=[5, 6], num_modes=5)
+    run_cavity_convergence_analysis_3d(grid_resolutions=[5, 7, 9], num_modes=5)
 

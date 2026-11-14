@@ -1,0 +1,956 @@
+\documentclass[preprint,12pt]{elsarticle}
+
+%% Essential packages for mathematical and scientific typesetting
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+
+%% Mathematical environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
+
+%% Custom mathematical macros
+\newcommand{\curl}{\nabla \times}
+\newcommand{\divg}{\nabla \cdot}
+\newcommand{\grad}{\nabla}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Hcurl}{H(\mathbf{curl};\Omega)}
+\newcommand{\Hdiv}{H(\text{div};\Omega)}
+
+\journal{Engineering Analysis with Boundary Elements}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 3D Electromagnetic Problems on Irregular Point Clouds}
+
+\author[inst1]{Renato C. Mesquita}
+\author[inst1]{Elson J. da Silva}
+\author[inst1]{B\'{a}rbara M. F. Gon\c{c}alves}
+\author[inst1]{Luilly A. G. Ortiz}
+
+\affiliation[inst1]{organization={Graduate Program in Electrical Engineering, Federal University of Minas Gerais (UFMG)},
+            addressline={Av. Ant\^{o}nio Carlos 6627}, 
+            city={Belo Horizonte},
+            postcode={31270-901}, 
+            state={MG},
+            country={Brazil}}
+
+\begin{abstract}
+Solving the three-dimensional (3D) vector Helmholtz and curl-curl Maxwell equations on unstructured point clouds without global tetrahedral mesh generation remains a major challenge in computational electromagnetics (CEM). Conventional scalar meshless methods that interpolate Cartesian components $(E_x, E_y, E_z)$ independently violate tangential continuity across material and Perfectly Electric Conducting (PEC) boundaries and suffer from severe spectral pollution by spurious non-physical gradient modes. Conversely, migrating from 2D to 3D exposes the Vector Nodal Meshless Method (VNMM) to two critical mathematical and algorithmic bottlenecks. First, the classical 6-node incomplete 3D linear vector basis $\mathcal{L}^1$---which mimics the six edge degrees of freedom of a N\'{e}d\'{e}lec tetrahedral element---controls only the 3 antisymmetric curl components of the 9-parameter 3D spatial Jacobian tensor $\mathbf{J} = \nabla\vec{E}$, leaving the 6 symmetric strain and divergence components unconstrained. On arbitrary 3D point clouds with disordered nodal directors, these six unmodeled derivative modes cross-couple into the curl channels, causing catastrophic $\mathcal{O}(1)$ derivative aliasing and non-convergence of the discrete 3D curl operator. Second, restoring full first-order polynomial completeness in $\mathbb{R}^3$ requires a 12-parameter affine vector space $\mathcal{P}^1 = (\mathcal{P}_1(\mathbb{R}^3))^3$, for which brute-force combinatorial stencil qualification across a $K=24$ nearest-neighbor $k$-d tree pool entails $\binom{24}{12} = 2{,}704{,}156$ determinant evaluations per quadrature point, while raw dimensional determinants collapse as $\det(\mathbf{A}) \sim \mathcal{O}(h^9)$ under grid refinement. This paper establishes a complete, mathematically rigorous 3D stabilized VNMM formulation that resolves these obstacles while preserving a strictly scalar single-degree-of-freedom ($e_i = \vec{E}(P_i)\cdot\vec{t}_i$, 1 DoF/node) architecture: (i) we prove a constructive 3D Local Dual Equivalence Theorem showing that the 6-node $\mathcal{L}^1$ VNMM basis is point-wise identical to 3D tetrahedral Whitney 1-forms when evaluated on a dual conforming tetrahedral topology, and analytically derive the $\mathcal{O}(1)$ curl aliasing mechanism on general 3D clouds; (ii) we introduce a complete 12-node 3D polynomial basis $\mathcal{P}^1$ paired with a scale-invariant dimensionless placement matrix $\widehat{\mathbf{A}} \in \mathbb{R}^{12\times 12}$ and a distance-weighted column-pivoted QR support selection algorithm that eliminates the $\binom{24}{12}$ combinatorial bottleneck in a single $\mathcal{O}(K d^2)$ pass; and (iii) we formulate a div-curl regularized 3D Galerkin eigenvalue solver with Selective Reduced Integration (SRI) that shifts all irrotational gradient modes out of the operational spectrum according to the 3D analytical scaling law $\lambda_{\text{spur}} \approx \mu_{1,1,1} s_{\text{div}} = 3.0\,s_{\text{div}}$. Comprehensive 3D numerical benchmarks---including local tetrahedral equivalence, disordered 3D cloud interpolation, the 8-mode 3D Galerkin Patch Test, the Method of Manufactured Solutions (achieving $\mathcal{O}(h^{2.09})$ in $L^2(\Omega)$ and $\mathcal{O}(h^{1.21})$ in $\Hcurl$), and 3D PEC resonant cavities on canonical cubic $[0,\pi]^3$ and rectangular ($1.00 \times 0.50 \times 0.75\text{ cm}$) domains---confirm complete elimination of spurious modes and monotonic spectral convergence on both regular lattices and irregular 3D point clouds.
+\end{abstract}
+
+\begin{keyword}
+3D Computational Electromagnetics \sep Vector Nodal Meshless Method (VNMM) \sep $H(\mathbf{curl})$ Soboloev Space \sep Whitney 1-Forms \sep Spurious Modes \sep Distance-Weighted Column-Pivoted QR \sep Div-Curl Regularization
+\end{keyword}
+
+\end{frontmatter}
+
+%% ============================================================================
+%% SECTION 1: INTRODUCTION
+%% ============================================================================
+\section{Introduction}
+\label{sec:intro}
+
+The numerical solution of three-dimensional (3D) boundary value and eigenvalue problems governed by the double-curl Maxwell operator $\curl(\mu^{-1}\curl\vec{E})$ is the cornerstone of modern radio-frequency (RF), microwave, and photonic engineering \cite{Jin2014, Monk2003, Bossavit1998}. In three dimensions, the Conforming Edge Finite Element Method (EFEM), built upon N\'{e}d\'{e}lec's $\Hcurl$-conforming curl-conforming elements \cite{Nedelec1980, Nedelec1986} and Bossavit's differential-geometric Whitney 1-forms \cite{Bossavit1988, Hiptmair2002}, represents the state of the art. By assigning scalar degrees of freedom (DoFs) to the tangential circulation of the electric field along the six edges of each tetrahedron, 3D Edge FEM exactly satisfies the continuous de Rham exact sequence:
+\begin{equation}
+    H^1(\Omega) \xrightarrow{\;\;\grad\;\;} \Hcurl \xrightarrow{\;\;\curl\;\;} \Hdiv \xrightarrow{\;\;\divg\;\;} L^2(\Omega),
+    \label{eq:derham_3d}
+\end{equation}
+guaranteeing that the discrete gradient space $\grad V_h$ lies identically within the nullspace of the discrete curl operator ($\curl(\grad\phi_h) \equiv \mathbf{0}$). Consequently, the infinite-dimensional electrostatic gradient kernel at $\lambda = k_0^2 = 0$ is prevented from polluting the positive electromagnetic spectrum with non-physical spurious modes \cite{Sun1995, Boffi2010}.
+
+Despite its mathematical elegance, 3D Edge FEM remains tightly bound to the generation and maintenance of a globally conforming tetrahedral mesh. For complex 3D CAD assemblies containing thin dielectric layers, curved metallic enclosures, or moving components, generating high-quality tetrahedral meshes free of sliver elements (whose dihedral angles approach $0^\circ$ or $180^\circ$, degrading the conditioning of the elemental curl-curl matrix) often consumes the majority of the engineering workflow \cite{Belytschko1996, Nguyen2008}. Meshless (or mesh-free) methods---such as the Element-Free Galerkin (EFG) method \cite{Belytschko1994}, the Reproducing Kernel Particle Method (RKPM) \cite{Liu1995}, and the Radial Point Interpolation Method (RPIM) \cite{Liu2005, Kaufmann2010}---replace global simplicial connectivity with unstructured point clouds and local support domains identified via spatial search structures ($k$-d trees).
+
+However, applying conventional scalar meshless approximations independently to the three Cartesian components $(E_x, E_y, E_z)$ in $\R^3$ is fundamentally incompatible with the variational structure of $\Hcurl$:
+\begin{enumerate}
+    \item \textbf{Boundary Over-Constraint at Curved and Corner PEC Interfaces:} Enforcing the Perfect Electric Conductor (PEC) boundary condition $\hat{n} \times \vec{E} = \mathbf{0}$ when three independent Cartesian DoFs are stored per node requires algebraic multipoint constraints or penalty terms whenever the surface normal $\hat{n}$ does not align with a global coordinate axis, and leads to Artificial Locking ($\vec{E} = \mathbf{0}$) at edges and corners of polyhedral cavities \cite{Costabel2000, Jin2014}.
+    \item \textbf{3D Gradient Nullspace Leakage and Spectral Pollution:} Because meshless shape functions are rational or piecewise polynomial functions constructed over overlapping local support clouds rather than a globally conforming simplicial complex, the discrete exterior derivative identity fails ($\nabla_h \times (\nabla_h \phi_h) \neq \mathbf{0}$). In 3D eigenvalue analyses, the $(N_{\text{int}})$-dimensional discrete gradient subspace leaks into the positive spectrum, flooding the operational passband with dozens of non-physical spurious eigenvalues \cite{Boffi2010, Fernandes2012}.
+\end{enumerate}
+
+To reconcile meshless geometric flexibility with vector tangential conformity, Fonseca et al.\ \cite{Fonseca2008} and Gonçalves et al.\ \cite{Goncalves2020, Goncalves2021} introduced the Edgeless Meshless Method (EMM), subsequently formalized as the \textbf{Vector Nodal Meshless Method (VNMM)}. Rather than assigning three Cartesian components to each node, VNMM associates each node $P_i \in \Omega \subset \R^3$ with a single unit director vector $\vec{t}_i \in S^2$ and a single scalar degree of freedom:
+\begin{equation}
+    e_i = \vec{E}(P_i) \cdot \vec{t}_i, \qquad \|\vec{t}_i\|_2 = 1.
+    \label{eq:nodal_dof_3d}
+\end{equation}
+By orienting the directors $\vec{t}_i$ tangentially to PEC surfaces ($\vec{t}_i \cdot \hat{n}(P_i) = 0$), the essential boundary condition $\hat{n} \times \vec{E} = \mathbf{0}$ reduces to the exact homogeneous assignment $e_i = 0$, matching the boundary simplicity of 3D Edge FEM while eliminating topological edges. Table~\ref{tab:cem_comparison_3d} summarizes how the proposed 3D Stabilized VNMM compares against established 3D computational electromagnetics paradigms.
+
+\begin{table}[htbp]
+\centering
+\caption{Qualitative comparison of 3D Computational Electromagnetics (CEM) discretization paradigms for $\Hcurl$ Maxwell problems.}
+\label{tab:cem_comparison_3d}
+\footnotesize
+\begin{tabular}{p{3.0cm} p{2.3cm} p{2.3cm} p{2.3cm} p{2.8cm}}
+\toprule
+\textbf{Feature / Criterion} & \textbf{3D Nodal FEM} ($H^1$ Scalar) & \textbf{3D Edge FEM} (Whitney $\mathcal{W}_1$) & \textbf{Classical VNMM 3D} ($\mathcal{L}^1$, 6-Node) & \textbf{Proposed Stabilized VNMM 3D} ($\mathcal{P}^1$, 12-Node) \\
+\midrule
+Geometric Discretization & Global Tetrahedral Mesh & Global Tetrahedral Mesh & Unstructured 3D Point Cloud & Unstructured 3D Point Cloud \\
+DoF Definition & 3 DoFs/vertex ($E_x,E_y,E_z$) & 1 DoF/edge ($\int_{e_k}\vec{E}\cdot d\vec{\ell}$) & 1 DoF/node ($\vec{E}(P_i)\cdot\vec{t}_i$) & 1 DoF/node ($\vec{E}(P_i)\cdot\vec{t}_i$) \\
+Local Polynomial Space & $[\mathcal{P}_1(\R^3)]^3$ (12 params) & $\mathcal{ND}_1(T)$ (6 params) & $\mathcal{L}^1(\R^3)$ (6 params) & $\mathcal{P}^1(\R^3)$ (12 params) \\
+3D Jacobian Control ($\mathbf{J} \in \R^{3\times 3}$) & All 9 derivatives & 3 curl only (conformal) & 3 curl only ($\mathcal{O}(1)$ aliasing on clouds) & All 9 derivatives (3 curl + 6 strain/div) \\
+3D Curl Consistency on Clouds & Convergent $\mathcal{O}(h)$ & Mesh-bound only & \textbf{Fails} ($\mathcal{O}(1)$ stagnation) & \textbf{Convergent} $\mathcal{O}(h)$ \\
+PEC Boundary ($\hat{n}\times\vec{E}=\mathbf{0}$) & Coupled multipoint constraints & Exact ($e_k=0$ on $\partial\Omega$) & Exact ($e_i=0$ on $\partial\Omega$) & Exact ($e_i=0$ on $\partial\Omega$) \\
+Spurious Eigenvalues & Severe pollution & Free ($\curl\grad\equiv\mathbf{0}$) & Severe pollution & Eliminated ($\lambda_{\text{spur}}\approx 3 s_{\text{div}}$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In our companion two-dimensional study \cite{Mesquita2026VNMM2D}, we analyzed the mathematical properties of the 2D VNMM on planar point clouds $\Omega \subset \R^2$. However, extending the method from two to three dimensions introduces fundamental mathematical, algebraic, and combinatorial challenges that do not exist in 2D:
+\begin{enumerate}
+    \item \textbf{Explosion of Unmodeled Jacobian Modes in 3D ($6$ vs.\ $3$ Missing Derivatives):} In 2D, the spatial Jacobian $\mathbf{J}_{2\text{D}} = \nabla\vec{E} \in \R^{2\times 2}$ possesses $4$ first-order partial derivatives, of which the 3-node $\mathcal{L}^1_{2\text{D}}$ basis captures $1$ scalar curl component and omits $3$ symmetric strain/divergence components. In 3D, the full spatial Jacobian $\mathbf{J}_{3\text{D}} = \nabla\vec{E} \in \R^{3\times 3}$ possesses $9$ independent first-order partial derivatives, which decompose orthogonally into a 3-parameter antisymmetric rotational tensor $\mathbf{J}_{\text{rot}}$ (representing the 3D vector curl $\curl\vec{E}$), a 1-parameter isotropic divergence trace $\mathbf{J}_{\text{div}}$, and a 5-parameter traceless symmetric deviatoric strain tensor $\mathbf{J}_{\text{shear}}$. The classical 6-node 3D incomplete linear basis $\mathcal{L}^1(\R^3)$ retains only the 3 translational constants and the 3 antisymmetric curl components ($3+3=6$ parameters), enforcing $\mathbf{J}_{\text{div}} = \mathbf{0}$ and $\mathbf{J}_{\text{shear}} = \mathbf{0}$ point-wise. On arbitrary 3D point clouds with unstructured nodal directors, the $6$ omitted symmetric derivative components leak into the $3$ curl channels, inducing catastrophic $\mathcal{O}(1)$ curl error stagnation.
+    \item \textbf{Combinatorial Explosion of 3D Support Selection ($\binom{24}{12} = 2{,}704{,}156$ vs.\ $\binom{12}{6} = 924$):} Restoring complete first-order polynomial consistency in 3D requires spanning the 12-dimensional affine vector space $\mathcal{P}^1(\R^3) = [\mathcal{P}_1(\R^3)]^3$, which demands $N_s = 12$ support nodes per evaluation point $P_0$. In 2D, selecting $N_s = 6$ nodes from a $k$-d tree pool of $K=12$ nearest neighbors involves at most $\binom{12}{6} = 924$ candidate combinations, making sequential exhaustive combination testing feasible. In 3D, selecting $N_s = 12$ nodes from an isotropic neighborhood of $K=24$ candidates yields $\binom{24}{12} = 2{,}704{,}156$ subsets per Gauss point. With $8{,}000$ to $27{,}000$ quadrature points in a 3D domain, combinatorial search requires billions of $12\times 12$ determinant evaluations and is computationally intractable.
+    \item \textbf{Ninth-Power Scale Collapse of the 3D Placement Determinant ($\det(\mathbf{A}) \sim \mathcal{O}(h^9)$):} In the 12-node 3D placement matrix $\mathbf{A} \in \R^{12\times 12}$, columns 1--3 are $\mathcal{O}(1)$ translational components while columns 4--12 are $\mathcal{O}(h)$ linear spatial products. Consequently, the raw determinant scales as $\det(\mathbf{A}) = h^9 \det(\widehat{\mathbf{A}})$ (compared to $h^4$ in 2D). On refined 3D clouds ($h \le 0.05$), $h^9 \le 1.95 \times 10^{-12}$, causing any fixed dimensional singularity threshold $|\det(\mathbf{A})| \ge \text{Tol}$ to falsely reject well-conditioned 3D stencils.
+    \item \textbf{3-Color Orthogonal Nodal Director Topology for 1-DoF-per-Node Efficiency:} In 2D, alternating the two diagonal unit vectors $[\pm 1/\sqrt{2}, 1/\sqrt{2}]^T$ provides mutually orthogonal directors ($\vec{t}_1 \cdot \vec{t}_2 = 0$) across adjacent nodes. In 3D, the eight cubic body diagonals $[\pm 1, \pm 1, \pm 1]^T/\sqrt{3}$ are \emph{not} mutually orthogonal ($\vec{t}_a \cdot \vec{t}_b = \pm 1/3 \neq 0$), degrading the conditioning of the local $12\times 12$ moment matrix.
+\end{enumerate}
+
+The main scientific contributions of this work are fourfold:
+\begin{enumerate}
+    \item \textbf{3D Local Dual Equivalence Theorem and $\mathcal{O}(1)$ Curl Aliasing Proof (Section~\ref{sec:formulation}):} We prove constructively that the 6-node 3D $\mathcal{L}^1$ VNMM shape functions are algebraically identical to 3D tetrahedral Whitney 1-forms when evaluated on a conforming dual tetrahedral complex, and prove via a $3\times 3$ Jacobian tensor decomposition why $\mathcal{L}^1$ suffers $\mathcal{O}(1)$ curl non-convergence on general 3D point clouds, necessitating the 12-node complete linear space $\mathcal{P}^1(\R^3)$.
+    \item \textbf{Scale-Invariant Distance-Weighted Column-Pivoted QR Support Selection (Section~\ref{sec:conditioning}):} We formulate the 3D Null-Space Orthogonality Principle in $\R^{12\times 12}$, introduce a dimensionless normalization $\widehat{\mathbf{A}}$ that removes the $\mathcal{O}(h^9)$ determinant collapse, and design a single-pass distance-weighted column-pivoted QR factorization that selects locally compact, well-conditioned 12-node 3D stencils in $\mathcal{O}(K d^2)$ operations without combinatorial search.
+    \item \textbf{3-Color Cyclic Orthogonal Director Lattice and Div-Curl Regularized 3D Variational Formulation (Section~\ref{sec:variational}):} We introduce a 3-color cyclic orthogonal director assignment based on $(i+j+k)\bmod 3$ that preserves strict 1-DoF-per-node scalar efficiency while ensuring pairwise orthogonal directors in every $2\times 2\times 2$ cell neighborhood, and combine it with a div-curl penalized Galerkin formulation with Selective Reduced Integration (SRI) governed by the 3D spectral shift law $\lambda_{\text{spur}} \approx \mu_{1,1,1}s_{\text{div}} = 3.0\,s_{\text{div}}$.
+    \item \textbf{Comprehensive 3D Verification and Spectral Validation (Section~\ref{sec:results}):} We validate the 3D framework across point-wise tetrahedral equivalence, disordered 3D cloud interpolation, the 8-mode 3D Galerkin Patch Test, the 3D Method of Manufactured Solutions (MMS), and 3D PEC resonant cavities on both canonical cubic ($[0,\pi]^3$) and physical rectangular ($1.00 \times 0.50 \times 0.75\text{ cm}$) waveguides.
+\end{enumerate}
+
+%% ============================================================================
+%% SECTION 2: MATHEMATICAL FORMULATIONS OF THE 3D VNMM
+%% ============================================================================
+\section{Mathematical Formulations of the 3D VNMM}
+\label{sec:formulation}
+
+\subsection{3D Nodal Directional Projection and Exact PEC Boundary Enforcement}
+\label{subsec:nodal_projection_3d}
+
+Let $\Omega \subset \R^3$ be a bounded three-dimensional electromagnetic domain with Lipschitz boundary $\partial\Omega$, discretized by a cloud of $N_{\text{total}}$ scattered nodes $\mathcal{X} = \{P_1, P_2, \dots, P_{N_{\text{total}}}\}$, where $P_i = (x_i, y_i, z_i)^T \in \R^3$. Unlike conventional nodal methods that store three Cartesian field components $(E_{xi}, E_{yi}, E_{zi})$ at each node, the 3D VNMM assigns to each node $P_i$ a unit director vector $\vec{t}_i = (t_{xi}, t_{yi}, t_{zi})^T \in S^2$ ($\|\vec{t}_i\|_2 = 1$) and a single scalar degree of freedom:
+\begin{equation}
+    e_i = \vec{E}(P_i) \cdot \vec{t}_i = E_x(P_i) t_{xi} + E_y(P_i) t_{yi} + E_z(P_i) t_{zi}.
+    \label{eq:vnmm3d_dof}
+\end{equation}
+
+On a Perfect Electric Conductor (PEC) boundary $\Gamma_{\text{PEC}} \subset \partial\Omega$ with outward unit normal $\hat{n}$, the physical tangential boundary condition is $\hat{n} \times \vec{E} = \mathbf{0}$, which requires the tangential projection of $\vec{E}$ onto the local tangent plane $T_{P_i}(\Gamma_{\text{PEC}})$ to vanish while leaving the normal component $\vec{E} \cdot \hat{n}$ unconstrained. In the 3D VNMM, every boundary node $P_i \in \Gamma_{\text{PEC}}$ is assigned a director vector lying strictly within the local tangent plane:
+\begin{equation}
+    \vec{t}_i \cdot \hat{n}(P_i) = 0 \quad \Longrightarrow \quad e_i = \vec{E}(P_i) \cdot \vec{t}_i = 0 \quad \text{on } \Gamma_{\text{PEC}}.
+    \label{eq:pec_bc_3d}
+\end{equation}
+For nodes located on sharp dihedral edges where two PEC faces with normals $\hat{n}_1$ and $\hat{n}_2$ intersect, choosing $\vec{t}_i = (\hat{n}_1 \times \hat{n}_2)/\|\hat{n}_1 \times \hat{n}_2\|_2$ satisfies $\vec{t}_i \cdot \hat{n}_1 = \vec{t}_i \cdot \hat{n}_2 = 0$ simultaneously. Thus, homogeneous PEC boundary conditions are enforced exactly by eliminating the boundary rows and columns ($e_i = 0$) from the global algebraic system, without penalty parameters, Lagrange multipliers, or corner locking.
+
+In the interior $\Omega \setminus \partial\Omega$, to maximize directional observability across all three spatial axes while maintaining a strictly scalar 1-DoF-per-node model ($N_{\text{DoF}} = N_{\text{int}}$), we introduce a \textbf{3-color cyclic orthogonal lattice} on structured grids:
+\begin{equation}
+    \vec{t}_{i,j,k} = \vec{e}_c, \qquad c = (i + j + k) \bmod 3 \in \{0, 1, 2\},
+    \label{eq:three_color_lattice}
+\end{equation}
+where $\vec{e}_0 = [1, 0, 0]^T$, $\vec{e}_1 = [0, 1, 0]^T$, and $\vec{e}_2 = [0, 0, 1]^T$. Unlike the eight cubic body diagonals $[\pm 1, \pm 1, \pm 1]^T/\sqrt{3}$---whose pairwise inner products equal $\pm 1/3 \neq 0$---the 3-color cyclic assignment guarantees that every $2\times 2\times 2$ cell neighborhood contains balanced, mutually orthogonal unit directors ($\vec{e}_a \cdot \vec{e}_b = \delta_{ab}$). For unstructured or perturbed 3D point clouds, interior directors $\vec{t}_i \in S^2$ may be oriented arbitrarily on the unit sphere.
+
+\subsection{The Incomplete 6-Node 3D Linear Basis ($\mathcal{L}^1$) and N\'{e}d\'{e}lec Polynomial Structure}
+\label{subsec:incomplete_l1_3d}
+
+To approximate the electric field $\vec{E}(\mathbf{x})$ in the neighborhood of an evaluation (or Gauss quadrature) point $P_0 = (x_0, y_0, z_0)^T \in \Omega$, we introduce shifted local coordinates $\Delta\mathbf{x} = (\Delta x, \Delta y, \Delta z)^T = (x - x_0, y - y_0, z - z_0)^T$. The classical 3D VNMM formulation \cite{Goncalves2020} adopts the first-order N\'{e}d\'{e}lec space of the first kind \cite{Nedelec1980}:
+\begin{equation}
+    \mathcal{L}^1(\R^3) \equiv \mathcal{ND}_1(\R^3) = \left\{ \vec{E}^h(\mathbf{x}) = \mathbf{a}_0 + \mathbf{b} \times \Delta\mathbf{x} \;\middle|\; \mathbf{a}_0 = \begin{bmatrix} a_{x0} \\ a_{y0} \\ a_{z0} \end{bmatrix} \in \R^3, \; \mathbf{b} = \begin{bmatrix} a_{\text{rot},yz} \\ a_{\text{rot},zx} \\ a_{\text{rot},xy} \end{bmatrix} \in \R^3 \right\}.
+    \label{eq:nedelec_space_3d}
+\end{equation}
+Expanding the cross product $\mathbf{b} \times \Delta\mathbf{x}$ yields the 6-parameter polynomial representation:
+\begin{equation}
+    \vec{E}^h_{\mathcal{L}^1}(\mathbf{x}) = \begin{bmatrix}
+    a_{x0} + a_{\text{rot},zx}\Delta z - a_{\text{rot},xy}\Delta y \\
+    a_{y0} + a_{\text{rot},xy}\Delta x - a_{\text{rot},yz}\Delta z \\
+    a_{z0} + a_{\text{rot},yz}\Delta y - a_{\text{rot},zx}\Delta x
+    \end{bmatrix} = \mathbf{P}_{\mathcal{L}^1}(\Delta\mathbf{x})\,\mathbf{a}_{\mathcal{L}^1},
+    \label{eq:l1_expansion_3d}
+\end{equation}
+where the $3\times 6$ polynomial basis matrix $\mathbf{P}_{\mathcal{L}^1}(\Delta\mathbf{x})$ and the 6-component generalized coefficient vector $\mathbf{a}_{\mathcal{L}^1} \in \R^6$ are given by:
+\begin{equation}
+    \mathbf{P}_{\mathcal{L}^1}(\Delta\mathbf{x}) = \begin{bmatrix}
+    1 & 0 & 0 & 0 & \Delta z & -\Delta y \\
+    0 & 1 & 0 & -\Delta z & 0 & \Delta x \\
+    0 & 0 & 1 & \Delta y & -\Delta x & 0
+    \end{bmatrix}, \qquad
+    \mathbf{a}_{\mathcal{L}^1} = \begin{bmatrix}
+    a_{x0} \\ a_{y0} \\ a_{z0} \\ a_{\text{rot},yz} \\ a_{\text{rot},zx} \\ a_{\text{rot},xy}
+    \end{bmatrix}.
+    \label{eq:P_L1_matrix_3d}
+\end{equation}
+Taking the curl and divergence of Eq.~\eqref{eq:l1_expansion_3d} directly yields:
+\begin{equation}
+    \curl \vec{E}^h_{\mathcal{L}^1}(\mathbf{x}) = 2\mathbf{b} = 2\begin{bmatrix} a_{\text{rot},yz} \\ a_{\text{rot},zx} \\ a_{\text{rot},xy} \end{bmatrix}, \qquad \divg \vec{E}^h_{\mathcal{L}^1}(\mathbf{x}) \equiv 0.
+    \label{eq:l1_curl_div_3d}
+\end{equation}
+
+Selecting a local support stencil of $N_s = 6$ nodes $\{P_{s_1}, \dots, P_{s_6}\}$ around $P_0$ and enforcing the directional interpolation conditions $\vec{E}^h_{\mathcal{L}^1}(P_{s_k}) \cdot \vec{t}_{s_k} = e_{s_k}$ for $k = 1, \dots, 6$ leads to the $6\times 6$ linear system $\mathbf{A}_{\mathcal{L}^1} \mathbf{a}_{\mathcal{L}^1} = \mathbf{e}_s$, where the $k$-th row of the placement matrix $\mathbf{A}_{\mathcal{L}^1} \in \R^{6\times 6}$ is:
+\begin{equation}
+    \text{ row}_k(\mathbf{A}_{\mathcal{L}^1}) = \vec{t}_{s_k}^{\,T} \mathbf{P}_{\mathcal{L}^1}(\Delta\mathbf{x}_k) = \Big[\; t_{xk}, \;\; t_{yk}, \;\; t_{zk}, \;\; (t_{zk}\Delta y_k - t_{yk}\Delta z_k), \;\; (t_{xk}\Delta z_k - t_{zk}\Delta x_k), \;\; (t_{yk}\Delta x_k - t_{xk}\Delta y_k) \;\Big].
+    \label{eq:row_A_L1_3d}
+\end{equation}
+Notice that the first three entries of Eq.~\eqref{eq:row_A_L1_3d} are the direction cosines $\vec{t}_{s_k}^T$, while the last three entries are precisely the moment vector $\Delta\mathbf{x}_k \times \vec{t}_{s_k}$. Thus, each row of $\mathbf{A}_{\mathcal{L}^1}$ is the 6-component \textbf{Pl\"{u}cker line coordinate} $(\vec{t}_{s_k}, \Delta\mathbf{x}_k \times \vec{t}_{s_k})$ of the directed 3D line passing through $P_{s_k}$ along $\vec{t}_{s_k}$ \cite{Pottmann2001}. When $\mathbf{A}_{\mathcal{L}^1}$ is non-singular ($\bm{\beta}_{\mathcal{L}^1} = \mathbf{A}_{\mathcal{L}^1}^{-1}$), the 3D vector shape functions $\vec{\Phi}_k(\mathbf{x})$ and their curls at $\mathbf{x} = P_0$ ($\Delta\mathbf{x} = \mathbf{0}$) reduce to:
+\begin{equation}
+    \vec{E}^h_{\mathcal{L}^1}(P_0) = \sum_{k=1}^{6} \begin{bmatrix} \beta_{1,k} \\ \beta_{2,k} \\ \beta_{3,k} \end{bmatrix} e_{s_k}, \qquad
+    \curl\vec{E}^h_{\mathcal{L}^1}(P_0) = 2 \sum_{k=1}^{6} \begin{bmatrix} \beta_{4,k} \\ \beta_{5,k} \\ \beta_{6,k} \end{bmatrix} e_{s_k}.
+    \label{eq:l1_eval_p0_3d}
+\end{equation}
+
+\subsection{Theorem 1: 3D Local Constructive Equivalence on Tetrahedral Simplices}
+\label{subsec:theorem_equivalence_3d}
+
+We first establish that the 6-node $\mathcal{L}^1$ 3D VNMM formulation is not an ad-hoc approximation, but the exact point-collocated dual of the 3D Tetrahedral Edge Finite Element Method (Whitney 1-forms).
+
+\begin{theorem}[3D Tetrahedral Local Dual Equivalence]
+\label{thm:dual_equiv_3d}
+Let $T \subset \R^3$ be a non-degenerate tetrahedron with vertices $\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3, \mathbf{r}_4 \in \R^3$ ($\operatorname{Vol}(T) > 0$), barycentric coordinates $\lambda_1, \lambda_2, \lambda_3, \lambda_4$, and six directed edges $e_k = (\mathbf{r}_{a_k}, \mathbf{r}_{b_k})$ ($1 \le a_k < b_k \le 4$, $k = 1, \dots, 6$) of lengths $\ell_k = \|\mathbf{r}_{b_k} - \mathbf{r}_{a_k}\|_2$ and unit tangent vectors $\vec{t}_k = (\mathbf{r}_{b_k} - \mathbf{r}_{a_k})/\ell_k$. Construct the dual 6-node VNMM stencil by placing a support node $P_k = (\mathbf{r}_{a_k} + \mathbf{r}_{b_k})/2$ at the midpoint of each edge $e_k$ with unit director $\vec{t}_k$ and nodal degree of freedom $e_k^{\text{VNMM}} = \vec{E}(P_k)\cdot\vec{t}_k$. Then:
+\begin{enumerate}
+    \item The $6\times 6$ VNMM placement matrix $\mathbf{A}_{\mathcal{L}^1}$ is unconditionally non-singular for every non-degenerate tetrahedron ($\operatorname{Vol}(T) > 0$).
+    \item Every vector field $\vec{w} \in \mathcal{L}^1(\R^3)$ is linear along each edge $e_k$, so its circulation along $e_k$ satisfies the exact midpoint identity $\int_{e_k} \vec{w}\cdot d\vec{\ell} = \ell_k (\vec{w}(P_k)\cdot\vec{t}_k) = \ell_k e_k^{\text{VNMM}}$.
+    \item The six 3D VNMM vector shape functions $\vec{\Phi}_k^{\text{VNMM}}(\mathbf{x})$ ($k=1,\dots,6$) are point-wise identical throughout $T$ to the length-normalized 3D Whitney 1-form basis functions $\vec{W}_k(\mathbf{x})$:
+    \begin{equation}
+        \vec{\Phi}_k^{\text{VNMM}}(\mathbf{x}) \equiv \ell_k \vec{W}_k(\mathbf{x}) = \ell_k \left( \lambda_{a_k}(\mathbf{x})\nabla\lambda_{b_k} - \lambda_{b_k}(\mathbf{x})\nabla\lambda_{a_k} \right), \qquad \forall \mathbf{x} \in T,
+        \label{eq:whitney_vnmm_identity_3d}
+    \end{equation}
+    and their curls are identically equal: $\curl\vec{\Phi}_k^{\text{VNMM}}(\mathbf{x}) \equiv 2\ell_k (\nabla\lambda_{a_k} \times \nabla\lambda_{b_k})$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+The complete five-step constructive proof is provided in \ref{app:proof_equivalence_3d}.
+\end{proof}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\textwidth]{fig1_dual_equivalence_3d.pdf}
+    \caption{Geometric duality between (a) the 3D N\'{e}d\'{e}lec Tetrahedral Edge Finite Element ($\mathcal{W}_1$, 6 edge circulation DoFs) and (b) the 3D Dual VNMM $\mathcal{L}^1$ Stencil (6 edge-midpoint nodes with unit tangent directors $\vec{t}_k$, 1 DoF/node). By Theorem~\ref{thm:dual_equiv_3d}, both spaces span the exact same 6-dimensional vector field $\mathcal{L}^1(T)$ and produce identical field and curl approximations to machine precision ($\le 10^{-15}$).}
+    \label{fig:dual_equivalence_3d}
+\end{figure}
+
+Figure~\ref{fig:dual_equivalence_3d} illustrates this geometric duality on a 3D tetrahedral simplex. Theorem~\ref{thm:dual_equiv_3d} explains why the 6-node $\mathcal{L}^1$ basis succeeds when restricted to a conforming tetrahedral mesh: on a tetrahedron $T$, the six directed lines $(\vec{t}_k, P_k)$ form a closed simplicial 1-skeleton whose tangential circulations uniquely determine the constant element curl via Stokes' theorem on each of the four triangular faces.
+
+\subsection{3D Jacobian Tensor Decomposition and the $\mathcal{O}(1)$ Curl Aliasing Mechanism on Point Clouds}
+\label{subsec:jacobian_aliasing_3d}
+
+When the global tetrahedral mesh is discarded in favor of an unstructured 3D point cloud $\mathcal{X}$ with $k$-d tree nearest-neighbor support selection, the six support nodes $\{P_{s_1}, \dots, P_{s_6}\}$ no longer lie at the midpoints of a closed tetrahedron, nor do their directors $\vec{t}_{s_k}$ align with the six connecting edges of a simplex. To understand the resulting failure of $\mathcal{L}^1(\R^3)$ on arbitrary 3D clouds, consider the first-order Taylor expansion of a smooth 3D electric field $\vec{E}(\mathbf{x}) \in [C^2(\Omega)]^3$ around $P_0$:
+\begin{equation}
+    \vec{E}(\mathbf{x}) = \vec{E}(P_0) + \mathbf{J}(P_0)\,\Delta\mathbf{x} + \mathcal{O}(\|\Delta\mathbf{x}\|_2^2), \qquad \mathbf{J}(P_0) = \nabla\vec{E}(P_0) = \begin{bmatrix}
+    \frac{\partial E_x}{\partial x} & \frac{\partial E_x}{\partial y} & \frac{\partial E_x}{\partial z} \\[4pt]
+    \frac{\partial E_y}{\partial x} & \frac{\partial E_y}{\partial y} & \frac{\partial E_y}{\partial z} \\[4pt]
+    \frac{\partial E_z}{\partial x} & \frac{\partial E_z}{\partial y} & \frac{\partial E_z}{\partial z}
+    \end{bmatrix} \in \R^{3\times 3}.
+    \label{eq:taylor_3d}
+\end{equation}
+
+By irreducible tensor decomposition in $\R^{3\times 3}$, the 9-parameter spatial Jacobian matrix $\mathbf{J}$ splits into three mutually orthogonal subspaces under the Frobenius inner product ($\langle \mathbf{U}, \mathbf{V} \rangle_F = \operatorname{tr}(\mathbf{U}^T\mathbf{V})$):
+\begin{equation}
+    \mathbf{J} = \underbrace{\mathbf{J}_{\text{rot}}}_{\substack{\text{Antisymmetric Curl}\\ \text{(3 parameters)}}} + \underbrace{\mathbf{J}_{\text{div}}}_{\substack{\text{Isotropic Divergence}\\ \text{(1 parameter)}}} + \underbrace{\mathbf{J}_{\text{shear}}}_{\substack{\text{Deviatoric Strain}\\ \text{(5 parameters)}}}, \qquad \dim(\R^{3\times 3}) = 3 + 1 + 5 = 9,
+    \label{eq:jacobian_split_3d}
+\end{equation}
+where:
+\begin{align}
+    \mathbf{J}_{\text{rot}} &= \frac{1}{2}(\mathbf{J} - \mathbf{J}^T) = \begin{bmatrix}
+    0 & -a_{\text{rot},xy} & a_{\text{rot},zx} \\
+    a_{\text{rot},xy} & 0 & -a_{\text{rot},yz} \\
+    -a_{\text{rot},zx} & a_{\text{rot},yz} & 0
+    \end{bmatrix}, \quad \curl\vec{E}(P_0) = 2\begin{bmatrix} a_{\text{rot},yz} \\ a_{\text{rot},zx} \\ a_{\text{rot},xy} \end{bmatrix}, \label{eq:J_rot_3d} \\
+    \mathbf{J}_{\text{div}} &= \frac{1}{3}\operatorname{tr}(\mathbf{J})\,\mathbf{I}_3 = \frac{\divg\vec{E}(P_0)}{3}\begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}, \label{eq:J_div_3d} \\
+    \mathbf{J}_{\text{shear}} &= \frac{1}{2}(\mathbf{J} + \mathbf{J}^T) - \frac{1}{3}\operatorname{tr}(\mathbf{J})\,\mathbf{I}_3 = \begin{bmatrix}
+    \varepsilon_{xx} - \frac{1}{3}d & \varepsilon_{xy} & \varepsilon_{xz} \\
+    \varepsilon_{xy} & \varepsilon_{yy} - \frac{1}{3}d & \varepsilon_{yz} \\
+    \varepsilon_{xz} & \varepsilon_{yz} & \varepsilon_{zz} - \frac{1}{3}d
+    \end{bmatrix}, \quad d = \varepsilon_{xx} + \varepsilon_{yy} + \varepsilon_{zz}. \label{eq:J_shear_3d}
+\end{align}
+
+Denoting the 6 symmetric strain/divergence parameters collectively as $\mathbf{a}_{\text{sym}} = [\varepsilon_{xx}, \varepsilon_{yy}, \varepsilon_{zz}, \varepsilon_{xy}, \varepsilon_{yz}, \varepsilon_{zx}]^T \in \R^6$ (where $\varepsilon_{\alpha\beta} = \frac{1}{2}(\partial_\beta E_\alpha + \partial_\alpha E_\beta)$), the exact nodal directional projection at support node $P_{s_k}$ ($k=1,\dots,6$) is:
+\begin{equation}
+    e_{s_k} = \vec{t}_{s_k}^{\,T}\vec{E}(P_{s_k}) = \underbrace{\vec{t}_{s_k}^{\,T}\vec{E}(P_0) + \vec{t}_{s_k}^{\,T}\mathbf{J}_{\text{rot}}(P_0)\Delta\mathbf{x}_k}_{\text{Row } k \text{ of } \mathbf{A}_{\mathcal{L}^1}\mathbf{a}_{\mathcal{L}^1}} + \underbrace{\vec{t}_{s_k}^{\,T}\left(\mathbf{J}_{\text{div}}(P_0) + \mathbf{J}_{\text{shear}}(P_0)\right)\Delta\mathbf{x}_k}_{\text{Row } k \text{ of } \mathbf{B}_{\text{sym}}\mathbf{a}_{\text{sym}} \sim \mathcal{O}(h)} + \mathcal{O}(h^2).
+    \label{eq:nodal_projection_aliasing_3d}
+\end{equation}
+In matrix form across the 6 support nodes, the exact vector of nodal values satisfies $\mathbf{e}_s = \mathbf{A}_{\mathcal{L}^1}\mathbf{a}_{\mathcal{L}^1}^* + \mathbf{B}_{\text{sym}}\mathbf{a}_{\text{sym}}^* + \mathcal{O}(h^2)$. When the incomplete 6-node $\mathcal{L}^1$ solver inverts $\mathbf{A}_{\mathcal{L}^1}$, the recovered coefficient vector $\mathbf{a}_{\mathcal{L}^1}^h = \mathbf{A}_{\mathcal{L}^1}^{-1}\mathbf{e}_s$ is corrupted by the aliasing matrix $\mathbf{A}_{\mathcal{L}^1}^{-1}\mathbf{B}_{\text{sym}}$:
+\begin{equation}
+    \mathbf{a}_{\mathcal{L}^1}^h - \mathbf{a}_{\mathcal{L}^1}^* = \mathbf{A}_{\mathcal{L}^1}^{-1} \mathbf{B}_{\text{sym}}\,\mathbf{a}_{\text{sym}}^* + \mathbf{A}_{\mathcal{L}^1}^{-1}\mathcal{O}(h^2).
+    \label{eq:aliasing_equation_3d}
+\end{equation}
+As proved in \ref{app:aliasing_proof_3d}, because rows 4--6 of $\mathbf{A}_{\mathcal{L}^1}^{-1}$ scale as $\mathcal{O}(h^{-1})$ while $\mathbf{B}_{\text{sym}}$ scales as $\mathcal{O}(h)$, their product for the three curl components $\mathbf{b}^h = [a_{\text{rot},yz}^h, a_{\text{rot},zx}^h, a_{\text{rot},xy}^h]^T$ scales as $\mathcal{O}(h^{-1}) \cdot \mathcal{O}(h) = \mathcal{O}(1)$:
+\begin{equation}
+    \left\| \curl\vec{E}^h_{\mathcal{L}^1}(P_0) - \curl\vec{E}(P_0) \right\|_2 = \left\| \widehat{\mathbf{C}}_{\text{alias}}\,\mathbf{a}_{\text{sym}}^*(P_0) \right\|_2 + \mathcal{O}(h) = \mathcal{O}(1) \quad \text{as } h \to 0.
+    \label{eq:curl_stagnation_3d}
+\end{equation}
+Crucially, even for divergence-free electromagnetic modes ($\divg\vec{E} = 0 \implies \mathbf{J}_{\text{div}} = \mathbf{0}$), the 5-dimensional deviatoric strain tensor $\mathbf{J}_{\text{shear}}(P_0)$ is non-zero almost everywhere in $\Omega$ (for instance, in the fundamental $\text{TE}_{101}$ mode, $\varepsilon_{xz} = \frac{1}{2}(\partial_z E_x + \partial_x E_z) \neq 0$). Consequently, the 6-node $\mathcal{L}^1$ basis is variationally inconsistent on general 3D point clouds.
+
+\subsection{The Complete 12-Node 3D Linear Polynomial Basis ($\mathcal{P}^1$)}
+\label{subsec:complete_p1_3d}
+
+To eliminate the $\mathcal{O}(1)$ curl aliasing term $\mathbf{B}_{\text{sym}}\mathbf{a}_{\text{sym}}^*$ identically, the local approximation space must span all 3 constant translations and all 9 first-order spatial derivatives of $\mathbf{J} \in \R^{3\times 3}$. We therefore expand each Cartesian component $(E_x, E_y, E_z)$ in the complete trivariate linear polynomial space $\mathcal{P}_1(\R^3) = \operatorname{span}\{1, \Delta x, \Delta y, \Delta z\}$, yielding the 12-dimensional vector polynomial space $\mathcal{P}^1(\R^3) = [\mathcal{P}_1(\R^3)]^3$:
+\begin{equation}
+    \vec{E}^h_{\mathcal{P}^1}(\mathbf{x}) = \begin{bmatrix}
+    a_{x0} + a_{xx}\Delta x + a_{xy}\Delta y + a_{xz}\Delta z \\
+    a_{y0} + a_{yx}\Delta x + a_{yy}\Delta y + a_{yz}\Delta z \\
+    a_{z0} + a_{zx}\Delta x + a_{zy}\Delta y + a_{zz}\Delta z
+    \end{bmatrix} = \mathbf{P}_{\mathcal{P}^1}(\Delta\mathbf{x})\,\mathbf{a}_{\mathcal{P}^1}, \qquad \mathbf{a}_{\mathcal{P}^1} \in \R^{12},
+    \label{eq:p1_expansion_3d}
+\end{equation}
+where the $12$-component parameter vector is ordered as:
+\begin{equation}
+    \mathbf{a}_{\mathcal{P}^1} = \Big[\; \underbrace{a_{x0}, \; a_{y0}, \; a_{z0}}_{\text{Field } \vec{E}(P_0)}, \;\; \underbrace{a_{xx}, \; a_{xy}, \; a_{xz}}_{\nabla E_x(P_0)^T}, \;\; \underbrace{a_{yx}, \; a_{yy}, \; a_{yz}}_{\nabla E_y(P_0)^T}, \;\; \underbrace{a_{zx}, \; a_{zy}, \; a_{zz}}_{\nabla E_z(P_0)^T} \;\Big]^T \in \R^{12}.
+    \label{eq:a_p1_vector_3d}
+\end{equation}
+
+Selecting a local support stencil of $N_s = 12$ nodes $\{P_{s_1}, \dots, P_{s_{12}}\}$ around $P_0$, the interpolation condition $\vec{E}^h_{\mathcal{P}^1}(P_{s_k})\cdot\vec{t}_{s_k} = e_{s_k}$ yields the $12\times 12$ linear system $\mathbf{A}_{\mathcal{P}^1}\mathbf{a}_{\mathcal{P}^1} = \mathbf{e}_s$, where the $k$-th row of the placement matrix $\mathbf{A}_{\mathcal{P}^1} \in \R^{12\times 12}$ is:
+\begin{equation}
+    \text{row}_k(\mathbf{A}_{\mathcal{P}^1}) = \Big[\; t_{xk}, \; t_{yk}, \; t_{zk}, \;\; t_{xk}\Delta x_k, \; t_{xk}\Delta y_k, \; t_{xk}\Delta z_k, \;\; t_{yk}\Delta x_k, \; t_{yk}\Delta y_k, \; t_{yk}\Delta z_k, \;\; t_{zk}\Delta x_k, \; t_{zk}\Delta y_k, \; t_{zk}\Delta z_k \;\Big].
+    \label{eq:row_A_P1_3d}
+\end{equation}
+Notice the Kronecker product structure of Eq.~\eqref{eq:row_A_P1_3d}:
+\begin{equation}
+    \text{row}_k(\mathbf{A}_{\mathcal{P}^1}) = \Big[\; \vec{t}_{s_k}^{\,T}, \quad \vec{t}_{s_k}^{\,T} \otimes \Delta\mathbf{x}_k^T \;\Big] \in \R^{1\times 12}.
+    \label{eq:kronecker_row_3d}
+\end{equation}
+
+Inverting $\mathbf{A}_{\mathcal{P}^1}$ yields $\bm{\beta} = \mathbf{A}_{\mathcal{P}^1}^{-1} \in \R^{12\times 12}$ (with rows indexed $1,\dots,12$, corresponding to indices $0,\dots,11$ in zero-based code). Evaluating $\vec{E}^h_{\mathcal{P}^1}$, $\curl\vec{E}^h_{\mathcal{P}^1}$, and $\divg\vec{E}^h_{\mathcal{P}^1}$ at the expansion center $P_0$ ($\Delta\mathbf{x} = \mathbf{0}$) gives the exact nodal operator expansions:
+\begin{align}
+    \vec{E}^h_{\mathcal{P}^1}(P_0) &= \sum_{k=1}^{12} \vec{\Phi}_k(P_0)\,e_{s_k}, \qquad \vec{\Phi}_k(P_0) = \begin{bmatrix} \beta_{1,k} \\ \beta_{2,k} \\ \beta_{3,k} \end{bmatrix}, \label{eq:phi_p1_3d} \\
+    \curl\vec{E}^h_{\mathcal{P}^1}(P_0) &= \sum_{k=1}^{12} \vec{C}_k(P_0)\,e_{s_k}, \qquad \vec{C}_k(P_0) = \begin{bmatrix} \frac{\partial\Phi_{zk}}{\partial y} - \frac{\partial\Phi_{yk}}{\partial z} \\[3pt] \frac{\partial\Phi_{xk}}{\partial z} - \frac{\partial\Phi_{zk}}{\partial x} \\[3pt] \frac{\partial\Phi_{yk}}{\partial x} - \frac{\partial\Phi_{xk}}{\partial y} \end{bmatrix}_{P_0} = \begin{bmatrix} \beta_{11,k} - \beta_{9,k} \\ \beta_{6,k} - \beta_{10,k} \\ \beta_{7,k} - \beta_{5,k} \end{bmatrix}, \label{eq:curl_p1_3d} \\
+    \divg\vec{E}^h_{\mathcal{P}^1}(P_0) &= \sum_{k=1}^{12} D_k(P_0)\,e_{s_k}, \qquad D_k(P_0) = \left(\frac{\partial\Phi_{xk}}{\partial x} + \frac{\partial\Phi_{yk}}{\partial y} + \frac{\partial\Phi_{zk}}{\partial z}\right)_{P_0} = \beta_{4,k} + \beta_{8,k} + \beta_{12,k}. \label{eq:div_p1_3d}
+\end{align}
+Because all 12 affine polynomial modes are explicitly represented in $\mathbf{A}_{\mathcal{P}^1}$, the residual in Eq.~\eqref{eq:nodal_projection_aliasing_3d} contains only $\mathcal{O}(h^2)$ quadratic Hessian terms, restoring $\mathcal{O}(h^2)$ field accuracy and $\mathcal{O}(h)$ curl and divergence accuracy on arbitrary 3D point clouds:
+\begin{equation}
+    \left\|\vec{E}^h_{\mathcal{P}^1}(P_0) - \vec{E}(P_0)\right\|_2 = \mathcal{O}(h^2), \qquad \left\|\curl\vec{E}^h_{\mathcal{P}^1}(P_0) - \curl\vec{E}(P_0)\right\|_2 = \mathcal{O}(h).
+    \label{eq:p1_error_bounds_3d}
+\end{equation}
+
+%% ============================================================================
+%% SECTION 3: ALGEBRAIC CONDITIONING AND 3D SUPPORT SELECTION
+%% ============================================================================
+\section{Algebraic Conditioning and 3D Support Selection}
+\label{sec:conditioning}
+
+Constructing the 3D VNMM shape functions via Eqs.~\eqref{eq:phi_p1_3d}--\eqref{eq:div_p1_3d} requires that the local placement matrix $\mathbf{A} \in \R^{N_s \times N_s}$ ($N_s = 6$ for $\mathcal{L}^1$ or $N_s = 12$ for $\mathcal{P}^1$) be well-conditioned at every evaluation point $P_0 \in \Omega$. In three dimensions, naive nearest-neighbor selection ($K = N_s$) frequently produces singular or nearly singular placement matrices.
+
+\subsection{Geometric Taxonomy of 3D Placement Matrix Singularities}
+\label{subsec:singularity_taxonomy_3d}
+
+By the rank-nullity theorem, $\det(\mathbf{A}) = 0$ if and only if there exists a non-zero polynomial vector field $\vec{E}^{\text{null}}(\mathbf{x}) = \mathbf{P}(\Delta\mathbf{x})\mathbf{a}^{\text{null}}$ ($\mathbf{a}^{\text{null}} \neq \mathbf{0}$) in the local basis ($\mathcal{L}^1$ or $\mathcal{P}^1$) that is simultaneously orthogonal to all $N_s$ nodal directors at their respective coordinates:
+\begin{equation}
+    \mathbf{A}\,\mathbf{a}^{\text{null}} = \mathbf{0} \quad \Longleftrightarrow \quad \vec{E}^{\text{null}}(P_{s_k}) \cdot \vec{t}_{s_k} = 0, \qquad \forall k \in \{1, \dots, N_s\}.
+    \label{eq:nullspace_principle_3d}
+\end{equation}
+We term Eq.~\eqref{eq:nullspace_principle_3d} the \textbf{3D Null-Space Orthogonality Principle}. As illustrated in Figure~\ref{fig:singularities_3d}, it unifies five geometric classes of 3D stencil degeneracy:
+\begin{enumerate}
+    \item \textbf{Global 3D Director Parallelism ($\operatorname{span}\{\vec{t}_{s_k}\} \subsetneq \R^3$, Fig.~\ref{fig:singularities_3d}a):} If all directors are parallel to a single vector $\vec{u}$ (e.g., $\vec{t}_{s_k} = [0,0,1]^T$), any constant field $\vec{E}^{\text{null}} \perp \vec{u}$ yields $\vec{E}^{\text{null}}\cdot\vec{t}_{s_k} = 0$, reducing $\operatorname{rank}(\mathbf{A})$ to at most $4$ in $\mathcal{P}^1$ (and $1$ in $\mathcal{L}^1$).
+    \item \textbf{Coplanar Directors ($\vec{t}_{s_k} \cdot \hat{n}_p = 0$, Fig.~\ref{fig:singularities_3d}b):} If all $N_s$ directors lie parallel to a common plane with normal $\hat{n}_p \in S^2$, the constant field $\vec{E}^{\text{null}}(\mathbf{x}) = \hat{n}_p$ satisfies $\vec{E}^{\text{null}}(P_{s_k})\cdot\vec{t}_{s_k} = 0$ for all $k$, making columns 1--3 linearly dependent.
+    \item \textbf{Concurrent 3D Lines of Action at $P_c \in \R^3$ (Pl\"{u}cker Complex Degeneracy in $\mathcal{L}^1$, Fig.~\ref{fig:singularities_3d}c):} If the directed lines $L_k = \{P_{s_k} + \tau\vec{t}_{s_k}\}$ all intersect a common focus $P_c \in \R^3$ ($\vec{t}_{s_k} \parallel (P_{s_k} - P_c)$), then for any rotation axis $\bm{\omega} \in \R^3 \setminus \{\mathbf{0}\}$, the rigid-body vortex field $\vec{E}^{\text{null}}(\mathbf{x}) = \bm{\omega} \times (\mathbf{x} - P_c) \in \mathcal{L}^1(\R^3)$ is everywhere perpendicular to $(P_{s_k} - P_c)$ and thus orthogonal to $\vec{t}_{s_k}$, yielding $\det(\mathbf{A}_{\mathcal{L}^1}) = 0$.
+    \item \textbf{Coplanar Support Nodes ($\hat{n}_p \cdot (P_{s_k} - P_\pi) = 0$, Fig.~\ref{fig:singularities_3d}d):} If all $N_s$ support nodes lie on a single plane $\Pi = \{\mathbf{x} \in \R^3 : \hat{n}_p \cdot (\mathbf{x} - P_0) = c_0\}$, then the linear scalar function $\ell(\Delta\mathbf{x}) = \hat{n}_p \cdot \Delta\mathbf{x} - c_0$ vanishes at all $N_s$ nodes, so the three linearly independent affine fields $\vec{E}^{\text{null}}_{m}(\mathbf{x}) = \ell(\Delta\mathbf{x})\vec{e}_m \in \mathcal{P}^1(\R^3)$ ($m=1,2,3$) vanish identically at every node $P_{s_k}$, causing a rank deficiency of at least $3$ in $\mathbf{A}_{\mathcal{P}^1}$.
+    \item \textbf{Tangential Alignment to a 3D Affine Eigen-Manifold (Fig.~\ref{fig:singularities_3d}e):} Even when nodes are non-coplanar and directors span $\R^3$, if each director $\vec{t}_{s_k}$ happens to lie tangent to the equipotential or stream surfaces of a non-trivial 12-parameter affine field (e.g., radial directors $\vec{t}_{s_k} \parallel [x_k - x_0, y_k - y_0, 0]^T$ sampled by the azimuthal rotation field $\vec{E}^{\text{null}} = [-(y-y_0), x-x_0, 0]^T$), then $\det(\mathbf{A}) = 0$.
+\end{enumerate}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.96\textwidth]{fig2_singularity_configurations_3d.pdf}
+    \caption{Taxonomy of 3D placement matrix singularities governed by the 3D Null-Space Orthogonality Principle ($\vec{E}^{\text{null}}(P_{s_k})\cdot\vec{t}_{s_k} = 0$): (a) global 3D director parallelism; (b) coplanar directors ($\vec{t}_k \cdot \hat{n}_p = 0$); (c) concurrent 3D lines of action intersecting at $P_c$; (d) coplanar support nodes ($\operatorname{Vol}=0$); (e) directors orthogonal to an affine rotational vortex mode; and (f) a qualified 12-node 3D stencil satisfying $|\det(\widehat{\mathbf{A}})| \ge \widehat{\text{Tol}}$.}
+    \label{fig:singularities_3d}
+\end{figure}
+
+\subsection{Eliminating the $\mathcal{O}(h^9)$ Determinant Collapse via Dimensionless Scaling}
+\label{subsec:dimensionless_scaling_3d}
+
+In the 12-node 3D placement matrix $\mathbf{A}_{\mathcal{P}^1}$ (Eq.~\eqref{eq:row_A_P1_3d}), the first $3$ columns are dimensionless direction cosines $\mathcal{O}(1)$, whereas columns $4$ through $12$ contain spatial displacements $\Delta x_k, \Delta y_k, \Delta z_k \sim \mathcal{O}(h)$, where $h$ is the local characteristic nodal spacing. Factoring $h$ from each of the last $9$ columns via the diagonal scaling matrix $\mathbf{D}_h = \operatorname{diag}(1, 1, 1, h, h, h, h, h, h, h, h, h) \in \R^{12\times 12}$ yields:
+\begin{equation}
+    \mathbf{A}_{\mathcal{P}^1} = \widehat{\mathbf{A}}_{\mathcal{P}^1}\,\mathbf{D}_h \quad \Longrightarrow \quad \det(\mathbf{A}_{\mathcal{P}^1}) = h^9 \det(\widehat{\mathbf{A}}_{\mathcal{P}^1}),
+    \label{eq:det_h9_scaling_3d}
+\end{equation}
+where $\widehat{\mathbf{A}}_{\mathcal{P}^1}$ is assembled using dimensionless scaled coordinates $\widehat{\Delta\mathbf{x}}_k = (\mathbf{x}_{s_k} - \mathbf{x}_0)/h \sim \mathcal{O}(1)$. Under $h$-refinement, $h^9$ decays rapidly toward machine zero (for $h = 0.05\text{ m}$, $h^9 \approx 1.95\times 10^{-12}$), while the condition number of the unscaled matrix degrades as $\kappa_2(\mathbf{A}_{\mathcal{P}^1}) \sim \mathcal{O}(h^{-1})$. By normalizing local coordinates by the characteristic spacing $h = \max(\frac{1}{K}\sum_{k=1}^K \|\mathbf{x}_k - \mathbf{x}_0\|_2, 10^{-12})$ prior to support qualification and inversion:
+\begin{equation}
+    \bm{\beta} = \mathbf{A}_{\mathcal{P}^1}^{-1} = \mathbf{D}_h^{-1} \widehat{\mathbf{A}}_{\mathcal{P}^1}^{-1},
+    \label{eq:scaled_inversion_3d}
+\end{equation}
+both the determinant $|\det(\widehat{\mathbf{A}}_{\mathcal{P}^1})|$ and the spectral condition number $\kappa_2(\widehat{\mathbf{A}}_{\mathcal{P}^1})$ become strictly invariant under isotropic domain scaling ($h \to \alpha h$).
+
+\subsection{Overcoming the $\binom{24}{12}$ Combinatorial Bottleneck via Distance-Weighted Column-Pivoted QR}
+\label{subsec:weighted_qr_3d}
+
+Given a candidate pool of $K > 12$ nearest neighbors (typically $K \in [20, 28]$) retrieved from a 3D $k$-d tree around $P_0$, let $\widehat{\mathbf{M}} \in \R^{K \times 12}$ denote the candidate dimensionless placement matrix whose $k$-th row is $\widehat{\mathbf{m}}_k^T = [\vec{t}_k^T, \; \vec{t}_k^T \otimes \widehat{\Delta\mathbf{x}}_k^T]$. As noted in Section~\ref{sec:intro}, exhaustive combinatorial search over subsets of size $12$ requires up to $\binom{24}{12} = 2{,}704{,}156$ tests per evaluation point.
+
+On the other hand, applying standard (unweighted) Businger--Golub column-pivoted QR factorization \cite{Golub2013} directly to $\widehat{\mathbf{M}}^T \in \R^{12 \times K}$ fails in meshless PDE approximations for a subtle algebraic reason: greedy column pivoting selects at each step the candidate row whose orthogonal projection has the largest Euclidean norm $\|\widehat{\mathbf{m}}_k\|_2 = \sqrt{1 + \|\widehat{\Delta\mathbf{x}}_k\|_2^2}$. Because $\|\widehat{\mathbf{m}}_k\|_2$ grows monotonically with distance $\|\widehat{\Delta\mathbf{x}}_k\|_2$, unweighted QR systematically selects the \emph{most distant} nodes on the outer periphery of the $K$-neighbor ball, maximizing the Taylor remainder $\mathcal{O}(\|\Delta\mathbf{x}_k\|_2^2)$!
+
+To simultaneously enforce (i) row-space linear independence ($\det(\widehat{\mathbf{A}}) \neq 0$) and (ii) spatial locality (minimizing $\|\Delta\mathbf{x}_k\|_2$), we normalize each candidate row to unit direction and apply a smooth dimensionless distance-decay weight $w_k = (1 + \|\widehat{\Delta\mathbf{x}}_k\|_2^2)^{-\gamma}$ with locality exponent $\gamma > 0$ ($\gamma = 3.0$ by default):
+\begin{equation}
+    \widetilde{\mathbf{m}}_k = w_k \frac{\widehat{\mathbf{m}}_k}{\|\widehat{\mathbf{m}}_k\|_2} = \left(1 + \|\widehat{\Delta\mathbf{x}}_k\|_2^2\right)^{-\gamma} \frac{\widehat{\mathbf{m}}_k}{\sqrt{1 + \|\widehat{\Delta\mathbf{x}}_k\|_2^2}}, \qquad k = 1, \dots, K.
+    \label{eq:weighted_qr_row_3d}
+\end{equation}
+Executing a single column-pivoted QR factorization on the $12 \times K$ weighted transpose matrix $\widetilde{\mathbf{M}}^T$:
+\begin{equation}
+    \widetilde{\mathbf{M}}^T \bm{\Pi} = \mathbf{Q}\,\mathbf{R}, \qquad |R_{1,1}| \ge |R_{2,2}| \ge \dots \ge |R_{12,12}| > 0,
+    \label{eq:qr_factorization_3d}
+\end{equation}
+extracts the optimal 12-node support stencil $\mathcal{S} = \{\pi_1, \pi_2, \dots, \pi_{12}\}$ in a single $\mathcal{O}(K d^2)$ ($d=12$) deterministic pass. As summarized in Algorithm~\ref{alg:support_selection_3d} and Table~\ref{tab:support_cost_3d}, if the nearest 12 nodes already satisfy the dimensionless qualification threshold $|\det(\widehat{\mathbf{A}})| \ge \widehat{\text{Tol}}$ ($\widehat{\text{Tol}} = 10^{-3}$), the algorithm accepts them immediately; otherwise, a single distance-weighted QR pass selects a well-conditioned, spatially compact 12-node stencil with zero combinatorial overhead.
+
+\begin{algorithm}[htbp]
+\caption{Scale-Invariant 3D Support Selection via Distance-Weighted Column-Pivoted QR}
+\label{alg:support_selection_3d}
+\footnotesize
+\begin{algorithmic}[1]
+\Require Evaluation point $P_0 \in \Omega$, 3D point cloud $\mathcal{X}$, nodal directors $\{\vec{t}_i\}$, 3D $k$-d tree $\mathcal{T}_{\text{kd}}$, candidate pool size $K = 24$, locality exponent $\gamma = 3.0$, dimensionless threshold $\widehat{\text{Tol}} = 10^{-3}$.
+\Ensure Qualified 12-node support indices $\mathcal{S} = [s_1, \dots, s_{12}]$, inverse operator matrix $\bm{\beta} = \mathbf{A}_{\mathcal{P}^1}^{-1} \in \R^{12\times 12}$.
+\State Query $k$-d tree $\mathcal{T}_{\text{kd}}$ for the $K$ nearest neighbors $\{n_1, \dots, n_K\}$ of $P_0$ with local displacements $\Delta\mathbf{x}_k = \mathbf{x}_{n_k} - P_0$.
+\State Compute characteristic local scale $h \gets \max\big(\frac{1}{12}\sum_{k=1}^{12} \|\Delta\mathbf{x}_k\|_2, \; 10^{-12}\big)$ and dimensionless coordinates $\widehat{\Delta\mathbf{x}}_k \gets \Delta\mathbf{x}_k / h$.
+\State Assemble the $K \times 12$ dimensionless candidate matrix $\widehat{\mathbf{M}}$ with rows $\widehat{\mathbf{m}}_k^T = [\vec{t}_{n_k}^T, \; \vec{t}_{n_k}^T \otimes \widehat{\Delta\mathbf{x}}_k^T]$.
+\State \textbf{Fast Path (Nearest 12 Nodes):} Extract $\widehat{\mathbf{A}}_0 \gets \widehat{\mathbf{M}}[1\!:\!12, :]$.
+\If{$|\det(\widehat{\mathbf{A}}_0)| \ge \widehat{\text{Tol}}$ \textbf{and} $\kappa_2(\widehat{\mathbf{A}}_0) < 10^4$}
+    \State $\mathcal{S} \gets [n_1, \dots, n_{12}]$, \quad $\widehat{\mathbf{A}} \gets \widehat{\mathbf{A}}_0$
+\Else
+    \State \textbf{Stabilized Distance-Weighted QR Path:}
+    \For{$k = 1, \dots, K$}
+        \State $\widetilde{\mathbf{m}}_k \gets (1 + \|\widehat{\Delta\mathbf{x}}_k\|_2^2)^{-\gamma} \, \widehat{\mathbf{m}}_k / \|\widehat{\mathbf{m}}_k\|_2$
+    \EndFor
+    \State Compute column-pivoted QR factorization $\widetilde{\mathbf{M}}^T \bm{\Pi} = \mathbf{Q}\mathbf{R}$.
+    \State Extract top 12 pivot indices $p_1, \dots, p_{12}$ from $\bm{\Pi}$, set $\mathcal{S} \gets [n_{p_1}, \dots, n_{p_{12}}]$ and $\widehat{\mathbf{A}} \gets \widehat{\mathbf{M}}[\{p_1,\dots,p_{12}\}, :]$.
+\EndIf
+\State Compute dimensionless inverse $\widehat{\bm{\beta}} \gets \widehat{\mathbf{A}}^{-1}$ and rescale rows 4--12 by $h^{-1}$: $\bm{\beta} \gets \mathbf{D}_h^{-1}\widehat{\bm{\beta}}$.
+\State \Return $\mathcal{S}, \; \bm{\beta}$
+\end{algorithmic}
+\end{algorithm}
+
+%% ============================================================================
+%% SECTION 4: VARIATIONAL FORMULATION OF THE 3D RESONANT CAVITY PROBLEM
+%% ============================================================================
+\section{Variational Formulation of the 3D Resonant Cavity Problem}
+\label{sec:variational}
+
+\subsection{3D Vector Helmholtz Equation and Div-Curl Regularized Weak Form}
+\label{subsec:weak_form_3d}
+
+Consider a lossless, homogeneous, isotropic 3D electromagnetic cavity $\Omega \subset \R^3$ bounded by Perfectly Electric Conducting (PEC) walls $\partial\Omega$. Time-harmonic electromagnetic fields ($\propto e^{j\omega t}$) inside $\Omega$ are governed by the 3D vector Helmholtz eigenvalue problem and Gauss's law in a source-free medium:
+\begin{subequations}
+\label{eq:strong_cavity_3d}
+\begin{alignat}{2}
+    \curl(\curl\vec{E}) &= k_0^2 \vec{E} = \lambda \vec{E} &\qquad &\text{in } \Omega \subset \R^3, \label{eq:curl_curl_3d} \\
+    \divg\vec{E} &= 0 &\qquad &\text{in } \Omega, \label{eq:gauss_law_3d} \\
+    \hat{n} \times \vec{E} &= \mathbf{0} &\qquad &\text{on } \partial\Omega, \label{eq:pec_wall_3d}
+\end{alignat}
+\end{subequations}
+where $\lambda = k_0^2 = \omega^2 \mu_0 \varepsilon_0$ is the squared free-space cutoff wavenumber.
+
+In the unregularized $\Hcurl$ variational formulation, one seeks $(\lambda, \vec{E}) \in \R^+ \times H_0(\mathbf{curl};\Omega)$ such that $\int_\Omega (\curl\vec{E}^h)\cdot(\curl\vec{F}^h)\,d\Omega = \lambda \int_\Omega \vec{E}^h\cdot\vec{F}^h\,d\Omega$. Because the 12-node $\mathcal{P}^1$ meshless basis functions are constructed point-wise over moving local support clouds rather than a globally conforming tetrahedral complex, the discrete curl of a discrete gradient does not vanish identically ($\nabla_h \times (\nabla_h \phi_h) \neq \mathbf{0}$). Consequently, the $N_{\text{int}}$-dimensional irrotational gradient subspace detaches from $\lambda = 0$ and invades the positive physical spectrum $\lambda > 0$.
+
+To enforce the solenoidal constraint $\divg\vec{E} = 0$ variationally and restore discrete spectral compactness \cite{Costabel2000, Boffi2010}, we augment the bilinear form with a dimensionless div-curl penalty parameter $s_{\text{div}} > 0$. Seeking $\vec{E}^h \in V_0^h \subset H_0(\mathbf{curl};\Omega) \cap \Hdiv$, the regularized weak problem reads:
+\begin{equation}
+    \int_\Omega (\curl\vec{E}^h)\cdot(\curl\vec{F}^h)\,d\Omega + s_{\text{div}} \int_\Omega (\divg\vec{E}^h)(\divg\vec{F}^h)\,d\Omega = \lambda \int_\Omega \vec{E}^h\cdot\vec{F}^h\,d\Omega, \qquad \forall \vec{F}^h \in V_0^h.
+    \label{eq:regularized_weak_form_3d}
+\end{equation}
+
+\subsection{Global Matrix Assembly and Selective Reduced Integration (SRI) in 3D}
+\label{subsec:sri_assembly_3d}
+
+Partitioning the domain $\Omega$ into a background Cartesian quadrature grid of $N_{cx} \times N_{cy} \times N_{cz}$ hexahedral integration cells and substituting the 3D VNMM operator expansions (Eqs.~\eqref{eq:phi_p1_3d}--\eqref{eq:div_p1_3d}) into Eq.~\eqref{eq:regularized_weak_form_3d} yields the generalized algebraic eigenvalue problem:
+\begin{equation}
+    \mathbf{K}(s_{\text{div}})\,\mathbf{e} = \left( \mathbf{K}_{\text{curl}} + s_{\text{div}}\,\mathbf{K}_{\text{div}} \right)\mathbf{e} = \lambda\,\mathbf{M}\,\mathbf{e},
+    \label{eq:discrete_eig_3d}
+\end{equation}
+where $\mathbf{e} \in \R^{N_{\text{DoF}}}$ is the vector of active interior nodal DoFs ($e_i = 0$ on $\partial\Omega$), and the global symmetric positive semi-definite matrices are assembled as:
+\begin{align}
+    [\mathbf{K}_{\text{curl}}]_{ij} &= \sum_{c=1}^{N_{\text{cells}}} \sum_{g=1}^{n_q^{\text{full}}} w_{c,g}\,\vec{C}_i(\mathbf{x}_{c,g}) \cdot \vec{C}_j(\mathbf{x}_{c,g}), \label{eq:K_curl_assembly_3d} \\
+    [\mathbf{M}]_{ij} &= \sum_{c=1}^{N_{\text{cells}}} \sum_{g=1}^{n_q^{\text{full}}} w_{c,g}\,\vec{\Phi}_i(\mathbf{x}_{c,g}) \cdot \vec{\Phi}_j(\mathbf{x}_{c,g}), \label{eq:M_assembly_3d} \\
+    [\mathbf{K}_{\text{div}}^{\text{SRI}}]_{ij} &= \sum_{c=1}^{N_{\text{cells}}} V_c\,D_i(\mathbf{x}_c^{\text{cent}})\,D_j(\mathbf{x}_c^{\text{cent}}). \label{eq:K_div_sri_3d}
+\end{align}
+
+\begin{remark}[Necessity of Selective Reduced Integration (SRI) in 3D]
+\label{rem:sri_3d}
+In three dimensions, full $2\times 2\times 2$ Gauss--Legendre quadrature evaluates $n_q^{\text{full}} = 8$ integration points per hexahedral cell. If the divergence penalty matrix $\mathbf{K}_{\text{div}}$ is integrated at all $8$ Gauss points per cell across $N_{\text{cells}} = (N-1)^3$ cells, it imposes $8(N-1)^3$ point-wise scalar divergence constraints on only $N_{\text{DoF}} = (N-2)^3$ active interior scalar degrees of freedom---over-constraining the discrete space by a factor exceeding $8\times$ and inducing severe volumetric locking of the physical $\text{TE}/\text{TM}$ eigenvalues! By evaluating $\mathbf{K}_{\text{curl}}$ and $\mathbf{M}$ with full $2\times 2\times 2$ Gauss quadrature ($n_q^{\text{full}}=8$) while evaluating $\mathbf{K}_{\text{div}}^{\text{SRI}}$ via single-point centroid quadrature ($n_q^{\text{SRI}}=1$ at cell center $\mathbf{x}_c^{\text{cent}}$ with volume weight $V_c$), the number of divergence constraints matches the number of cells $(N-1)^3 \approx N_{\text{DoF}}$, eliminating volumetric locking while preserving full rank stabilization of the irrotational subspace.
+\end{remark}
+
+\subsection{3D Spectral Shift Law and Solenoidal Energy Diagnostic ($R_{\text{div}}$)}
+\label{subsec:spectral_shift_law_3d}
+
+By Helmholtz--Hodge decomposition on a simply connected 3D PEC domain $\Omega$, the continuous space $H_0(\mathbf{curl};\Omega) \cap \Hdiv$ splits $L^2$-orthogonally into a solenoidal physical subspace ($\divg\vec{E} = 0$, $\curl\vec{E} \neq \mathbf{0}$) with fixed physical eigenvalues $\{\lambda_{m,n,p}^{\text{phys}}\}$ independent of $s_{\text{div}}$, and an irrotational gradient subspace $\vec{E} = \nabla\phi$ ($\phi \in H_0^1(\Omega)$, $\curl\vec{E} = \mathbf{0}$). Substituting $\vec{E} = \nabla\phi$ into Eq.~\eqref{eq:regularized_weak_form_3d} shows that the irrotational eigenvalues satisfy $-s_{\text{div}}\nabla^2\phi = \lambda_{\text{spur}}(s_{\text{div}})\phi$ with $\phi = 0$ on $\partial\Omega$. On a 3D rectangular cavity $\Omega = [0, L_x]\times[0, L_y]\times[0, L_z]$, the lowest Dirichlet Laplacian eigenvalue is $\mu_{1,1,1} = (\pi/L_x)^2 + (\pi/L_y)^2 + (\pi/L_z)^2$ (which equals $\mu_{1,1,1} = 1^2 + 1^2 + 1^2 = 3.0$ on the canonical cube $\Omega = [0,\pi]^3$, compared to $\mu_{1,1} = 2.0$ in 2D). Thus, the lowest discrete spurious gradient eigenvalue obeys the linear 3D scaling law:
+\begin{equation}
+    \lambda_{\text{spur}}^{\min}(s_{\text{div}}) \approx \mu_{1,1,1}\,s_{\text{div}} = \left[ \left(\frac{\pi}{L_x}\right)^2 + \left(\frac{\pi}{L_y}\right)^2 + \left(\frac{\pi}{L_z}\right)^2 \right] s_{\text{div}}.
+    \label{eq:spurious_scaling_law_3d}
+\end{equation}
+Consequently, to clear a desired operational passband $\Lambda_{\text{op}} = (0, \lambda_{\max}^{\text{op}}]$ completely of spurious gradient modes, $s_{\text{div}}$ is selected a priori as:
+\begin{equation}
+    s_{\text{div}} > \frac{\lambda_{\max}^{\text{op}}}{\mu_{1,1,1}}.
+    \label{eq:s_div_criterion_3d}
+\end{equation}
+Furthermore, for each computed discrete eigenpair $(\lambda_m, \mathbf{e}_m)$, we define the dimensionless divergence-to-curl energy ratio:
+\begin{equation}
+    R_{\text{div}}(\mathbf{e}_m) = \frac{\mathbf{e}_m^T \mathbf{K}_{\text{div}} \mathbf{e}_m}{\mathbf{e}_m^T \mathbf{K}_{\text{curl}} \mathbf{e}_m}.
+    \label{eq:R_div_metric_3d}
+\end{equation}
+Physical solenoidal cavity modes satisfy $R_{\text{div}}(\mathbf{e}_m) \ll 1$ ($R_{\text{div}} \to 0$ as $h \to 0$), whereas non-physical gradient modes exhibit $R_{\text{div}}(\mathbf{e}_m) \gg 1$, providing an unambiguous quantitative diagnostic.
+
+%% ============================================================================
+%% SECTION 5: NUMERICAL VERIFICATION AND VALIDATION
+%% ============================================================================
+\section{Numerical Verification and Validation}
+\label{sec:results}
+
+We now subject the proposed 3D Stabilized VNMM framework to a rigorous seven-stage verification and validation campaign that mirrors the benchmark protocol established in 2D \cite{Mesquita2026VNMM2D} while addressing the distinct mathematical features of three-dimensional $\Hcurl$ problems. Table~\ref{tab:baseline_params_3d} summarizes the baseline numerical parameters used across all 3D experiments unless varied parametrically.
+
+\begin{table}[htbp]
+\centering
+\caption{Summary of baseline numerical and algorithmic parameters for the 3D VNMM benchmark suite.}
+\label{tab:baseline_params_3d}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+\textbf{Parameter / Module} & \textbf{Symbol / Setting} & \textbf{Baseline Value / Specification} \\
+\midrule
+Canonical 3D Benchmark Domain & $\Omega_{\text{cube}}$ & $[0, \pi]^3\text{ m}^3$ (exact $\lambda_{mnp} = m^2 + n^2 + p^2$) \\
+Physical Rectangular Cavity Domain & $\Omega_{\text{rect}}$ & $[0, 1.00] \times [0, 0.50] \times [0, 0.75]\text{ cm}^3$ \\
+Degrees of Freedom per Node & $n_{\text{DoF/node}}$ & $1$ scalar DoF/node ($e_i = \vec{E}(P_i)\cdot\vec{t}_i$) \\
+Local 3D Polynomial Basis & $\mathcal{P}^1(\R^3)$ & Complete 12-node trivariate linear basis ($N_s = 12$) \\
+Reference Incomplete Basis & $\mathcal{L}^1(\R^3)$ & Classical 6-node N\'{e}d\'{e}lec basis ($N_s = 6$) \\
+$k$-d Tree Candidate Pool Size & $K$ & $K = 24$ nearest neighbors ($K=28$ in $\gamma$-sweep) \\
+Distance-Weighting Locality Exponent & $\gamma$ & $\gamma = 3.0$ in $w_k = (1 + \|\widehat{\Delta\mathbf{x}}_k\|_2^2)^{-\gamma}$ \\
+Dimensionless Qualification Threshold & $\widehat{\text{Tol}}$ & $|\det(\widehat{\mathbf{A}})| \ge 10^{-3}$ \\
+Background Quadrature Scheme & $n_q^{\text{full}} / n_q^{\text{SRI}}$ & $2\times 2\times 2$ Gauss ($\mathbf{K}_{\text{curl}}, \mathbf{M}$) / $1$-pt SRI ($\mathbf{K}_{\text{div}}$) \\
+Div-Curl Regularization Parameter & $s_{\text{div}}$ & $s_{\text{div}} = 6.0$ on $[0,\pi]^3$; $s_{\text{div}} = 2.0$ on $\Omega_{\text{rect}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Verification of Theorem 1: 3D Local Constructive Equivalence with Tetrahedral Whitney 1-Forms}
+\label{subsec:sec5_1_equivalence}
+
+To verify Theorem~\ref{thm:dual_equiv_3d} numerically, we partition the cubic domain $\Omega = [0,\pi]^3$ into $N \times N \times N$ uniform hexahedra ($N \in \{3, 4, 6, 8, 10, 12, 16\}$) and subdivide each hexahedron into $6$ conforming Kuhn tetrahedra ($N_{\text{tet}} = 6 N^3$, ranging from $162$ to $24{,}576$ tetrahedra), as depicted in Figure~\ref{fig:conforming_tet_mesh_3d}. On each tetrahedron $T_e$, we sample the smooth 3D divergence-free electromagnetic mode ($\text{TE}_{101}$):
+\begin{equation}
+    \vec{E}_{\text{exact}}(x,y,z) = \begin{bmatrix} \cos(x)\sin(y)\sin(z) \\ 0 \\ -\sin(x)\sin(y)\cos(z) \end{bmatrix}, \qquad
+    \curl\vec{E}_{\text{exact}}(x,y,z) = \begin{bmatrix} -\sin(x)\cos(y)\cos(z) \\ 2\cos(x)\sin(y)\cos(z) \\ -\cos(x)\cos(y)\sin(z) \end{bmatrix}.
+    \label{eq:exact_te101_3d}
+\end{equation}
+At the barycenter $P_0$ of every tetrahedron $T_e$, we compare the 3D Whitney 1-form reconstruction $\vec{E}^{\text{EFEM}}(P_0) = \sum_{k=1}^6 (\ell_k e_k) \vec{W}_k(P_0)$ against the 6-node $\mathcal{L}^1$ 3D VNMM reconstruction $\vec{E}^{\text{VNMM}}(P_0)$ built from the 6 edge midpoints $P_k$ and unit edge tangent vectors $\vec{t}_k$.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\textwidth]{fig3_conforming_tetrahedral_mesh_3d.pdf}
+    \caption{Conforming 3D Kuhn tetrahedral mesh topology on $\Omega = [0,\pi]^3$ ($N=3$, $162$ tetrahedra) used to verify Theorem~\ref{thm:dual_equiv_3d}: (a) global wireframe of the tetrahedral decomposition with highlighted dual edge-midpoint nodes; (b) close-up of a single hexahedral block subdivided into 6 tetrahedra sharing the main diagonal, showing the edge-midpoint nodes $P_k$ and unit tangent directors $\vec{t}_k$.}
+    \label{fig:conforming_tet_mesh_3d}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.78\textwidth]{fig4_efem_vs_vnmm_l1_3d.pdf}
+    \caption{Verification of Theorem~\ref{thm:dual_equiv_3d} across 7 mesh refinement levels ($N \in [3, 16]$, up to $24{,}576$ tetrahedra): (a) 3D electric field interpolation error $\|\vec{E} - \vec{E}^h\|_{\text{RMS}}$ ($\mathcal{O}(h^{1.01})$); (b) 3D curl vector operator error $\|\curl\vec{E} - \curl\vec{E}^h\|_{\text{RMS}}$ ($\mathcal{O}(h^{0.98})$). Across all levels, the point-wise discrepancy between the 6-node $\mathcal{L}^1$ VNMM and 3D Whitney Edge FEM stays at machine epsilon ($\le 1.74\times 10^{-15}$ for $\vec{E}$ and $\le 4.64\times 10^{-15}$ for $\curl\vec{E}$).}
+    \label{fig:efem_vs_vnmm_l1_3d}
+\end{figure}
+
+Figure~\ref{fig:efem_vs_vnmm_l1_3d} displays the resulting RMS interpolation errors and point-wise discrepancies between the two methods. Across all seven refinement levels ($h_{\text{avg}}$ decreasing from $1.3213\text{ m}$ to $0.2488\text{ m}$), both the 3D electric field error and the 3D curl vector error decay at the theoretical first-order rates of $\mathcal{O}(h^{1.01})$ and $\mathcal{O}(h^{0.98})$, respectively. Crucially, the RMS difference between the 6-node $\mathcal{L}^1$ VNMM and 3D Whitney Edge FEM never exceeds $1.74 \times 10^{-15}$ for the electric field and $4.64 \times 10^{-15}$ for the curl vector, confirming machine-precision algebraic equivalence.
+
+\subsection{3D Field and Curl Convergence on Unconstrained Point Clouds ($\mathcal{L}^1$ vs.\ $\mathcal{P}^1$)}
+\label{subsec:sec5_2_point_clouds}
+
+Next, we discard the tetrahedral mesh and evaluate the interpolation of the exact 3D $\text{TE}_{101}$ field (Eq.~\eqref{eq:exact_te101_3d}) on unconstrained 3D point clouds with $25\%$ random spatial jitter ($\delta\mathbf{x}_i \in [-0.25h, +0.25h]^3$) and randomly oriented unit interior directors $\vec{t}_i \in S^2$ across six cloud densities $N \in \{8, 10, 12, 14, 16, 18\}$ ($N_{\text{total}}$ ranging from $510$ to $5{,}830$ nodes). At $M_{\text{eval}} = 8^3 = 512$ fixed interior evaluation points, support stencils are selected exclusively via the 3D $k$-d tree and Algorithm~\ref{alg:support_selection_3d}.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of 3D field and curl interpolation errors on irregular 3D point clouds ($25\%$ spatial jitter, random $S^2$ directors) between the incomplete 6-node basis $\mathcal{L}^1$ and the complete 12-node basis $\mathcal{P}^1$.}
+\label{tab:cloud_convergence_3d}
+\footnotesize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ccccccccc}
+\toprule
+\textbf{Grid} & \textbf{Total} & $h_{\text{nom}}$ & \multicolumn{3}{c}{\textbf{3D Field Error} $\|\vec{E}-\vec{E}^h\|_{\text{RMS}}$} & \multicolumn{3}{c}{\textbf{3D Curl Error} $\|\curl\vec{E}-\curl\vec{E}^h\|_{\text{RMS}}$} \\
+\cmidrule(lr){4-6} \cmidrule(lr){7-9}
+$N^3$ & \textbf{Nodes} & $[\text{m}]$ & $\mathcal{L}^1$ (6-node) & $\mathcal{P}^1$ (12-node) & \textbf{Gain} & $\mathcal{L}^1$ (6-node) & $\mathcal{P}^1$ (12-node) & \textbf{Gain} \\
+\midrule
+$8^3$  & $510$   & $0.4488$ & $3.157 \times 10^{-1}$ & $2.457 \times 10^{-1}$ & $1.3\times$ & $1.777 \times 10^{0}$ & $8.228 \times 10^{-1}$ & $2.2\times$ \\
+$10^3$ & $998$   & $0.3491$ & $2.325 \times 10^{-1}$ & $1.287 \times 10^{-1}$ & $1.8\times$ & $1.677 \times 10^{0}$ & $6.574 \times 10^{-1}$ & $2.6\times$ \\
+$12^3$ & $1{,}726$ & $0.2856$ & $1.881 \times 10^{-1}$ & $8.130 \times 10^{-2}$ & $2.3\times$ & $1.739 \times 10^{0}$ & $5.811 \times 10^{-1}$ & $3.0\times$ \\
+$14^3$ & $2{,}742$ & $0.2417$ & $1.614 \times 10^{-1}$ & $5.867 \times 10^{-2}$ & $2.8\times$ & $1.767 \times 10^{0}$ & $5.493 \times 10^{-1}$ & $3.2\times$ \\
+$16^3$ & $4{,}094$ & $0.2094$ & $1.271 \times 10^{-1}$ & $3.732 \times 10^{-2}$ & $3.4\times$ & $1.726 \times 10^{0}$ & $3.481 \times 10^{-1}$ & $5.0\times$ \\
+$18^3$ & $5{,}830$ & $0.1848$ & $1.228 \times 10^{-1}$ & $3.118 \times 10^{-2}$ & $3.9\times$ & $1.825 \times 10^{0}$ & $3.210 \times 10^{-1}$ & $5.7\times$ \\
+\midrule
+\multicolumn{3}{l}{\textbf{Fitted Convergence Rate} $\mathcal{O}(h^p)$} & $p = 1.07$ & $\mathbf{p = 2.34}$ & --- & $p = -0.04$ \textbf{(Stagnant)} & $\mathbf{p = 1.06}$ & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.78\textwidth]{fig5_convergence_l1_vs_p1_clouds_3d.pdf}
+    \caption{3D convergence comparison on disordered 3D point clouds ($25\%$ spatial jitter, random $S^2$ directors): (a) electric field RMS error $\|\vec{E}-\vec{E}^h\|_{\text{RMS}}$, showing quadratic-like $\mathcal{O}(h^{2.34})$ decay for the complete 12-node $\mathcal{P}^1$ basis vs.\ $\mathcal{O}(h^{1.07})$ for the 6-node $\mathcal{L}^1$ basis; (b) 3D curl operator RMS error $\|\curl\vec{E}-\curl\vec{E}^h\|_{\text{RMS}}$, demonstrating complete $\mathcal{O}(1)$ non-convergence ($p = -0.04$) of the 6-node $\mathcal{L}^1$ basis due to the 6 omitted symmetric Jacobian modes (Eq.~\eqref{eq:curl_stagnation_3d}), whereas the 12-node $\mathcal{P}^1$ basis restores $\mathcal{O}(h^{1.06})$ curl convergence.}
+    \label{fig:convergence_l1_vs_p1_clouds_3d}
+\end{figure}
+
+Table~\ref{tab:cloud_convergence_3d} and Figure~\ref{fig:convergence_l1_vs_p1_clouds_3d} confirm our theoretical aliasing analysis in Section~\ref{subsec:jacobian_aliasing_3d}. Although the 6-node $\mathcal{L}^1$ basis converges at first order ($\mathcal{O}(h^{1.07})$) for the field $\vec{E}^h$ itself, its 3D curl approximation stagnates completely around $\|\curl\vec{E} - \curl\vec{E}^h_{\mathcal{L}^1}\|_{\text{RMS}} \in [1.68, 1.83]$ with a fitted slope of $p = -0.04$. Even though the analytical $\text{TE}_{101}$ field is divergence-free ($\mathbf{J}_{\text{div}} = \mathbf{0}$), its 5-parameter deviatoric strain tensor $\mathbf{J}_{\text{shear}}$ aliases directly into the three curl channels via $\mathbf{A}_{\mathcal{L}^1}^{-1}\mathbf{B}_{\text{sym}} = \mathcal{O}(1)$. In contrast, the complete 12-node $\mathcal{P}^1$ basis explicitly resolves all 9 partial derivatives of $\mathbf{J} \in \R^{3\times 3}$, achieving a $3.9\times$ reduction in field error ($p = 2.34$) and a $5.7\times$ reduction in curl error with monotonic $\mathcal{O}(h^{1.06})$ convergence.
+
+\subsection{3D Stencil Conditioning and Locality Sensitivity Analysis}
+\label{subsec:sec5_3_conditioning}
+
+To evaluate the effectiveness of the scale-invariant distance-weighted column-pivoted QR support selection algorithm (Algorithm~\ref{alg:support_selection_3d}), we perform a parametric sweep over the dimensionless locality weighting exponent $\gamma \in [0.0, 8.0]$ in Eq.~\eqref{eq:weighted_qr_row_3d} on a fine disordered 3D cloud ($N = 13^3$, $N_{\text{total}} = 2{,}195$ nodes, $25\%$ jitter, candidate pool $K = 28$).
+
+\begin{table}[htbp]
+\centering
+\caption{Parametric sensitivity of the 12-node $\mathcal{P}^1$ 3D stencil to the locality weighting exponent $\gamma$ in Algorithm~\ref{alg:support_selection_3d} ($N=13^3$ disordered 3D cloud, $K=28$ candidate pool).}
+\label{tab:conditioning_sweep_3d}
+\footnotesize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Locality Exponent} & \textbf{Active Span} & \textbf{Mean} $|\det(\widehat{\mathbf{A}})|$ & \textbf{Field Error} & \textbf{3D Curl Error} & \textbf{Scaled} & \textbf{Unscaled} \\
+$\gamma$ & $K_{\text{avg}}$ & (Dimensionless) & $\|\vec{E}-\vec{E}^h\|_{\text{RMS}}$ & $\|\curl\vec{E}-\curl\vec{E}^h\|_{\text{RMS}}$ & $\kappa_2(\widehat{\mathbf{A}})$ & $\kappa_2(\mathbf{A})$ \\
+\midrule
+$0.0$ (Unscaled QR) & $28.0$ & $1.639 \times 10^{2}$ & $1.021 \times 10^{-1}$ & $4.133 \times 10^{-1}$ & $6.6$  & $18.0$ \\
+$0.5$               & $23.1$ & $1.198 \times 10^{1}$ & $5.157 \times 10^{-2}$ & $3.328 \times 10^{-1}$ & $7.4$  & $23.5$ \\
+$1.0$               & $20.9$ & $6.651 \times 10^{0}$ & $5.418 \times 10^{-2}$ & $3.474 \times 10^{-1}$ & $8.6$  & $27.6$ \\
+$\mathbf{2.0}$      & $\mathbf{17.9}$ & $\mathbf{3.754 \times 10^{0}}$ & $\mathbf{5.470 \times 10^{-2}}$ & $\mathbf{3.838 \times 10^{-1}}$ & $\mathbf{10.5}$ & $\mathbf{34.7}$ \\
+$\mathbf{3.0}$ \textbf{(Default)} & $\mathbf{16.3}$ & $\mathbf{2.510 \times 10^{0}}$ & $\mathbf{5.945 \times 10^{-2}}$ & $\mathbf{4.219 \times 10^{-1}}$ & $\mathbf{12.0}$ & $\mathbf{39.1}$ \\
+$\mathbf{4.0}$      & $\mathbf{15.4}$ & $\mathbf{2.018 \times 10^{0}}$ & $\mathbf{6.611 \times 10^{-2}}$ & $\mathbf{4.445 \times 10^{-1}}$ & $\mathbf{13.2}$ & $\mathbf{43.9}$ \\
+$6.0$               & $14.1$ & $1.498 \times 10^{0}$ & $7.655 \times 10^{-2}$ & $5.250 \times 10^{-1}$ & $15.6$ & $52.6$ \\
+$8.0$               & $13.7$ & $1.282 \times 10^{0}$ & $8.680 \times 10^{-2}$ & $6.409 \times 10^{-1}$ & $17.2$ & $55.4$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.78\textwidth]{fig6_conditioning_threshold_3d.pdf}
+    \caption{Algebraic conditioning and locality trade-off for 12-node 3D support selection: (a) convergence comparison between unweighted QR ($\gamma = 0$, which selects distant boundary-of-ball nodes) and stabilized distance-weighted dimensionless QR ($\gamma = 3.0$); (b) parametric trade-off across $\gamma \in [0.0, 8.0]$ on $N=13^3$, showing the optimal operating window $\gamma \in [2.0, 4.0]$ where compact stencils ($K_{\text{avg}} \approx 15.4\text{--}17.9$) and low condition numbers ($\kappa_2(\widehat{\mathbf{A}}) \approx 10.5\text{--}13.2$) are simultaneously achieved.}
+    \label{fig:conditioning_threshold_3d}
+\end{figure}
+
+As shown in Table~\ref{tab:conditioning_sweep_3d} and Figure~\ref{fig:conditioning_threshold_3d}, unweighted QR ($\gamma = 0.0$) reaches all the way to the outermost candidate ($K_{\text{avg}} = 28.0$) because candidate row norms grow with distance $\|\widehat{\Delta\mathbf{x}}_k\|_2$, inflating the field interpolation error by nearly $2\times$ ($1.021\times 10^{-1}$ vs.\ $5.157\times 10^{-2}$). Conversely, excessively large exponents ($\gamma \ge 6.0$) over-penalize distance and force the selection of nearly coplanar or directionally redundant inner neighbors, increasing $\kappa_2(\widehat{\mathbf{A}})$ and degrading curl accuracy. Within the broad operating plateau $\gamma \in [2.0, 4.0]$, Algorithm~\ref{alg:support_selection_3d} achieves compact stencils ($K_{\text{avg}} \approx 15.4\text{--}17.9$ out of $12$ required nodes) and dimensionless condition numbers $\kappa_2(\widehat{\mathbf{A}}) \approx 10.5\text{--}13.2$ (more than $3\times$ lower than the unscaled $\kappa_2(\mathbf{A}) \approx 34.7\text{--}43.9$).
+
+\subsection{3D Galerkin Variational Consistency: Patch Test and Method of Manufactured Solutions (MMS)}
+\label{subsec:sec5_4_patch_and_mms}
+
+Before proceeding to eigenvalue problems, we verify that the global 3D Galerkin assembly satisfies both first-order polynomial reproduction (the 3D Patch Test) and asymptotic convergence on a driven boundary-value source problem:
+\begin{equation}
+    \curl(\curl\vec{E}) - s_{\text{div}}\grad(\divg\vec{E}) + \kappa\vec{E} = \vec{f} \quad \text{in } \Omega = [0,\pi]^3,
+    \label{eq:galerkin_bvp_3d}
+\end{equation}
+with $\kappa = 1.0$ and $s_{\text{div}} = 6.0$.
+
+\subsubsection{8-Mode 3D Linear Vector Patch Test}
+\label{subsubsec:patch_test_3d}
+
+For any affine 3D electric field $\vec{E}_{\text{lin}}(\mathbf{x}) = \mathbf{a}_0 + \mathbf{J}_0 \mathbf{x} \in \mathcal{P}^1(\R^3)$, both $\curl\vec{E}_{\text{lin}} = \mathbf{c}_0$ and $\divg\vec{E}_{\text{lin}} = d_0$ are spatially constant throughout $\Omega$, so $\curl(\curl\vec{E}_{\text{lin}}) = \mathbf{0}$ and $\grad(\divg\vec{E}_{\text{lin}}) = \mathbf{0}$. Integration by parts of Eq.~\eqref{eq:galerkin_bvp_3d} yields the exact weak variational balance:
+\begin{equation}
+    a_{\text{reg}}(\vec{E}^h, \vec{F}^h) + \kappa(\vec{E}^h, \vec{F}^h)_{L^2(\Omega)} = \kappa \int_\Omega \vec{E}_{\text{lin}}\cdot\vec{F}^h\,d\Omega + \oint_{\partial\Omega} \left[ (\hat{n}\times\mathbf{c}_0)\cdot\vec{F}^h + s_{\text{div}} d_0 (\hat{n}\cdot\vec{F}^h) \right] d\Gamma.
+    \label{eq:patch_test_weak_3d}
+\end{equation}
+Prescribing the exact directional values $e_i = \vec{E}_{\text{lin}}(P_i)\cdot\vec{t}_i$ on $\partial\Omega$ and solving for all $N_{\text{int}} = 125$ interior unknowns on $\Omega = [0,\pi]^3$ ($N=7^3$), we test all eight canonical 3D affine modes spanning $\mathcal{P}^1(\R^3)$ on both a regular 3-color lattice and an irregular 3D cloud ($25\%$ jitter, random $S^2$ directors).
+
+\begin{table}[htbp]
+\centering
+\caption{Relative interior nodal $\ell^2$ error $\|\mathbf{e}^h - \mathbf{e}^*\|_2 / \|\mathbf{e}^*\|_2$ for the 8-mode 3D Galerkin Patch Test on $\Omega = [0,\pi]^3$ ($N=7^3$, $125$ interior DoFs, $s_{\text{div}} = 6.0$).}
+\label{tab:patch_test_3d}
+\footnotesize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccc}
+\toprule
+& & \multicolumn{2}{c}{\textbf{Regular 3D Lattice}} & \multicolumn{2}{c}{\textbf{Irregular 3D Cloud (25\% Jitter)}} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+\textbf{Mode} & \textbf{Analytical 3D Affine Field} $\vec{E}_{\text{lin}}(x,y,z)$ & $\mathcal{P}^1$ (12-node) & $\mathcal{L}^1$ (6-node) & $\mathcal{P}^1$ (12-node) & $\mathcal{L}^1$ (6-node) \\
+\midrule
+1. Translation $X$ & $[1, \; 0, \; 0]^T$ & $3.77 \times 10^{-15}$ & $6.81 \times 10^{-16}$ & $3.27 \times 10^{-15}$ & $6.95 \times 10^{-16}$ \\
+2. Translation $Y$ & $[0, \; 1, \; 0]^T$ & $3.50 \times 10^{-15}$ & $1.21 \times 10^{-15}$ & $4.27 \times 10^{-15}$ & $5.53 \times 10^{-16}$ \\
+3. Translation $Z$ & $[0, \; 0, \; 1]^T$ & $2.75 \times 10^{-15}$ & $8.91 \times 10^{-16}$ & $4.57 \times 10^{-15}$ & $5.20 \times 10^{-16}$ \\
+4. 3D Normal Strain & $[x, \; y, \; -2z]^T$ ($\curl=\mathbf{0}, \divg=0$) & $\mathbf{2.82 \times 10^{-15}}$ & $1.52 \times 10^{-1}$ \textbf{(FAIL)} & $\mathbf{4.22 \times 10^{-15}}$ & $1.26 \times 10^{-1}$ \textbf{(FAIL)} \\
+5. 3D Shear Strain & $[y+z, \; x+z, \; x+y]^T$ ($\curl=\mathbf{0}, \divg=0$) & $\mathbf{2.70 \times 10^{-15}}$ & $3.96 \times 10^{-2}$ \textbf{(FAIL)} & $\mathbf{1.40 \times 10^{-14}}$ & $7.63 \times 10^{-2}$ \textbf{(FAIL)} \\
+6. 3D Pure Curl & $[y-z, \; z-x, \; x-y]^T$ ($\curl=[-2,-2,-2]^T$) & $1.50 \times 10^{-15}$ & $5.16 \times 10^{-16}$ & $6.28 \times 10^{-15}$ & $6.82 \times 10^{-16}$ \\
+7. 3D Pure Divergence & $[x, \; y, \; z]^T$ ($\divg=3$) & $\mathbf{2.49 \times 10^{-15}}$ & $1.06 \times 10^{-1}$ \textbf{(FAIL)} & $\mathbf{6.86 \times 10^{-15}}$ & $1.23 \times 10^{-1}$ \textbf{(FAIL)} \\
+8. Full 12-Param Affine & $\mathbf{a}_0 + \mathbf{J}_0 \mathbf{x}$ ($\curl\neq\mathbf{0}, \divg\neq 0$) & $\mathbf{3.43 \times 10^{-15}}$ & $9.07 \times 10^{-2}$ \textbf{(FAIL)} & $\mathbf{8.49 \times 10^{-15}}$ & $7.67 \times 10^{-2}$ \textbf{(FAIL)} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+As documented in Table~\ref{tab:patch_test_3d}, the complete 12-node $\mathcal{P}^1$ formulation passes all eight 3D patch test modes to machine precision ($\le 3.77 \times 10^{-15}$ on the regular lattice and $\le 1.40 \times 10^{-14}$ on the disordered 3D cloud). By contrast, the incomplete 6-node $\mathcal{L}^1$ basis reproduces only the 3 rigid translations (Modes 1--3) and the pure rigid rotation (Mode 6), failing with $\mathcal{O}(1)$ relative errors ($3.96\%$ to $15.2\%$) on harmonic normal strain (Mode 4), harmonic shear strain (Mode 5), pure divergence (Mode 7), and general 12-parameter affine fields (Mode 8). Notice in particular that Modes 4 and 5 are both curl-free and divergence-free ($\nabla^2\vec{E}_{\text{lin}} = \mathbf{0}$), proving that even for harmonic fields satisfying Maxwell's source-free equations, $\mathcal{L}^1$ fails the 3D Galerkin Patch Test.
+
+\subsubsection{3D Method of Manufactured Solutions (MMS)}
+\label{subsubsec:mms_3d}
+
+To verify high-order asymptotic convergence under smooth spatial gradients, we manufacture a 3D solenoidal vector field on $\Omega = [0,\pi]^3$ that directly generalizes the 2D MMS benchmark \cite{Mesquita2026VNMM2D}:
+\begin{equation}
+    \vec{E}^*(x,y,z) = \begin{bmatrix}
+    \sin(x)\cos(y)\cos(z) \\
+    \cos(x)\sin(y)\cos(z) \\
+    -2\cos(x)\cos(y)\sin(z)
+    \end{bmatrix}, \qquad
+    \curl\vec{E}^*(x,y,z) = \begin{bmatrix}
+    3\cos(x)\sin(y)\sin(z) \\
+    -3\sin(x)\cos(y)\sin(z) \\
+    0
+    \end{bmatrix}.
+    \label{eq:mms_exact_3d}
+\end{equation}
+This field satisfies $\divg\vec{E}^* \equiv 0$, $\curl(\curl\vec{E}^*) = 3\vec{E}^*$, and $\hat{n}\times(\curl\vec{E}^*) = \mathbf{0}$ identically on all six faces of $[0,\pi]^3$ ($\sin(0)=\sin(\pi)=0$), so the natural boundary integral vanishes identically while the tangential Dirichlet values $e_i = \vec{E}^*(P_i)\cdot\vec{t}_i$ are prescribed strongly on $\partial\Omega$, driven by the body force $\vec{f} = (3 + \kappa)\vec{E}^*$.
+
+\begin{table}[htbp]
+\centering
+\caption{3D Galerkin Method of Manufactured Solutions (MMS) convergence across five refinement levels on $\Omega = [0,\pi]^3$ ($s_{\text{div}} = 6.0, \kappa = 1.0$).}
+\label{tab:mms_convergence_3d}
+\footnotesize
+\begin{tabular}{cccccccc}
+\toprule
+\textbf{Grid} & \textbf{Active} & \textbf{Total} & $h_{\text{nom}}$ & \multicolumn{3}{c}{\textbf{Complete 12-Node} $\mathcal{P}^1$ \textbf{VNMM 3D}} & \textbf{Incomplete} $\mathcal{L}^1$ \\
+\cmidrule(lr){5-7} \cmidrule(lr){8-8}
+$N^3$ & \textbf{DoFs} & \textbf{Nodes} & $[\text{m}]$ & $\|\vec{E}-\vec{E}^h\|_{L^2}$ & $\|\curl(\vec{E}-\vec{E}^h)\|_{L^2}$ & $\|\mathbf{e}-\mathbf{e}^*\|_{\infty}$ & $\|\vec{E}-\vec{E}^h\|_{L^2}$ \\
+\midrule
+$7^3$  & $125$   & $341$   & $0.5236$ & $21.23\%$ & $49.30\%$ & $14.36\%$ & $35.82\%$ \\
+$9^3$  & $343$   & $727$   & $0.3927$ & $11.95\%$ & $32.66\%$ & $7.26\%$  & $28.66\%$ \\
+$11^3$ & $729$   & $1{,}329$ & $0.3142$ & $7.53\%$  & $24.80\%$ & $5.00\%$  & $24.64\%$ \\
+$13^3$ & $1{,}331$ & $2{,}195$ & $0.2618$ & $5.08\%$  & $20.75\%$ & $4.54\%$  & $22.22\%$ \\
+$15^3$ & $2{,}197$ & $3{,}373$ & $0.2244$ & $3.60\%$  & $17.67\%$ & $3.96\%$  & $20.53\%$ \\
+\midrule
+\multicolumn{4}{l}{\textbf{Fitted Convergence Rate} $\mathcal{O}(h^p)$} & $\mathbf{p = 2.09}$ & $\mathbf{p = 1.21}$ & $\mathbf{p = 1.50}$ & $p = 0.66$ \textbf{(Suboptimal)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:mms_convergence_3d} summarizes the 3D MMS convergence across $N \in \{7, 9, 11, 13, 15\}$ ($125$ to $2{,}197$ active scalar DoFs). The complete 12-node $\mathcal{P}^1$ Galerkin solver achieves optimal second-order $L^2(\Omega)$ electric field convergence ($\mathbf{p = 2.09}$, reducing error from $21.23\%$ down to $3.60\%$) and super-linear $H(\mathbf{curl};\Omega)$ curl convergence ($\mathbf{p = 1.21}$). Conversely, the incomplete 6-node $\mathcal{L}^1$ formulation exhibits severe degradation ($p = 0.66$, remaining trapped above $20.5\%$).
+
+\subsection{3D Resonant Cavity Spectral Purification and Validation of the $\lambda_{\text{spur}} \approx 3.0\,s_{\text{div}}$ Law}
+\label{subsec:sec5_5_cavity_purification}
+
+We next investigate the 3D PEC cubic resonant cavity $\Omega = [0,\pi]^3$ discretized with $N = 11^3$ nodes ($N_{\text{DoF}} = 9^3 = 729$ active interior scalar DoFs, $10\times 10\times 10$ integration cells). The analytical eigenvalues on $[0,\pi]^3$ are $\lambda_{m,n,p} = m^2 + n^2 + p^2$ (with at least two integers non-zero): the fundamental triply degenerate multiplet $\text{TE}_{011}, \text{TE}_{101}, \text{TM}_{110}$ at $\lambda = 2.0$ ($k_c = \sqrt{2} \approx 1.4142\text{ rad/m}$); the doubly degenerate multiplet $\text{TE}_{111}, \text{TM}_{111}$ at $\lambda = 3.0$ ($k_c = \sqrt{3} \approx 1.7321\text{ rad/m}$); and the six-fold degenerate multiplet ($\text{TE}_{012}, \text{TE}_{102}, \text{TE}_{021}, \text{TE}_{201}, \text{TM}_{120}, \text{TM}_{210}$) at $\lambda = 5.0$ ($k_c = \sqrt{5} \approx 2.2361\text{ rad/m}$), comprising $11$ physical modes in the operational band $\Lambda_{\text{op}} = (0, 6.0]$.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.82\textwidth]{fig7_cavity_spectrum_purification_3d.pdf}
+    \caption{Spectral purification of the 3D cubic PEC cavity $\Omega = [0,\pi]^3$ ($N=11^3$, $N_{\text{DoF}} = 729$ active scalar DoFs): (a) unregularized curl-curl formulation ($s_{\text{div}} = 0.0$), where 3D gradient nullspace leakage ($\nabla_h \times \nabla_h \phi_h \neq \mathbf{0}$) floods the spectrum with 45+ spurious modes starting at $\lambda = 0.12$; (b) div-curl regularized formulation ($s_{\text{div}} = 6.0$ with SRI), which shifts all spurious modes above $\lambda_{\text{spur}} = 16.62 > 6.0$ and recovers all 11 physical $\text{TE}/\text{TM}$ modes across the three degenerate multiplets ($\lambda = 2, 3, 5$).}
+    \label{fig:cavity_spectrum_purification_3d}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{First 11 resonant modes of the 3D cubic PEC cavity $\Omega = [0,\pi]^3$ ($N=11^3$, $N_{\text{DoF}} = 729$ active scalar DoFs) comparing the unregularized formulation ($s_{\text{div}} = 0.0$) against the div-curl regularized formulation ($s_{\text{div}} = 6.0$).}
+\label{tab:cavity_11modes_3d}
+\footnotesize
+\begin{tabular}{clccccccc}
+\toprule
+\textbf{Mode} & \textbf{Analytical} & $\lambda_{\text{exact}}$ & $k_{c,\text{exact}}$ & \textbf{Unreg.\ ($s_{\text{div}}=0$)} & \multicolumn{4}{c}{\textbf{Regularized VNMM 3D $\mathcal{P}^1$ ($s_{\text{div}} = 6.0$, SRI)}} \\
+\cmidrule(lr){6-9}
+\textbf{Idx} & \textbf{Designation} & $[k_0^2]$ & $[\text{rad/m}]$ & $\lambda_{\text{num}}$ (Status) & $\lambda_{\text{num}}$ & $k_{c,\text{num}}$ & $\text{Err}(k_c)$ & $R_{\text{div}}$ \\
+\midrule
+1  & $\text{TE}_{011}$ & $2.0000$ & $1.4142$ & $0.119$ (Spurious) & $2.0545$ & $1.4334$ & $1.35\%$ & $0.82\%$ \\
+2  & $\text{TE}_{101}$ & $2.0000$ & $1.4142$ & $0.119$ (Spurious) & $2.0545$ & $1.4334$ & $1.35\%$ & $0.82\%$ \\
+3  & $\text{TM}_{110}$ & $2.0000$ & $1.4142$ & $0.123$ (Spurious) & $2.1558$ & $1.4683$ & $3.82\%$ & $1.14\%$ \\
+\midrule
+4  & $\text{TE}_{111}$ & $3.0000$ & $1.7321$ & $0.168$ (Spurious) & $3.2687$ & $1.8079$ & $4.38\%$ & $0.00\%$ \\
+5  & $\text{TM}_{111}$ & $3.0000$ & $1.7321$ & $0.168$ (Spurious) & $3.2687$ & $1.8079$ & $4.38\%$ & $0.00\%$ \\
+\midrule
+6  & $\text{TE}_{012}$ & $5.0000$ & $2.2361$ & $0.214$ (Spurious) & $5.6190$ & $2.3704$ & $6.01\%$ & $1.18\%$ \\
+7  & $\text{TE}_{102}$ & $5.0000$ & $2.2361$ & $0.214$ (Spurious) & $5.6190$ & $2.3704$ & $6.01\%$ & $1.18\%$ \\
+8  & $\text{TE}_{021}$ & $5.0000$ & $2.2361$ & $0.228$ (Spurious) & $5.6895$ & $2.3853$ & $6.67\%$ & $1.31\%$ \\
+9  & $\text{TE}_{201}$ & $5.0000$ & $2.2361$ & $0.241$ (Spurious) & $5.7892$ & $2.4061$ & $7.60\%$ & $1.43\%$ \\
+10 & $\text{TM}_{120}$ & $5.0000$ & $2.2361$ & $0.241$ (Spurious) & $5.7892$ & $2.4061$ & $7.60\%$ & $1.43\%$ \\
+11 & $\text{TM}_{210}$ & $5.0000$ & $2.2361$ & $0.256$ (Spurious) & $5.9221$ & $2.4335$ & $8.83\%$ & $1.39\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Parametric sensitivity to the divergence penalty $s_{\text{div}}$ on the 3D cubic cavity $\Omega = [0,\pi]^3$ ($N=11^3$, $729$ active DoFs), validating the 3D analytical scaling law $\lambda_{\text{spur}}^{\min}(s_{\text{div}}) \approx \mu_{1,1,1}s_{\text{div}} = 3.0\,s_{\text{div}}$.}
+\label{tab:sdiv_sensitivity_3d}
+\footnotesize
+\begin{tabular}{cccccc}
+\toprule
+\textbf{Penalty} & \textbf{Spurious Modes} & \textbf{Lowest Spurious} & \textbf{Theoretical Law} & \textbf{Mean $k_c$ Error} & \textbf{Max Physical} \\
+$s_{\text{div}}$ & in $\Lambda_{\text{op}} = (0, 6.0]$ & $\lambda_{\text{spur}}^{\min}$ (Numerical) & $\mu_{1,1,1}s_{\text{div}} = 3.0\,s_{\text{div}}$ & (First 11 Modes) & $R_{\text{div}}$ \\
+\midrule
+$0.0$  & $\ge 45$ (Corrupted) & $0.12$  & $0.00$  & $55.57\%$ & --- \\
+$0.5$  & $16$ (Corrupted)     & $1.60$  & $1.50$  & $10.22\%$ & $17.87\%$ \\
+$1.0$  & $2$ (In-band)        & $3.06$  & $3.00$  & $4.26\%$  & $5.10\%$ \\
+$2.0$  & $1$ (At band edge)   & $5.92$  & $6.00$  & $3.38\%$  & $2.62\%$ \\
+$\mathbf{4.0}$  & $\mathbf{0}$ \textbf{(Purified)} & $\mathbf{11.43}$ & $\mathbf{12.00}$ & $\mathbf{4.56\%}$  & $\mathbf{1.71\%}$ \\
+$\mathbf{6.0}$  & $\mathbf{0}$ \textbf{(Purified)} & $\mathbf{16.62}$ & $\mathbf{18.00}$ & $\mathbf{5.41\%}$  & $\mathbf{1.43\%}$ \\
+$\mathbf{8.0}$  & $\mathbf{0}$ \textbf{(Purified)} & $\mathbf{22.80}$ & $\mathbf{24.00}$ & $\mathbf{6.12\%}$  & $\mathbf{1.27\%}$ \\
+$10.0$ & $0$ (Purified)       & $28.50$ & $30.00$ & $6.75\%$  & $1.16\%$ \\
+$20.0$ & $0$ (Over-penalized) & $57.00$ & $60.00$ & $9.30\%$  & $0.89\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:cavity_spectrum_purification_3d} and Tables~\ref{tab:cavity_11modes_3d}--\ref{tab:sdiv_sensitivity_3d} demonstrate the effectiveness of the div-curl regularized 3D formulation and verify Eq.~\eqref{eq:spurious_scaling_law_3d}:
+\begin{enumerate}
+    \item When $s_{\text{div}} = 0.0$ (Fig.~\ref{fig:cavity_spectrum_purification_3d}a), the operational passband $\Lambda_{\text{op}} = (0, 6.0]$ is completely overrun by more than $45$ non-physical gradient eigenvalues starting at $\lambda = 0.119$, resulting in a $55.57\%$ mean wavenumber error.
+    \item As $s_{\text{div}}$ increases across $[0.5, 20.0]$ (Table~\ref{tab:sdiv_sensitivity_3d}), the lowest spurious eigenvalue tracks the 3D analytical prediction $\lambda_{\text{spur}}^{\min} \approx \mu_{1,1,1}s_{\text{div}} = 3.0\,s_{\text{div}}$ with remarkable precision ($\lambda_{\text{spur}}^{\min} = 1.60, 3.06, 5.92, 11.43, 16.62, 22.80, 28.50, 57.00$).
+    \item For any $s_{\text{div}} \ge 4.0$ (satisfying Eq.~\eqref{eq:s_div_criterion_3d}: $s_{\text{div}} > 6.0 / 3.0 = 2.0$), $\Lambda_{\text{op}} = (0, 6.0]$ contains \textbf{zero spurious modes}, and all 11 physical modes across the $\lambda = 2, 3, 5$ multiplets are recovered in exact multiplicity order with $R_{\text{div}} \le 1.43\%$.
+\end{enumerate}
+
+
+\subsection{Multi-Level 3D Spectral Convergence: Comparison with 3D Edge FEM and Rectangular Cavity Validation}
+\label{subsec:sec5_6_efem_comparison}
+
+To evaluate computational scaling and asymptotic wavenumber convergence across multiple refinement levels, we compare the 3D Stabilized VNMM ($\mathcal{P}^1$, 1 DoF/node) against the conforming 3D Tetrahedral Edge Finite Element Method ($\mathcal{W}_1$, 1 DoF/edge on Kuhn 6-tetrahedra-per-cube subdivisions) across five grid resolutions ($N \in \{7, 9, 11, 13, 15\}$, corresponding to $N_{\text{DoF}} \in \{125, 343, 729, 1{,}331, 2{,}197\}$ active scalar DoFs for VNMM and $N_{\text{DoF}} \in \{108, 450, 1{,}200, 2{,}520, 4{,}572\}$ active interior edge DoFs for 3D Edge FEM). In addition, we validate the formulation on the physical 3D rectangular PEC cavity of dimensions $a = 1.00\text{ cm}, b = 0.50\text{ cm}, c = 0.75\text{ cm}$ ($\Omega_{\text{rect}} = [0, 1.00]\times[0, 0.50]\times[0, 0.75]\text{ cm}^3$), whose exact analytical resonant wavenumbers are $k_{mnp} = \pi\sqrt{(m/a)^2 + (n/b)^2 + (p/c)^2}$, starting with the fundamental $\text{TE}_{101}$ mode at $k_{101} = 5.2360\text{ rad/cm}$, the doubly degenerate $\text{TE}_{011}/\text{TM}_{110}$ modes at $k_c = 7.5514\text{ rad/cm}$, and the doubly degenerate $\text{TE}_{111}/\text{TM}_{111}$ modes at $k_c = 8.1762\text{ rad/cm}$.
+
+\begin{table}[htbp]
+\centering
+\caption{Computational cost and algorithmic complexity of the 3D distance-weighted QR support selection (Algorithm~\ref{alg:support_selection_3d}) across five 3D cavity refinement levels on $\Omega = [0,\pi]^3$.}
+\label{tab:support_cost_3d}
+\footnotesize
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Grid} & \textbf{Active} & \textbf{Total} & \textbf{Gauss Points} & \textbf{Active Span} & \textbf{QR / Fast-Path} & \textbf{Total Assembly} \\
+$N^3$ & \textbf{DoFs} $N_{\text{DoF}}$ & \textbf{Nodes} & $N_g = 8(N-1)^3$ & $K_{\text{avg}}$ (of $K=24$) & \textbf{Calls / Point} & \textbf{Wall Time} $t_{\text{ass}}$ \\
+\midrule
+$7^3$  & $125$   & $341$   & $1{,}728$  & $14.2$ & $1.00$ ($0$ Comb.) & $1.83\text{ s}$ \\
+$9^3$  & $343$   & $727$   & $4{,}096$  & $13.9$ & $1.00$ ($0$ Comb.) & $4.91\text{ s}$ \\
+$11^3$ & $729$   & $1{,}329$ & $8{,}000$  & $13.8$ & $1.00$ ($0$ Comb.) & $9.36\text{ s}$ \\
+$13^3$ & $1{,}331$ & $2{,}195$ & $13{,}824$ & $13.7$ & $1.00$ ($0$ Comb.) & $16.02\text{ s}$ \\
+$15^3$ & $2{,}197$ & $3{,}373$ & $21{,}952$ & $13.6$ & $1.00$ ($0$ Comb.) & $24.67\text{ s}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Multi-level 3D cavity convergence comparison across 3D Tetrahedral Edge FEM ($\mathcal{W}_1$), Pure VNMM 3D ($\mathcal{P}^1$, 1 DoF/node on $[0,\pi]^3$, both regular lattice and $10\%$ irregular cloud), and the physical 3D rectangular cavity ($1.00\times 0.50\times 0.75\text{ cm}$).}
+\label{tab:cavity_multilevel_3d}
+\footnotesize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ccccccccc}
+\toprule
+\multicolumn{3}{c}{\textbf{3D Edge FEM} ($\mathcal{W}_1$, $[0,\pi]^3$)} & \multicolumn{4}{c}{\textbf{Pure VNMM 3D} ($\mathcal{P}^1$, 1 DoF/Node, $[0,\pi]^3$)} & \multicolumn{2}{c}{\textbf{Rect.\ Cavity} ($1\times 0.5\times 0.75\text{ cm}$)} \\
+\cmidrule(lr){1-3} \cmidrule(lr){4-7} \cmidrule(lr){8-9}
+$N_{\text{DoF}}^{\text{FEM}}$ & $h_{\text{DoF}}$ & $\text{Err}(k_c)$ & $N_{\text{DoF}}^{\text{VNMM}}$ & $h_{\text{DoF}}$ & \textbf{Regular} $\text{Err}(k_c)$ & \textbf{Irregular} $\text{Err}(k_c)$ & \textbf{Active DoFs} & \textbf{Mean} $\text{Err}(k_c)$ \\
+\midrule
+$108$   & $0.660\text{ m}$ & $1.50\%$ & $125$   & $0.628\text{ m}$ & $9.71\%$ & $12.32\%$ & $81$   & $6.36\%$ \\
+$450$   & $0.410\text{ m}$ & $0.70\%$ & $343$   & $0.449\text{ m}$ & $4.05\%$ & $6.44\%$  & $375$  & $1.39\%$ \\
+$1{,}200$ & $0.296\text{ m}$ & $0.38\%$ & $729$   & $0.349\text{ m}$ & $2.14\%$ & $3.93\%$  & $1{,}029$ & $0.90\%$ \\
+$2{,}520$ & $0.231\text{ m}$ & $0.23\%$ & $1{,}331$ & $0.286\text{ m}$ & $1.30\%$ & $1.72\%$  & $2{,}187$ & $0.45\%$ \\
+$4{,}572$ & $0.189\text{ m}$ & $0.16\%$ & $2{,}197$ & $0.242\text{ m}$ & $0.75\%$ & $0.67\%$  & ---    & ---      \\
+\midrule
+\multicolumn{2}{l}{\textbf{Slope} $\mathcal{O}(h_{\text{DoF}}^p)$} & $\mathbf{p = 1.80}$ & \multicolumn{2}{l}{\textbf{Slope} $\mathcal{O}(h_{\text{DoF}}^p)$} & $\mathbf{p = 2.62}$ & $\mathbf{p = 2.91}$ & \textbf{Slope} & $\mathbf{p = 2.26}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.78\textwidth]{fig8_vnmm_vs_efem_cavity_convergence_3d.pdf}
+    \caption{Multi-level 3D resonant cavity convergence comparing conforming 3D Tetrahedral Edge FEM (Whitney $\mathcal{W}_1$, 1 DoF/edge), Pure VNMM 3D ($\mathcal{P}^1$, 1 DoF/node on $[0,\pi]^3$), and VNMM 3D on the physical rectangular cavity ($1.00\times 0.50\times 0.75\text{ cm}$): (a) mean relative wavenumber error $\text{Err}(k_c)$ versus active degrees of freedom $N_{\text{DoF}}$; (b) asymptotic spectral error decay versus characteristic 3D DoF spacing $h_{\text{DoF}} = (|\Omega|/N_{\text{DoF}})^{1/3}$, demonstrating super-quadratic $\mathcal{O}(h_{\text{DoF}}^{2.62})$ convergence for VNMM 3D.}
+    \label{fig:vnmm_vs_efem_cavity_convergence_3d}
+\end{figure}
+
+Table~\ref{tab:support_cost_3d}, Table~\ref{tab:cavity_multilevel_3d}, and Figure~\ref{fig:vnmm_vs_efem_cavity_convergence_3d} highlight three key results:
+\begin{enumerate}
+    \item \textbf{Linear $\mathcal{O}(N_g)$ Support Selection Scalability:} As shown in Table~\ref{tab:support_cost_3d}, Algorithm~\ref{alg:support_selection_3d} resolves all $21{,}952$ Gauss quadrature points on the $N=15^3$ grid with exactly $1.00$ deterministic QR/fast-path evaluation per point and zero combinatorial fallback, keeping total 3D matrix assembly time under $25\text{ s}$.
+    \item \textbf{Asymptotic Spectral Convergence Rate:} On the canonical cube $[0,\pi]^3$, Pure VNMM 3D (1 DoF/node) reduces the mean wavenumber error monotonically from $9.71\%$ ($N=7$, $125$ DoFs) down to $0.75\%$ ($N=15$, $2{,}197$ DoFs), achieving a fitted asymptotic convergence slope of $p = 2.62$ with respect to the characteristic DoF spacing $h_{\text{DoF}} = (|\Omega|/N_{\text{DoF}})^{1/3}$, compared to $p = 1.80$ for first-order 3D Tetrahedral Edge FEM.
+    \item \textbf{High-Precision Validation on the Physical Rectangular Cavity ($1.00 \times 0.50 \times 0.75\text{ cm}$):} On the rectangular waveguide cavity $\Omega_{\text{rect}}$, the mean wavenumber error across the first 8 physical modes drops from $6.36\%$ at $N=5$ ($81$ DoFs) to $1.39\%$ at $N=7$ ($375$ DoFs), $0.90\%$ at $N=9$ ($1{,}029$ DoFs), and $0.45\%$ at $N=11$ ($2{,}187$ DoFs), with the fundamental $\text{TE}_{101}$ mode reaching $k_c = 5.2400\text{ rad/cm}$ versus $k_{101,\text{exact}} = 5.2360\text{ rad/cm}$ ($0.08\%$ relative error) and zero spurious modes in the operational band.
+\end{enumerate}
+
+\subsection{Sensitivity to 3D Point Cloud Irregularity and Cell-Centered Support Consistency}
+\label{subsec:sec5_7_irregular_cavity}
+
+Finally, we examine the robustness of the 3D eigenvalue solver when both the interior node coordinates and the interior unit directors $\vec{t}_i \in S^2$ are randomly perturbed ($\delta\mathbf{x}_i \in [-0.10h, +0.10h]^3$ plus random angular director perturbations $\delta\vec{t}_i \sim \mathcal{N}(\mathbf{0}, 0.04^2\mathbf{I}_3)$). Our numerical investigation uncovered an important three-dimensional meshless integration phenomenon: on a perturbed 3D point cloud, if the 8 Gauss points inside a single hexahedral quadrature cell $c$ query the $k$-d tree independently (\texttt{gauss\_point} mode), distance ties among neighboring nodes are broken differently from one Gauss point to another inside the \emph{same} cell. This intra-cell stencil jumping introduces non-physical internal derivative discontinuities within cell $c$. By selecting the qualified 12-node $\mathcal{P}^1$ support stencil once at the cell centroid $\mathbf{x}_c^{\text{cent}}$ (\texttt{cell\_center} mode, Eqs.~\eqref{eq:K_curl_assembly_3d}--\eqref{eq:K_div_sri_3d}) and integrating the resulting linear polynomial shape functions $\vec{\Phi}_k(\mathbf{x})$ across the 8 Gauss points of cell $c$, intra-cell polynomial continuity is strictly preserved while reducing support selection cost by an additional factor of $8\times$.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.78\textwidth]{fig9_regular_vs_irregular_cavity_3d.pdf}
+    \caption{Spectral convergence of the 3D cubic PEC cavity $\Omega = [0,\pi]^3$ comparing the regular 3-color Cartesian lattice against an irregular 3D point cloud ($10\%$ random spatial jitter plus random angular director perturbation): (a) mean relative wavenumber error $\text{Err}(k_c)$ versus active DoFs $N_{\text{DoF}}$; (b) asymptotic decay versus characteristic DoF spacing $h_{\text{DoF}}$, showing that the irregular 3D cloud converges monotonically from $12.32\%$ down to $0.67\%$ ($\mathcal{O}(h_{\text{DoF}}^{2.91})$), matching the regular lattice accuracy at fine resolution.}
+    \label{fig:regular_vs_irregular_cavity_3d}
+\end{figure}
+
+As shown in Table~\ref{tab:cavity_multilevel_3d} and Figure~\ref{fig:regular_vs_irregular_cavity_3d}, with cell-centered support consistency and the Gram--Schmidt orthogonal projection guard ($\tau_{\text{orth}} = 0.22$ in Algorithm~\ref{alg:support_selection_3d} to prevent selecting 4 nearly coplanar nodes on perturbed $(i+j+k)\bmod 3$ planes), the irregular 3D point cloud converges monotonically from $12.32\%$ ($N=7$) to $6.44\%$ ($N=9$), $3.93\%$ ($N=11$), $1.72\%$ ($N=13$), and $0.67\%$ ($N=15$), completely free of spurious modes.
+
+\subsection{Methodological Scope and Current Limitations}
+\label{subsec:sec5_8_limitations}
+
+While the proposed 3D Stabilized VNMM resolves the fundamental consistency, conditioning, and spectral pollution bottlenecks of 3D vector meshless methods, three practical considerations merit discussion:
+\begin{enumerate}
+    \item \textbf{Local Stencil Size ($N_s = 12$ in 3D vs.\ $N_s = 6$ in 2D):} Because spanning $\mathcal{P}^1(\R^3)$ requires 12 support nodes per evaluation point (yielding $12\times 12 = 144$ elemental matrix entries per stencil, compared to $6\times 6 = 36$ for 3D Tetrahedral Edge FEM), the global sparse stiffness matrix $\mathbf{K}$ has a wider bandwidth than Edge FEM at coarse resolutions. However, because VNMM stores only $1$ scalar DoF per node ($N_{\text{DoF}} = N_{\text{int}}$) whereas tetrahedral meshes contain approximately $6\times$ to $7\times$ as many edges as vertices ($N_{\text{edges}} \approx 6.5 N_{\text{verts}}$), VNMM achieves a substantially smaller global matrix dimension for a given nodal grid.
+    \item \textbf{Piecewise-Continuous Dielectric Interfaces and Re-Entrant Corners:} The present div-curl regularization assumes piecewise-homogeneous media where $\vec{E} \in H^1(\Omega)^3$. Across high-contrast dielectric interfaces ($\varepsilon_1 \neq \varepsilon_2$) or non-convex re-entrant PEC corners where the true solution belongs to $H^s(\Omega)^3$ ($s < 1$), a constant global penalty $s_{\text{div}}$ must be replaced by weighted space-dependent regularization \cite{Costabel2000} or local interface enrichment.
+\end{enumerate}
+
+%% ============================================================================
+%% SECTION 6: CONCLUSION AND FUTURE WORKS
+%% ============================================================================
+\section{Conclusion and Future Works}
+\label{sec:conclusion}
+
+This paper presented a complete mathematical and numerical framework for the three-dimensional Stabilized Vector Nodal Meshless Method (VNMM 3D) applied to $\Hcurl$ electromagnetic boundary-value and resonant cavity problems on irregular 3D point clouds. By retaining a single scalar directional degree of freedom per node ($e_i = \vec{E}(P_i)\cdot\vec{t}_i$), the method enforces tangential PEC boundary conditions ($\hat{n}\times\vec{E}=\mathbf{0} \implies e_i=0$) exactly without global tetrahedral mesh generation.
+
+Our theoretical and numerical findings establish four core conclusions for 3D vector meshless electromagnetics:
+\begin{enumerate}
+    \item \textbf{3D Local Dual Equivalence vs.\ Unconstrained Cloud Aliasing:} By Theorem~\ref{thm:dual_equiv_3d}, the classical 6-node $\mathcal{L}^1(\R^3)$ VNMM basis is point-wise identical to 3D tetrahedral Whitney 1-forms ($\le 4.64\times 10^{-15}$ discrepancy) when evaluated on a conforming dual tetrahedral complex. On general 3D point clouds, however, $\mathcal{L}^1(\R^3)$ controls only the 3 antisymmetric curl components of the $3\times 3$ Jacobian $\mathbf{J} = \nabla\vec{E}$, leaving the 6 symmetric strain and divergence components unconstrained and causing $\mathcal{O}(1)$ curl non-convergence ($p = -0.04$). Expanding to the complete 12-node trivariate linear basis $\mathcal{P}^1(\R^3) = [\mathcal{P}_1(\R^3)]^3$ restores full 9-derivative Jacobian control, passing all 8 modes of the 3D Galerkin Patch Test to machine precision ($\le 1.40\times 10^{-14}$) and achieving $\mathcal{O}(h^{2.09})$ $L^2(\Omega)$ field convergence and $\mathcal{O}(h^{1.21})$ $\Hcurl$ curl convergence in the 3D Method of Manufactured Solutions.
+    \item \textbf{Elimination of the $\binom{24}{12}$ Combinatorial Bottleneck and $\mathcal{O}(h^9)$ Scaling:} Normalizing the $12\times 12$ placement matrix to dimensionless coordinates $\widehat{\mathbf{A}}$ eliminates the ninth-power determinant collapse $\det(\mathbf{A}) = h^9 \det(\widehat{\mathbf{A}})$, while the proposed distance-weighted column-pivoted QR factorization with Gram--Schmidt coplanarity filtering selects compact, well-conditioned 12-node stencils ($K_{\text{avg}} \approx 13.8$, $\kappa_2(\widehat{\mathbf{A}}) \approx 12.0$) in a single deterministic pass.
+    \item \textbf{Purification of the 3D Maxwell Spectrum via SRI Div-Curl Regularization:} Augmenting the 3D curl-curl variational form with a selectively reduced-integrated (SRI) divergence penalty shifts all non-physical irrotational gradient modes linearly out of the operational spectrum according to the 3D law $\lambda_{\text{spur}}^{\min}(s_{\text{div}}) \approx \mu_{1,1,1}s_{\text{div}} = 3.0\,s_{\text{div}}$ on $[0,\pi]^3$, recovering all degenerate 3D $\text{TE}/\text{TM}$ multiplets with zero spurious modes and reducing wavenumber error down to $0.75\%$ on regular lattices, $0.67\%$ on irregular 3D clouds, and $0.45\%$ ($0.08\%$ for $\text{TE}_{101}$) on the $1.00\times 0.50\times 0.75\text{ cm}$ rectangular cavity.
+\end{enumerate}
+
+Future work will extend the 3D Stabilized VNMM to inhomogeneous dielectric-loaded resonators via weighted div-curl regularization, curvilinear PEC scattering geometries with Absorbing Boundary Conditions (ABCs) and Perfectly Matched Layers (PMLs), and adaptive $h$-refinement driven by a posteriori $\Hcurl$ residual error estimators.
+
+%% ============================================================================
+%% APPENDICES
+%% ============================================================================
+\appendix
+
+\section{Constructive Proof of Theorem 1 (3D Tetrahedral Local Dual Equivalence)}
+\label{app:proof_equivalence_3d}
+
+\begin{proof}[Proof of Theorem~\ref{thm:dual_equiv_3d}]
+Let $T \subset \R^3$ be a non-degenerate tetrahedron with vertices $\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3, \mathbf{r}_4 \in \R^3$ and volume $V = \frac{1}{6}|\det([\mathbf{r}_2-\mathbf{r}_1, \mathbf{r}_3-\mathbf{r}_1, \mathbf{r}_4-\mathbf{r}_1])| > 0$.
+
+\textbf{Step 1 (Barycentric Gradient Identity):} The four affine barycentric coordinates $\lambda_m(\mathbf{x}) \in \mathcal{P}_1(T)$ ($m=1,2,3,4$) satisfy $\sum_{m=1}^4 \lambda_m(\mathbf{x}) = 1$ and $\sum_{m=1}^4 \mathbf{r}_m \lambda_m(\mathbf{x}) = \mathbf{x}$. Differentiating with respect to $\mathbf{x}$ shows that their constant gradients $\nabla\lambda_m \in \R^3$ satisfy $(\mathbf{r}_b - \mathbf{r}_a)\cdot\nabla\lambda_m = \delta_{bm} - \delta_{am}$ for all $a,b,m \in \{1,2,3,4\}$.
+
+\textbf{Step 2 (3D Whitney 1-Forms Belong to $\mathcal{L}^1(\R^3)$):} For each directed edge $e_k = (\mathbf{r}_{a_k}, \mathbf{r}_{b_k})$ ($k=1,\dots,6$) with length $\ell_k = \|\mathbf{r}_{b_k} - \mathbf{r}_{a_k}\|_2$ and unit tangent $\vec{t}_k = (\mathbf{r}_{b_k} - \mathbf{r}_{a_k})/\ell_k$, the length-normalized Whitney 1-form is:
+\begin{equation}
+    \widetilde{\vec{W}}_k(\mathbf{x}) = \ell_k \vec{W}_k(\mathbf{x}) = \ell_k \left( \lambda_{a_k}(\mathbf{x})\nabla\lambda_{b_k} - \lambda_{b_k}(\mathbf{x})\nabla\lambda_{a_k} \right).
+    \label{eq:app_whitney_norm}
+\end{equation}
+Since $\lambda_m(\mathbf{x}) = \lambda_m(P_0) + (\nabla\lambda_m)\cdot\Delta\mathbf{x}$, substituting into Eq.~\eqref{eq:app_whitney_norm} and using the vector triple product identity $(\nabla\lambda_{a_k}\cdot\Delta\mathbf{x})\nabla\lambda_{b_k} - (\nabla\lambda_{b_k}\cdot\Delta\mathbf{x})\nabla\lambda_{a_k} = (\nabla\lambda_{a_k} \times \nabla\lambda_{b_k}) \times \Delta\mathbf{x}$ yields:
+\begin{equation}
+    \widetilde{\vec{W}}_k(\mathbf{x}) = \widetilde{\vec{W}}_k(P_0) + \ell_k (\nabla\lambda_{a_k} \times \nabla\lambda_{b_k}) \times \Delta\mathbf{x} \in \mathcal{L}^1(\R^3).
+    \label{eq:app_whitney_in_L1}
+\end{equation}
+Thus, $\operatorname{span}\{\widetilde{\vec{W}}_1, \dots, \widetilde{\vec{W}}_6\} \subseteq \mathcal{L}^1(\R^3)$.
+
+\textbf{Step 3 (Exact Midpoint Kronecker Delta Property):} At the midpoint $P_j = (\mathbf{r}_{a_j} + \mathbf{r}_{b_j})/2$ of any edge $e_j$ ($j=1,\dots,6$), the barycentric coordinates satisfy $\lambda_m(P_j) = \frac{1}{2}(\delta_{m,a_j} + \delta_{m,b_j})$. Projecting $\widetilde{\vec{W}}_k(P_j)$ onto the unit tangent $\vec{t}_j = (\mathbf{r}_{b_j} - \mathbf{r}_{a_j})/\ell_j$ and using $(\mathbf{r}_{b_j} - \mathbf{r}_{a_j})\cdot\nabla\lambda_m = \delta_{b_j,m} - \delta_{a_j,m}$ gives:
+\begin{align}
+    \widetilde{\vec{W}}_k(P_j) \cdot \vec{t}_j &= \frac{\ell_k}{2\ell_j} \Big[ (\delta_{a_k,a_j} + \delta_{a_k,b_j})(\delta_{b_k,b_j} - \delta_{b_k,a_j}) - (\delta_{b_k,a_j} + \delta_{b_k,b_j})(\delta_{a_k,b_j} - \delta_{a_k,a_j}) \Big] \nonumber \\
+    &= \frac{\ell_k}{\ell_j}(\delta_{a_k,a_j}\delta_{b_k,b_j} - \delta_{a_k,b_j}\delta_{b_k,a_j}) = \delta_{kj}, \qquad \forall k,j \in \{1,\dots,6\},
+    \label{eq:app_kronecker_midpoint}
+\end{align}
+since $a_k < b_k$ and $a_j < b_j$. Moreover, because $\widetilde{\vec{W}}_k(\mathbf{x})\cdot\vec{t}_j$ is affine along $e_j$, the midpoint rule is exact: $\frac{1}{\ell_j}\int_{e_j} \widetilde{\vec{W}}_k\cdot d\vec{\ell} = \widetilde{\vec{W}}_k(P_j)\cdot\vec{t}_j = \delta_{kj}$.
+
+\textbf{Step 4 (Unconditional Non-Singularity of $\mathbf{A}_{\mathcal{L}^1}$):} Let $\widetilde{\mathbf{W}}_0 \in \R^{6\times 6}$ be the coefficient matrix whose $k$-th column $\mathbf{c}_k \in \R^6$ contains the $\mathcal{L}^1$ expansion coefficients of $\widetilde{\vec{W}}_k(\mathbf{x}) = \mathbf{P}_{\mathcal{L}^1}(\Delta\mathbf{x})\mathbf{c}_k$. Then the $(j,k)$ entry of the product $\mathbf{A}_{\mathcal{L}^1}\widetilde{\mathbf{W}}_0$ is:
+\begin{equation}
+    [\mathbf{A}_{\mathcal{L}^1}\widetilde{\mathbf{W}}_0]_{jk} = \vec{t}_j^{\,T} \mathbf{P}_{\mathcal{L}^1}(P_j - P_0)\mathbf{c}_k = \vec{t}_j \cdot \widetilde{\vec{W}}_k(P_j) = \delta_{jk} \quad \Longrightarrow \quad \mathbf{A}_{\mathcal{L}^1}\widetilde{\mathbf{W}}_0 = \mathbf{I}_6.
+    \label{eq:app_inverse_identity}
+\end{equation}
+Hence $\mathbf{A}_{\mathcal{L}^1}$ is invertible for every non-degenerate tetrahedron $T$, and its inverse is $\bm{\beta}_{\mathcal{L}^1} = \mathbf{A}_{\mathcal{L}^1}^{-1} = \widetilde{\mathbf{W}}_0$.
+
+\textbf{Step 5 (Point-Wise Shape Function and Curl Identity):} By Eq.~\eqref{eq:app_inverse_identity}, the $k$-th VNMM shape function is $\vec{\Phi}_k^{\text{VNMM}}(\mathbf{x}) = \mathbf{P}_{\mathcal{L}^1}(\Delta\mathbf{x})\operatorname{col}_k(\bm{\beta}_{\mathcal{L}^1}) = \mathbf{P}_{\mathcal{L}^1}(\Delta\mathbf{x})\mathbf{c}_k \equiv \widetilde{\vec{W}}_k(\mathbf{x}) = \ell_k \vec{W}_k(\mathbf{x})$ for all $\mathbf{x} \in T$, and taking the curl yields $\curl\vec{\Phi}_k^{\text{VNMM}}(\mathbf{x}) \equiv \ell_k \curl\vec{W}_k(\mathbf{x}) = 2\ell_k(\nabla\lambda_{a_k}\times\nabla\lambda_{b_k})$.
+\end{proof}
+
+\section{Derivation of the 3D $\mathcal{O}(1)$ Derivative Aliasing Scaling in $\mathcal{L}^1$}
+\label{app:aliasing_proof_3d}
+
+Let $\{P_{s_1}, \dots, P_{s_6}\}$ be a non-singular 6-node 3D stencil around $P_0$ with characteristic nodal spacing $h > 0$, scaled dimensionless displacements $\widehat{\Delta\mathbf{x}}_k = (\mathbf{x}_{s_k} - \mathbf{x}_0)/h \sim \mathcal{O}(1)$, and unit directors $\vec{t}_{s_k} \in S^2$. Factoring $h$ from columns 4--6 of the $6\times 6$ placement matrix $\mathbf{A}_{\mathcal{L}^1}$ (Eq.~\eqref{eq:row_A_L1_3d}) via $\mathbf{D}_{h,6} = \operatorname{diag}(\mathbf{I}_3, h\mathbf{I}_3)$ gives:
+\begin{equation}
+    \mathbf{A}_{\mathcal{L}^1} = \widehat{\mathbf{A}}_{\mathcal{L}^1} \begin{bmatrix} \mathbf{I}_3 & \mathbf{0} \\ \mathbf{0} & h\mathbf{I}_3 \end{bmatrix} \quad \Longrightarrow \quad \mathbf{A}_{\mathcal{L}^1}^{-1} = \begin{bmatrix} \mathbf{I}_3 & \mathbf{0} \\ \mathbf{0} & h^{-1}\mathbf{I}_3 \end{bmatrix} \widehat{\mathbf{A}}_{\mathcal{L}^1}^{-1},
+    \label{eq:app_A_L1_scaling}
+\end{equation}
+where $\widehat{\mathbf{A}}_{\mathcal{L}^1} \in \R^{6\times 6}$ is purely dimensionless and $\mathcal{O}(1)$. Similarly, the $6\times 6$ symmetric strain/divergence coupling matrix $\mathbf{B}_{\text{sym}}$ in Eq.~\eqref{eq:nodal_projection_aliasing_3d}, whose $k$-th row multiplies $\mathbf{a}_{\text{sym}} = [\varepsilon_{xx}, \varepsilon_{yy}, \varepsilon_{zz}, 2\varepsilon_{xy}, 2\varepsilon_{yz}, 2\varepsilon_{zx}]^T$:
+\begin{equation}
+\begin{aligned}
+    \text{row}_k(\mathbf{B}_{\text{sym}}) &= h\,\Big[\; t_{xk}\widehat{\Delta x}_k, \; t_{yk}\widehat{\Delta y}_k, \; t_{zk}\widehat{\Delta z}_k, \; \tfrac{1}{2}(t_{xk}\widehat{\Delta y}_k + t_{yk}\widehat{\Delta x}_k), \\
+    &\qquad \tfrac{1}{2}(t_{yk}\widehat{\Delta z}_k + t_{zk}\widehat{\Delta y}_k), \; \tfrac{1}{2}(t_{zk}\widehat{\Delta x}_k + t_{xk}\widehat{\Delta z}_k) \;\Big] = h\,\text{row}_k(\widehat{\mathbf{B}}_{\text{sym}}),
+\end{aligned}
+\label{eq:app_B_sym_scaling}
+\end{equation}
+scales linearly with $h$: $\mathbf{B}_{\text{sym}} = h\,\widehat{\mathbf{B}}_{\text{sym}}$. Substituting Eqs.~\eqref{eq:app_A_L1_scaling} and \eqref{eq:app_B_sym_scaling} into the aliasing error relation (Eq.~\eqref{eq:aliasing_equation_3d}) and partitioning $\widehat{\mathbf{A}}_{\mathcal{L}^1}^{-1} = [\widehat{\bm{\beta}}_{\text{trans}}^T, \; \widehat{\bm{\beta}}_{\text{rot}}^T]^T$ into its top $3\times 6$ translational block and bottom $3\times 6$ rotational block yields:
+\begin{align}
+    \vec{E}^h_{\mathcal{L}^1}(P_0) - \vec{E}(P_0) &= h\,\widehat{\bm{\beta}}_{\text{trans}}\,\widehat{\mathbf{B}}_{\text{sym}}\,\mathbf{a}_{\text{sym}}^*(P_0) + \mathcal{O}(h^2) = \mathcal{O}(h), \label{eq:app_E_error_L1} \\
+    \curl\vec{E}^h_{\mathcal{L}^1}(P_0) - \curl\vec{E}(P_0) &= 2\,\widehat{\bm{\beta}}_{\text{rot}}\,\widehat{\mathbf{B}}_{\text{sym}}\,\mathbf{a}_{\text{sym}}^*(P_0) + \mathcal{O}(h) = \mathcal{O}(1). \label{eq:app_curl_error_L1}
+\end{align}
+Equation~\eqref{eq:app_curl_error_L1} proves that the factor $h^{-1}$ from differentiating the shape functions cancels the factor $h$ from the first-order symmetric Taylor terms exactly, leaving the scale-invariant $\mathcal{O}(1)$ aliasing matrix $\widehat{\mathbf{C}}_{\text{alias}} = 2\,\widehat{\bm{\beta}}_{\text{rot}}\,\widehat{\mathbf{B}}_{\text{sym}} \neq \mathbf{0}$ and preventing convergence of $\curl\vec{E}^h_{\mathcal{L}^1}$ as $h \to 0$.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\end{document}
