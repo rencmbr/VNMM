@@ -745,7 +745,9 @@ def main():
     print(f"\nTotal de pontos de interpolação: {len(interp_points)} (144 em cada região)")
     
     # 4. Gráfico da configuração inicial
-    setup_plot_file = DIR_EXPERIMENTOS / "VNMM_Materials_setup.png"
+    fig_dir = ROOT_DIR / "paper" / "VNMM2D-Multimateriais" / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    setup_plot_file = fig_dir / "VNMM_Materials_setup.png"
     plot_materials_setup(
         domain=domain,
         node_coords=node_coords,
@@ -816,7 +818,9 @@ def main():
     # ==========================================================================
     # GERAÇÃO DO GRÁFICO DE RESULTADOS DE INTERPOLAÇÃO
     # ==========================================================================
-    results_plot_file = DIR_EXPERIMENTOS / "VNMM_Materials_interpolation_results.png"
+    fig_dir = ROOT_DIR / "paper" / "VNMM2D-Multimateriais" / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    results_plot_file = fig_dir / "VNMM_Materials_interpolation_results.png"
     print(f"\nGerando gráfico completo de resultados de interpolação...")
     plot_interpolation_results(
         domain=domain,

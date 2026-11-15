@@ -36,7 +36,7 @@ for p in [str(DIR_2D), str(ROOT_DIR), str(DIR_EXP)]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from VNMM_Materials import (
+from scripts.multimaterial_interpolation_2d import (
     create_two_material_domain,
     generate_material_nodes,
     generate_interpolation_points,
@@ -44,7 +44,7 @@ from VNMM_Materials import (
     get_mms_field,
     interpolate_vnmm_multimaterial
 )
-from VNMM_Dielectric_Cavity_Eigenvalues import compute_analytical_dielectric_cavity_modes
+from scripts.dielectric_cavity_eigenvalues_2d import compute_analytical_dielectric_cavity_modes
 from scripts.support_nodes_vnmm_2d_6_p1 import support_nodes_vnmm_2d_6_p1
 from src.gauss_quadrature_2d import get_gauss_points_weights_1d
 
@@ -462,7 +462,9 @@ def main():
     )
 
     # Gerar a figura detalhada
-    out_img = DIR_EXP / "VNMM_Jitter_Detailed_Study.png"
+    fig_dir = ROOT_DIR / "paper" / "VNMM2D-Multimateriais" / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    out_img = fig_dir / "VNMM_Jitter_Detailed_Study.png"
     print(f"\nGerando figura detalhada de sensibilidade a jitter...")
     plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=str(out_img))
 

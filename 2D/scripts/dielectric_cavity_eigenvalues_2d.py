@@ -560,7 +560,9 @@ def main():
     print("=" * 85)
 
     # 3. Gerar e salvar gráfico dos modos
-    plot_path = DIR_EXPERIMENTOS / "VNMM_Dielectric_Cavity_Modes.png"
+    fig_dir = ROOT_DIR / "paper" / "VNMM2D-Multimateriais" / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    plot_path = fig_dir / "VNMM_Dielectric_Cavity_Modes.png"
     print("\nGerando mapas de contorno dos modos ressonantes...")
     plot_dielectric_resonant_modes(
         results=results,

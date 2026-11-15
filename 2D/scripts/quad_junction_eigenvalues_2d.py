@@ -38,7 +38,7 @@ import matplotlib.patches as patches
 DIR_EXP = Path(__file__).resolve().parent
 DIR_2D = DIR_EXP.parent
 ROOT_DIR = DIR_2D.parent
-DIR_FIG = DIR_EXP / "figures"
+DIR_FIG = ROOT_DIR / "paper" / "VNMM2D-Multimateriais" / "figures"
 DIR_FIG.mkdir(parents=True, exist_ok=True)
 
 for p in [str(DIR_2D), str(ROOT_DIR), str(DIR_EXP)]:
