@@ -419,7 +419,7 @@ def main():
     print("=" * 75)
 
     res = solve_vnmm_pml_scattering(L=1.8, L0=1.0, a=0.35, k0=3.5, h=0.05, sigma_max=8.0, s_div=1.5)
-    print(f"Nós totais: {res['total_nodes']} (Ativos: {res['active_nodes']})")
+    print(f"Nós totais: {res['total_nodes']} (Active: {res['active_nodes']})")
     evaluate_and_plot(res, L=1.8, L0=1.0, a=0.35, k0=3.5)
 
 

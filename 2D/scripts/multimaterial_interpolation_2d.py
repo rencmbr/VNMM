@@ -68,7 +68,7 @@ def create_two_material_domain(Lx=2.0, Ly=1.0, x_interface=1.0, eps_r1=1.0, eps_
         },
         "interface": {
             "id": 0,
-            "name": "Interface Material (Gamma_int)",
+            "name": "Material Interface (Gamma_int)",
             "color_node": "#2E7D32", # Verde escuro
             "color_line": "#C62828", # Vermelho escuro
         }
@@ -761,7 +761,7 @@ def main():
     # TESTE 1: GALERKIN PATCH TEST (CAMPO AFIM LINEAR)
     # ==========================================================================
     print("\n" + "=" * 80)
-    print("      EXECUTANDO TESTE 1: GALERKIN PATCH TEST (CAMPO AFIM)")
+    print("      RUNNING TEST 1: GALERKIN PATCH TEST (CAMPO AFIM)")
     print("=" * 80)
     patch_field = get_patch_test_field()
     res_patch = interpolate_vnmm_multimaterial(
@@ -791,7 +791,7 @@ def main():
     # TESTE 2: METHOD OF MANUFACTURED SOLUTIONS (MMS)
     # ==========================================================================
     print("\n" + "=" * 80)
-    print("      EXECUTANDO TESTE 2: METHOD OF MANUFACTURED SOLUTIONS (MMS)")
+    print("      RUNNING TEST 2: METHOD OF MANUFACTURED SOLUTIONS (MMS)")
     print("=" * 80)
     mms_field = get_mms_field(domain)
     res_mms = interpolate_vnmm_multimaterial(

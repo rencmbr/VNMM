@@ -1,5 +1,5 @@
 """
-Cálculo de Modos Ressonantes e Autovalores TEz em Cavidades Carregadas com Dielétrico
+Cálculo de Modes Ressonantes e Autovalores TEz em Cavidades Carregadas com Dielétrico
 =====================================================================================
 Arquivo: VNMM_Dielectric_Cavity_Eigenvalues.py
 
@@ -60,7 +60,7 @@ def compute_analytical_dielectric_cavity_modes(Lx=np.pi, Ly=np.pi, d=np.pi/2.0, 
     """
     all_modes = []
 
-    # 1.1 Modos m = 0 (sem variação em y)
+    # 1.1 Modes m = 0 (sem variação em y)
     def f_m0(k0):
         kx1 = k0 * np.sqrt(eps1)
         kx2 = k0 * np.sqrt(eps2)
@@ -89,7 +89,7 @@ def compute_analytical_dielectric_cavity_modes(Lx=np.pi, Ly=np.pi, d=np.pi/2.0, 
             except Exception:
                 pass
 
-    # 1.2 Modos m >= 1 (com variação senoidal em y)
+    # 1.2 Modes m >= 1 (com variação senoidal em y)
     for m in range(1, 5):
         ky = m * np.pi / Ly
 
@@ -477,7 +477,7 @@ def plot_dielectric_resonant_modes(
         err_kc = abs(mode['kc'] - ref['k0']) / ref['k0'] * 100.0 if ref else 0.0
 
         ax.set_title(
-            f"Modo {m_idx + 1}: VNMM $\\lambda = {mode['lambda']:.4f}$ ($k_c = {mode['kc']:.4f}$)\n"
+            f"Mode {m_idx + 1}: VNMM $\\lambda = {mode['lambda']:.4f}$ ($k_c = {mode['kc']:.4f}$)\n"
             f"{ref_str} (Erro: {err_kc:.2f}%) | $R_{{\\mathrm{{div}}}} = {mode['r_div']:.2f}\\%$",
             fontsize=10.5, fontweight="bold"
         )
@@ -522,7 +522,7 @@ def main():
         Lx=Lx, Ly=Ly, d=x_int, eps1=eps1, eps2=eps2, max_modes=8
     )
 
-    print(f"{'Modo':<8} | {'Tipo':<10} | {'lambda_exato':<14} | {'kc_exato':<12}")
+    print(f"{'Mode':<8} | {'Tipo':<10} | {'lambda_exato':<14} | {'kc_exato':<12}")
     print("-" * 52)
     for idx, m in enumerate(analytical_modes, 1):
         print(f"{idx:<8} | {m['desc']:<10} | {m['lambda']:<14.6f} | {m['k0']:<12.6f}")
@@ -538,11 +538,11 @@ def main():
     )
 
     phys_modes = results['physical_modes']
-    print(f"Total de nós: {results['total_nodes']} (PEC: {results['pec_nodes']}, Ativos: {results['active_nodes']})")
-    print(f"Modos físicos purificados identificados (R_div < 5%): {len(phys_modes)}")
+    print(f"Total de nós: {results['total_nodes']} (PEC: {results['pec_nodes']}, Active: {results['active_nodes']})")
+    print(f"Modes físicos purificados identificados (R_div < 5%): {len(phys_modes)}")
 
     print("\n" + "=" * 85)
-    print(f"{'Modo':<5} | {'lambda_exato':<13} | {'lambda_VNMM':<13} | {'kc_exato':<10} | {'kc_VNMM':<10} | {'Erro kc (%)':<12} | {'R_div (%)':<10}")
+    print(f"{'Mode':<5} | {'lambda_exato':<13} | {'lambda_VNMM':<13} | {'kc_exato':<10} | {'kc_VNMM':<10} | {'Erro kc (%)':<12} | {'R_div (%)':<10}")
     print("=" * 85)
 
     errors_kc = []

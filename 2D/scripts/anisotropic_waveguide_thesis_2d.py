@@ -41,7 +41,7 @@ def is_inside_H(x, y, tol=1e-12):
 
 def run_test_4_3_2():
     print("\n" + "=" * 80)
-    print("  EXECUTANDO TESTE 4.3.2: GUIA DE ONDA COM SALIÊNCIA EM 'H' (ANISOTRÓPICO)")
+    print("  RUNNING TEST 4.3.2: GUIA DE ONDA COM SALIÊNCIA EM 'H' (ANISOTRÓPICO)")
     print("=" * 80)
 
     # Grid ajustado
@@ -108,7 +108,7 @@ def run_test_4_3_2():
     ]
     ax.plot([-2.5, -1.0, -1.0, 1.0, 1.0, 2.5, 2.5, 1.0, 1.0, -1.0, -1.0, -2.5, -2.5],
             [-1.5, -1.5, -0.5, -0.5, -1.5, -1.5, 1.5, 1.5, 0.5, 0.5, 1.5, 1.5, -1.5],
-            'k-', linewidth=2.0, label='Fronteira PEC')
+            'k-', linewidth=2.0, label='PEC Boundary')
 
     # Nós e vetores
     ax.quiver(coords[~is_pec, 0], coords[~is_pec, 1],
@@ -130,7 +130,7 @@ def run_test_4_3_2():
     fig_h_path = DIR_EXP / "Verificacao_Nuvens_Malha_Guia_H.png"
     plt.savefig(fig_h_path, dpi=200)
     plt.close()
-    print(f"Figura salva em: {fig_h_path}")
+    print(f"Figure saved to: {fig_h_path}")
 
     # Montagem variacional
     eps_tensor = np.array([[1.0, -1j], [1j, 4.0]], dtype=complex)
@@ -204,7 +204,7 @@ def is_inside_circ_guide(x, y, r_hole=1.0/3.0, tol=1e-12):
 
 def run_test_4_3_3():
     print("\n" + "=" * 80)
-    print("  EXECUTANDO TESTE 4.3.3: GUIA BIMATERIAL ANISOTRÓPICO COM FUROS PEC")
+    print("  RUNNING TEST 4.3.3: GUIA BIMATERIAL ANISOTRÓPICO COM FUROS PEC")
     print("=" * 80)
 
     # Subdomínio 1: [-2, 0] x [-1, 1] com furo em (-1, 0), r = 1/3
@@ -308,12 +308,12 @@ def run_test_4_3_3():
                 ax.add_patch(rect)
 
     # Fronteira externa e círculos
-    ax.plot([-2, 2, 2, -2, -2], [-1, -1, 1, 1, -1], 'k-', linewidth=2.0, label='Paredes PEC Externas')
-    ax.axvline(x=0.0, color="#1B5E20", linestyle="--", linewidth=2.0, label="Interface Material (x=0)")
+    ax.plot([-2, 2, 2, -2, -2], [-1, -1, 1, 1, -1], 'k-', linewidth=2.0, label='External PEC Walls')
+    ax.axvline(x=0.0, color="#1B5E20", linestyle="--", linewidth=2.0, label="Material Interface (x=0)")
 
     c1 = plt.Circle((-1.0, 0.0), r_hole, color="#D32F2F", fill=True, alpha=0.3)
     c2 = plt.Circle(( 1.0, 0.0), r_hole, color="#D32F2F", fill=True, alpha=0.3)
-    c1_line = plt.Circle((-1.0, 0.0), r_hole, color="#D32F2F", fill=False, linewidth=2.0, label="Cilindros PEC Internos")
+    c1_line = plt.Circle((-1.0, 0.0), r_hole, color="#D32F2F", fill=False, linewidth=2.0, label="Internal PEC Cylinders")
     c2_line = plt.Circle(( 1.0, 0.0), r_hole, color="#D32F2F", fill=False, linewidth=2.0)
     ax.add_patch(c1); ax.add_patch(c2); ax.add_patch(c1_line); ax.add_patch(c2_line)
 
@@ -337,7 +337,7 @@ def run_test_4_3_3():
     fig_circ_path = DIR_EXP / "Verificacao_Nuvens_Malha_Guia_Bimaterial_Circ.png"
     plt.savefig(fig_circ_path, dpi=200)
     plt.close()
-    print(f"Figura salva em: {fig_circ_path}")
+    print(f"Figure saved to: {fig_circ_path}")
 
     # Montagem variacional bimaterial
     # Meio 1: mu1 = 1, eps1 = [[1, 0], [0, 2]]
@@ -421,18 +421,18 @@ def main():
     res_433 = run_test_4_3_3()
 
     print("\n" + "=" * 80)
-    print("  RESULTADOS CONSOLIDADOS (VNMM 2D vs FEM DE REFERÊNCIA DA TESE)")
+    print("  CONSOLIDATED RESULTS (VNMM 2D vs FEM DE REFERÊNCIA DA TESE)")
     print("=" * 80)
     print("1. Guia com Saliência ('H') Homogêneo e Anisotrópico (Teste 4.3.2):")
     print("-" * 65)
-    print(f"{'Modo':<6} | {'Ref. FEM':<12} | {'VNMM 2D':<12} | {'Erro Relativo (%)':<18}")
+    print(f"{'Mode':<6} | {'Ref. FEM':<12} | {'VNMM 2D':<12} | {'Relative Error (%)':<18}")
     print("-" * 65)
     for i, (r, v, e) in enumerate(res_432):
         print(f"  {i+1:<4} | {r:<12.6f} | {v:<12.6f} | {e:<18.2f}")
 
     print("\n2. Guia Bimaterial Anisotrópico com Cilindros PEC (Teste 4.3.3):")
     print("-" * 65)
-    print(f"{'Modo':<6} | {'Ref. FEM':<12} | {'VNMM 2D':<12} | {'Erro Relativo (%)':<18}")
+    print(f"{'Mode':<6} | {'Ref. FEM':<12} | {'VNMM 2D':<12} | {'Relative Error (%)':<18}")
     print("-" * 65)
     for i, (r, v, e) in enumerate(res_433):
         print(f"  {i+1:<4} | {r:<12.6f} | {v:<12.6f} | {e:<18.2f}")

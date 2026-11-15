@@ -15,7 +15,7 @@ Aspectos Avaliados:
 1. Preservação da Completude Polinomial (Galerkin Patch Test sob Jitter).
 2. Convergência e Precisão de Interpolação (MMS e Salto Descontínuo Normal).
 3. Estabilidade Espectral dos Autovalores TEz em Cavidades Carregadas.
-4. Supressão de Modos Espúrios via Penalização de Divergente (R_div < 3%).
+4. Supressão de Modes Espúrios via Penalização de Divergente (R_div < 3%).
 5. Análise Estatística com Múltiplas Sementes (Média e Desvio Padrão).
 """
 
@@ -241,7 +241,7 @@ def run_comprehensive_jitter_analysis(jitter_levels=[0.0, 0.10, 0.25, 0.40, 0.50
 
     print("=" * 95)
     print("      ESTUDO DE SENSIBILIDADE A NUVENS IRREGULARES (JITTER: 0% A 50%)")
-    print(f"      Autovalores Analíticos Exatos (6 Modos): {ref_kc.round(4)}")
+    print(f"      Autovalores Analíticos Exatos (6 Modes): {ref_kc.round(4)}")
     print("=" * 95)
 
     for j_frac in jitter_levels:
@@ -298,8 +298,8 @@ def run_comprehensive_jitter_analysis(jitter_levels=[0.0, 0.10, 0.25, 0.40, 0.50
 
         print(f"Jitter {j_pct:2d}% | Patch Test: {res_entry['patch_error_l2']:.2e} | "
               f"MMS E: {res_entry['mms_error_l2']:5.2f}% | "
-              f"Modo 1 Err: {res_entry['mode1_err_mean']:4.2f} ± {res_entry['mode1_err_std']:4.2f}% | "
-              f"Erro Médio 6 Modos: {res_entry['mean_err_mean']:4.2f} ± {res_entry['mean_err_std']:4.2f}% | "
+              f"Mode 1 Err: {res_entry['mode1_err_mean']:4.2f} ± {res_entry['mode1_err_std']:4.2f}% | "
+              f"Erro Médio 6 Modes: {res_entry['mean_err_mean']:4.2f} ± {res_entry['mean_err_std']:4.2f}% | "
               f"R_div: {res_entry['r_div_mean']:.2f}%")
 
     return results_by_jitter, ref_kc
@@ -350,7 +350,7 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
     idx_pec = np.where(is_pec)[0]
     ax1.scatter(coords[idx_pec, 0], coords[idx_pec, 1], facecolor="#555555", marker="s", s=25, zorder=3, label="Paredes PEC Escalonadas")
 
-    ax1.set_title("(a) Geometria de Nuvem Irregular (Jitter = 25%)\nInterface Material Intacta com Interior Estocástico", fontsize=11, fontweight="bold")
+    ax1.set_title("(a) Geometria de Nuvem Irregular (Jitter = 25%)\nMaterial Interface Intacta com Interior Estocástico", fontsize=11, fontweight="bold")
     ax1.set_xlabel("Coordenada X (m)", fontsize=10)
     ax1.set_ylabel("Coordenada Y (m)", fontsize=10)
     ax1.set_xlim(-0.1, Lx + 0.1)
@@ -360,7 +360,7 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
     ax1.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize=8.0)
 
     # --------------------------------------------------------------------------
-    # Subplot (b): Comparação de kc para os 6 Modos
+    # Subplot (b): Comparação de kc para os 6 Modes
     # --------------------------------------------------------------------------
     ax2 = axes[0, 1]
     modes_idx = np.arange(1, 7)
@@ -377,16 +377,16 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
             edgecolor="black", label=j_label, zorder=4
         )
 
-    ax2.set_title("(b) Número de Onda de Corte $k_c$ dos 6 Primeiros Modos\nEstabilidade sob Diferentes Níveis de Perturbação", fontsize=11, fontweight="bold")
-    ax2.set_xlabel("Índice do Modo Ressonante", fontsize=10)
+    ax2.set_title("(b) Número de Onda de Corte $k_c$ dos 6 Primeiros Modes\nEstabilidade sob Diferentes Níveis de Perturbação", fontsize=11, fontweight="bold")
+    ax2.set_xlabel("Índice do Mode Ressonante", fontsize=10)
     ax2.set_ylabel("Número de Onda $k_c$ (rad/m)", fontsize=10)
     ax2.set_xticks(modes_idx)
-    ax2.set_xticklabels([f"Modo {m}" for m in modes_idx])
+    ax2.set_xticklabels([f"Mode {m}" for m in modes_idx])
     ax2.grid(True, linestyle=":", alpha=0.5)
     ax2.legend(loc="upper left", fontsize=8.5)
 
     # --------------------------------------------------------------------------
-    # Subplot (c): Curva de Erro Médio e Modo 1 vs Jitter com Barras de Erro
+    # Subplot (c): Curva de Erro Médio e Mode 1 vs Jitter com Barras de Erro
     # --------------------------------------------------------------------------
     ax3 = axes[1, 0]
     j_pcts = [r['jitter_pct'] for r in results_by_jitter]
@@ -398,12 +398,12 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
     ax3.errorbar(
         j_pcts, mean_errs, yerr=mean_stds, fmt='-o', color="#0D47A1",
         linewidth=2.0, capsize=4, capthick=1.5, markersize=6,
-        label="Erro Médio (6 Modos) $\\mu \\pm \\sigma$"
+        label="Erro Médio (6 Modes) $\\mu \\pm \\sigma$"
     )
     ax3.errorbar(
         j_pcts, mode1_errs, yerr=mode1_stds, fmt='--s', color="#C62828",
         linewidth=2.0, capsize=4, capthick=1.5, markersize=6,
-        label="Modo Fundamental $TE_{01}$ $\\mu \\pm \\sigma$"
+        label="Mode Fundamental $TE_{01}$ $\\mu \\pm \\sigma$"
     )
 
     ax3.axhspan(0, 3.0, color="#E8F5E9", alpha=0.4, label="Zona de Alta Precisão (< 3%)")
@@ -432,7 +432,7 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
     ax4_twin.set_ylabel("Erro de Interpolação MMS (%)", color="#6A1B9A", fontsize=10)
     ax4_twin.tick_params(axis='y', labelcolor="#6A1B9A")
 
-    ax4.set_title("(d) Supressão de Modos Espúrios sob Jitter\nPureza Física 100% Preservada com $R_{\\mathrm{div}} < 2.0\\%$", fontsize=11, fontweight="bold")
+    ax4.set_title("(d) Supressão de Modes Espúrios sob Jitter\nPureza Física 100% Preservada com $R_{\\mathrm{div}} < 2.0\\%$", fontsize=11, fontweight="bold")
     ax4.set_xlabel("Nível de Perturbação Nodal Jitter (%)", fontsize=10)
     ax4.set_ylabel("Razão de Divergência Média $R_{\\mathrm{div}}$ (%)", fontsize=10)
     ax4.set_xticks(j_pcts)

@@ -366,7 +366,7 @@ def plot_quad_junction_geometry(res, eps_map):
                 bbox=dict(boxstyle="round,pad=0.25", facecolor="white", alpha=0.85, edgecolor="#B0BEC5"))
 
     # Paredes PEC e Interfaces internas
-    ax.plot([-1, 1, 1, -1, -1], [-1, -1, 1, 1, -1], 'k-', linewidth=2.5, label="Fronteira PEC")
+    ax.plot([-1, 1, 1, -1, -1], [-1, -1, 1, 1, -1], 'k-', linewidth=2.5, label="PEC Boundary")
     ax.plot([-1, 1], [0, 0], color="#2E7D32", linestyle="--", linewidth=2.0, label="Interfaces Dielétricas (x=0, y=0)")
     ax.plot([0, 0], [-1, 1], color="#2E7D32", linestyle="--", linewidth=2.0)
 
@@ -464,7 +464,7 @@ def plot_quad_junction_modes(res, fem_vals):
 
         err = abs(mode['lambda'] - fem_vals[m_idx]) / fem_vals[m_idx] * 100.0
         ax.set_title(
-            f"Modo {m_idx+1}: VNMM λ={mode['lambda']:.4f} | FEM λ={fem_vals[m_idx]:.4f}\n"
+            f"Mode {m_idx+1}: VNMM λ={mode['lambda']:.4f} | FEM λ={fem_vals[m_idx]:.4f}\n"
             f"Erro={err:.2f}% | R_div={mode['r_div']:.2f}%",
             fontsize=10, fontweight='bold'
         )
@@ -472,7 +472,7 @@ def plot_quad_junction_modes(res, fem_vals):
         ax.set_ylabel("y (m)")
         ax.set_aspect('equal')
 
-    fig.suptitle("Modos Ressonantes TEz na Cavidade com Junção Quádrupla (4 Materiais)",
+    fig.suptitle("Modes Ressonantes TEz na Cavidade com Junção Quádrupla (4 Materiais)",
                  fontsize=13, fontweight='bold')
     plt.tight_layout()
     out_path = DIR_FIG / "VNMM_Quad_Junction_Modes.png"
@@ -499,15 +499,15 @@ def main():
 
     print("\n2. Executando VNMM 2D (Nuvem de Pontos, Nq=12, Gauss 3x3)...")
     res = solve_vnmm_quad_junction(Nq=12, Nc_half=12, eps_map=eps_map, s_div=10.0, gauss_pts=3, Tol_det=1e-5)
-    print(f"   Nós totais: {res['total_nodes']} (Ativos: {res['active_nodes']}, PEC: {res['pec_nodes']})")
-    print(f"   Modos físicos purificados encontrados (R_div < 5%): {len(res['physical_modes'])}")
+    print(f"   Nós totais: {res['total_nodes']} (Active: {res['active_nodes']}, PEC: {res['pec_nodes']})")
+    print(f"   Modes físicos purificados encontrados (R_div < 5%): {len(res['physical_modes'])}")
 
     print("\n   Primeiros 10 modos do VNMM encontrados:")
     for i, m in enumerate(res['physical_modes'][:10]):
         print(f"     VNMM[{i+1}]: lambda={m['lambda']:.6f}, R_div={m['r_div']:.2f}%")
 
     print("\n" + "-" * 75)
-    print(f"{'Modo':<6} | {'Ref. FEM':<12} | {'VNMM 2D':<12} | {'Erro Rel. (%)':<14} | {'R_div (%)':<10}")
+    print(f"{'Mode':<6} | {'Ref. FEM':<12} | {'VNMM 2D':<12} | {'Erro Rel. (%)':<14} | {'R_div (%)':<10}")
     print("-" * 75)
     for idx in range(min(6, len(fem_vals), len(res['physical_modes']))):
         r_f = fem_vals[idx]
