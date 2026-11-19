@@ -444,6 +444,74 @@ def compare_mlpg_mms_assemblies(
     return results
 
 
+def quantify_multiplicity_rayleigh_perturbation(
+    grid_sizes: Optional[List[int]] = None,
+    jitter_values: Optional[List[float]] = None,
+    alpha_s: float = 0.8,
+    seed: int = 42,
+) -> Dict[float, Any]:
+    """
+    Quantifies the spectral perturbation induced by spatially varying subdomain
+    overlap multiplicity M(x) = sum_I chi_{D_I}(x) on the continuous Rayleigh
+    quotient across the first 10 analytical TE_{nm} cavity modes on [0, pi]^2.
+    """
+    if grid_sizes is None:
+        grid_sizes = [15, 22, 29, 36, 43, 49]
+    if jitter_values is None:
+        jitter_values = [0.0, 0.25]
+
+    modes = [(1, 0), (0, 1), (1, 1), (2, 0), (0, 2), (2, 1), (1, 2), (2, 2), (3, 0), (0, 3)]
+    print("\n" + "=" * 95)
+    print("      CONTINUOUS MULTIPLICITY M(x) RAYLEIGH QUOTIENT PERTURBATION (FIRST 10 TE MODES)")
+    print("=" * 95)
+
+    out: Dict[float, Any] = {}
+    for jitter in jitter_values:
+        h_vals, mean_shifts, max_shifts = [], [], []
+        print(f">>> jitter = {jitter*100:.0f}% <<<")
+        for N in grid_sizes:
+            coords, vectors, is_bnd = generate_cavity_mesh(
+                Nx=N, Ny=N, jitter_frac=jitter, interior_type="random", seed=seed
+            )
+            subs = build_mlpg_subdomains_2d(coords, vectors, is_bnd, alpha_s=alpha_s)
+            errs_kc = []
+            for (n, m) in modes:
+                kc_exact = float(np.sqrt(n ** 2 + m ** 2))
+                num_M, den_M = 0.0, 0.0
+                for sub in subs:
+                    pts, wts = get_disk_quadrature_points_2d(
+                        sub.center, sub.radius_s, n_r=4, n_theta=12,
+                        domain_bounds=getattr(sub, 'domain_bounds', None)
+                    )
+                    x, y = pts[:, 0], pts[:, 1]
+                    Ex = m * np.cos(n * x) * np.sin(m * y)
+                    Ey = -n * np.sin(n * x) * np.cos(m * y)
+                    curl_z = -(n ** 2 + m ** 2) * np.cos(n * x) * np.cos(m * y)
+                    num_M += float(np.sum(wts * (curl_z ** 2)))
+                    den_M += float(np.sum(wts * (Ex ** 2 + Ey ** 2)))
+                kc_M = float(np.sqrt(num_M / den_M))
+                errs_kc.append(abs(kc_M - kc_exact) / kc_exact)
+
+            h_nom = np.pi / float(N - 1)
+            mean_e = float(np.mean(errs_kc))
+            max_e = float(np.max(errs_kc))
+            h_vals.append(h_nom)
+            mean_shifts.append(mean_e)
+            max_shifts.append(max_e)
+            print(f"  {N:2d}x{N:<2d} (h={h_nom:.4f}): mean |kc^(M)-kc|/kc = {mean_e*100:6.4f}%, max = {max_e*100:6.4f}%")
+
+        rate_shift, _ = np.polyfit(np.log(h_vals), np.log(mean_shifts), 1)
+        print(f"  Fitted mean shift decay rate: p = {rate_shift:.2f}")
+        out[jitter] = {
+            "h_values": h_vals,
+            "mean_shifts": mean_shifts,
+            "max_shifts": max_shifts,
+            "rate": float(rate_shift),
+        }
+
+    return out
+
+
 if __name__ == "__main__":
     print("\n>>> CASO 1: CONDIÇÕES DE DIRICHLET PURAS (MONTAGEM SIMÉTRICA)")
     res_dir = run_mlpg_mms_convergence_study(boundary_condition="dirichlet", assembly_mode="subdomain_galerkin")
@@ -453,3 +521,6 @@ if __name__ == "__main__":
 
     print("\n>>> CASO 3: COMPARAÇÃO MONTAGEM SIMÉTRICA VS. NÃO SIMÉTRICA")
     compare_mlpg_mms_assemblies(grid_sizes=[9, 13, 17])
+
+    print("\n>>> CASO 4: PERTURBAÇÃO ESPECTRAL DA MULTIPLICIDADE M(x)")
+    quantify_multiplicity_rayleigh_perturbation()
