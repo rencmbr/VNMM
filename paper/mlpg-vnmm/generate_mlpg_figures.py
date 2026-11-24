@@ -13,6 +13,7 @@ Figures produced (saved as PDF):
 4. fig_mlpg_cavity_jitter.pdf        (Figure 4: Cavity Cutoff Error under Jitter)
 5. fig_mlpg_cavity_stabilization.pdf (Figure 5: Orthogonal Energy Stabilization Convergence)
 6. fig_mlpg_benchmark_comparison.pdf (Figure 6: Computational Benchmark VNMM-MLPG vs Gauss)
+7. fig_mlpg_modal_fields.pdf         (Figure 7: Analytical vs Numerical Modal Fields on 21x21 and 49x49 Regular Grids)
 """
 
 import os
@@ -337,130 +338,279 @@ def plot_fig4_cavity_jitter():
 
 
 def plot_fig5_cavity_stabilization():
-    print("Generating Figure 5: Orthogonal Energy Stabilization Convergence...")
-    grids = [15, 22, 29, 36, 43, 49]
+    print("Generating Figure 5: Orthogonal Energy Stabilization Convergence (8 Grids: 15x15 to 81x81)...")
+    fine_path = os.path.join(DIR_2D, "scripts", "fine_mesh_beta_cstab_study.json")
+    ag_path = os.path.join(DIR_2D, "scripts", "alpha_gamma_beta2_study.json")
+    with open(fine_path, "r") as f:
+        fine_data = json.load(f)
+    with open(ag_path, "r") as f:
+        ag_data = json.load(f)
+
+    grids = fine_data["grids"]
     h = np.array([np.pi / (N - 1) for N in grids])
 
-    # Empirical cavity cutoff errors computed with dimensionless scaling alpha_stab = c_stab * (h / L)^2 (L = pi)
-    data = {
-        0.0: {
-            0: [3.87, 3.55, 2.58, 2.28, 2.03, 2.32],
-            20: [6.69, 3.31, 1.84, 2.11, 1.59, 1.92],
-            40: [11.14, 4.41, 2.06, 2.24, 1.34, 1.59],
-            70: [17.67, 7.11, 3.34, 2.87, 1.39, 1.29],
-            100: [23.81, 9.73, 5.38, 3.94, 1.67, 1.17]
-        },
-        0.25: {
-            0: [12.67, 5.70, 5.61, 5.15, 4.27, 3.95],
-            20: [4.44, 3.73, 4.37, 4.02, 3.46, 3.37],
-            40: [5.02, 4.39, 3.93, 3.17, 2.68, 2.80],
-            70: [11.88, 6.82, 3.77, 2.36, 1.77, 1.97],
-            100: [18.61, 10.12, 4.78, 2.17, 1.38, 1.45]
-        }
-    }
-
-    colors = {
-        0: '#7f7f7f',
-        20: '#1f77b4',
-        40: '#2ca02c',
-        70: '#ff7f0e',
-        100: '#d62728'
-    }
-    markers = {
-        0: 'x',
-        20: 's',
-        40: '^',
-        70: 'o',
-        100: 'd'
-    }
+    def get_rate(h_vals, err_vals):
+        p, _ = np.polyfit(np.log(h_vals), np.log(err_vals), 1)
+        return p
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.6), dpi=300)
 
-    def get_rate(h_vals, err_vals):
-        log_h = np.log(h_vals)
-        log_e = np.log(err_vals)
-        p, _ = np.polyfit(log_h, log_e, 1)
-        return p
+    for ax, j_key, title in [
+        (ax1, "0%", r'(a) Regular Lattice ($0\%$ Jitter)'),
+        (ax2, "25%", r'(b) Perturbed Point Cloud ($25\%$ Jitter)'),
+    ]:
+        errs_c0 = [r["mean_err_kc"] for r in fine_data["sweep"][j_key]["1.5"]["0"]]
+        errs_q70 = [r["mean_err_kc"] for r in fine_data["sweep"][j_key]["1.5"]["70"]]
+        errs_l1 = [r["mean_err_kc"] for r in ag_data["gamma_study"][j_key]["1.0"]["0.05"]]
+        errs_l2 = [r["mean_err_kc"] for r in ag_data["gamma_study"][j_key]["1.0"]["0.10"]]
+        errs_l4 = [r["mean_err_kc"] for r in ag_data["gamma_study"][j_key]["1.0"]["0.20"]]
 
-    # Panel (a): 0% Jitter (Regular)
-    for c_stab in [0, 20, 40, 70, 100]:
-        errs = data[0.0][c_stab]
-        p = get_rate(h, errs)
-        lbl = rf'$c_{{\mathrm{{stab}}}}={c_stab}$ ($p={p:.2f}$)' if c_stab > 0 else f'Unstabilized ($c=0$, $p={p:.2f}$)'
-        ls = '--' if c_stab == 0 else '-'
-        lw = 1.5 if c_stab == 0 else 2.0
-        ax1.loglog(h, errs, marker=markers[c_stab], linestyle=ls, color=colors[c_stab],
-                   linewidth=lw, markersize=6, label=lbl)
+        curves = [
+            (errs_c0, '#7f7f7f', 'x', '--', 1.5,
+             rf'Unstabilized ($c_{{\mathrm{{stab}}}} = 0$, $p={get_rate(h, errs_c0):.2f}$)'),
+            (errs_q70, '#ff7f0e', 'D', '-.', 1.8,
+             rf'Quadratic ($\gamma = 2, c_2 = 70$, $p={get_rate(h, errs_q70):.2f}$)'),
+            (errs_l1, '#2ca02c', '^', '-', 1.7,
+             rf'Linear ($\gamma = 1, c_{{\mathrm{{stab}}}} = 1.0$, $p={get_rate(h, errs_l1):.2f}$)'),
+            (errs_l2, '#1f77b4', 's', '-', 1.8,
+             rf'Linear ($\gamma = 1, c_{{\mathrm{{stab}}}} = 2.0$, $p={get_rate(h, errs_l2):.2f}$)'),
+            (errs_l4, '#d62728', 'o', '-', 2.2,
+             rf'Linear ($\gamma = 1, c_{{\mathrm{{stab}}}} = 4.0$, $p={get_rate(h, errs_l4):.2f}$)'),
+        ]
 
-    ax1.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]', fontsize=10.5)
-    ax1.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]', fontsize=10.5)
-    ax1.set_title(r'(a) Regular Lattice ($0\%$ Jitter)', fontsize=11.5)
-    ax1.grid(True, which="both", linestyle=':', alpha=0.5)
+        for errs, color, marker, ls, lw, lbl in curves:
+            ax.loglog(h, errs, marker=marker, linestyle=ls, color=color,
+                      linewidth=lw, markersize=5.5, label=lbl)
 
-    # Panel (b): 25% Jitter (Perturbed)
-    for c_stab in [0, 20, 40, 70, 100]:
-        errs = data[0.25][c_stab]
-        p = get_rate(h, errs)
-        lbl = rf'$c_{{\mathrm{{stab}}}}={c_stab}$ ($p={p:.2f}$)' if c_stab > 0 else f'Unstabilized ($c=0$, $p={p:.2f}$)'
-        ls = '--' if c_stab == 0 else '-'
-        lw = 1.5 if c_stab == 0 else 2.0
-        ax2.loglog(h, errs, marker=markers[c_stab], linestyle=ls, color=colors[c_stab],
-                   linewidth=lw, markersize=6, label=lbl)
-
-    ax2.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]', fontsize=10.5)
-    ax2.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]', fontsize=10.5)
-    ax2.set_title(r'(b) Perturbed Point Cloud ($25\%$ Jitter)', fontsize=11.5)
-    ax2.grid(True, which="both", linestyle=':', alpha=0.5)
-
-    xlim = (min(h) * 0.85, max(h) * 1.15)
-    ylim = (0.8, 30.0)
-    ax1.set_xlim(xlim)
-    ax1.set_ylim(ylim)
-    ax2.set_xlim(xlim)
-    ax2.set_ylim(ylim)
-
-    ax1.legend(loc='lower right', framealpha=0.92, fontsize=8.0)
-    ax2.legend(loc='lower right', framealpha=0.92, fontsize=8.0)
+        ax.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]', fontsize=10.5)
+        ax.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]', fontsize=10.5)
+        ax.set_title(title, fontsize=11.5)
+        ax.grid(True, which="both", linestyle=':', alpha=0.5)
+        ax.set_xlim((min(h) * 0.85, max(h) * 1.15))
+        ax.set_ylim((0.55, 28.0))
+        ax.legend(loc='lower right', framealpha=0.92, fontsize=7.6)
 
     fig.tight_layout()
     save_figure(fig, "fig_mlpg_cavity_stabilization")
 
 
 def plot_fig6_benchmark():
-    print("Generating Figure 6: Computational Benchmark Convergence...")
-    grids = [15, 22, 29, 36, 43, 49]
-    h_vals = np.array([np.pi / (N - 1) for N in grids])
+    print("Generating Figure 6: Computational Benchmark Convergence (Gauss 15..49 vs Linear MLPG 15..81)...")
+    ag_path = os.path.join(DIR_2D, "scripts", "alpha_gamma_beta2_study.json")
+    with open(ag_path, "r") as f:
+        ag_data = json.load(f)
 
-    fig, ax = plt.subplots(figsize=(6.4, 4.8), dpi=300)
-
+    grids_gauss = [15, 22, 29, 36, 43, 49]
+    h_gauss = np.array([np.pi / (N - 1) for N in grids_gauss])
     gauss_0 = [25.25, 13.46, 6.18, 4.22, 2.46, 1.53]
     gauss_25 = [24.67, 11.49, 5.94, 3.10, 1.96, 1.63]
 
-    mlpg_0 = [17.67, 7.11, 3.34, 2.87, 1.39, 1.29]
-    mlpg_25 = [11.88, 6.82, 3.77, 2.36, 1.77, 1.97]
+    grids_mlpg = ag_data["grids"]
+    h_mlpg = np.array([np.pi / (N - 1) for N in grids_mlpg])
+    mlpg_0 = [r["mean_err_kc"] for r in ag_data["gamma_study"]["0%"]["1.0"]["0.20"]]
+    mlpg_25 = [r["mean_err_kc"] for r in ag_data["gamma_study"]["25%"]["1.0"]["0.20"]]
 
-    p_g0, _ = np.polyfit(np.log(h_vals), np.log(gauss_0), 1)
-    p_g25, _ = np.polyfit(np.log(h_vals), np.log(gauss_25), 1)
-    p_m0, _ = np.polyfit(np.log(h_vals), np.log(mlpg_0), 1)
-    p_m25, _ = np.polyfit(np.log(h_vals), np.log(mlpg_25), 1)
+    p_g0, _ = np.polyfit(np.log(h_gauss), np.log(gauss_0), 1)
+    p_g25, _ = np.polyfit(np.log(h_gauss), np.log(gauss_25), 1)
+    p_m0, _ = np.polyfit(np.log(h_mlpg), np.log(mlpg_0), 1)
+    p_m25, _ = np.polyfit(np.log(h_mlpg), np.log(mlpg_25), 1)
 
-    ax.loglog(h_vals, gauss_0, 's--', color='#1f77b4', markerfacecolor='none', markeredgewidth=1.4,
+    fig, ax = plt.subplots(figsize=(6.4, 4.8), dpi=300)
+
+    ax.loglog(h_gauss, gauss_0, 's--', color='#1f77b4', markerfacecolor='none', markeredgewidth=1.4,
               linewidth=1.6, label=f'Gauss 0% ($p={p_g0:.2f}$)')
-    ax.loglog(h_vals, mlpg_0, 'o-', color='#1f77b4', linewidth=2.0,
+    ax.loglog(h_mlpg, mlpg_0, 'o-', color='#1f77b4', linewidth=2.0,
               label=f'MLPG 0% ($p={p_m0:.2f}$)')
 
-    ax.loglog(h_vals, gauss_25, 's--', color='#2ca02c', markerfacecolor='none', markeredgewidth=1.4,
+    ax.loglog(h_gauss, gauss_25, 's--', color='#2ca02c', markerfacecolor='none', markeredgewidth=1.4,
               linewidth=1.6, label=f'Gauss 25% ($p={p_g25:.2f}$)')
-    ax.loglog(h_vals, mlpg_25, 'o-', color='#2ca02c', linewidth=2.0,
+    ax.loglog(h_mlpg, mlpg_25, 'o-', color='#2ca02c', linewidth=2.0,
               label=f'MLPG 25% ($p={p_m25:.2f}$)')
 
+    ax.axvline(np.pi / 48.0, color='#7f7f7f', linestyle=':', linewidth=1.0, alpha=0.75)
+    ax.set_xlim((min(h_mlpg) * 0.88, max(h_mlpg) * 1.12))
+    ax.set_ylim((0.55, 38.0))
     ax.set_xlabel(r'Nominal Nodal Spacing $h_{\mathrm{nom}}$ [m]')
     ax.set_ylabel(r'Mean Cutoff Error $\overline{\varepsilon}_{k_c}$ [\%]')
     ax.grid(True, which="both", linestyle=':', alpha=0.5)
-    ax.legend(loc='upper left', framealpha=0.92, fontsize=8.5, ncol=2)
+    ax.legend(loc='upper left', framealpha=0.92, fontsize=8.3, ncol=2)
 
     fig.tight_layout()
     save_figure(fig, "fig_mlpg_benchmark_comparison")
+
+
+def plot_fig7_modal_fields():
+    print("Generating Figure 7: Analytical vs Numerical Modal Fields (21x21 and 49x49 Regular Grids)...")
+    from scipy.sparse.linalg import eigsh
+    from src.mlpg_assembler_2d import assemble_mlpg_matrices_2d, get_disk_quadrature_points_2d
+    from src.eigen_solver_cavity_2d import apply_pec_boundary_conditions
+
+    Lx = np.pi
+    n_vis = 75
+    gx = np.linspace(0.0, Lx, n_vis)
+    XX, YY = np.meshgrid(gx, gx)
+    vis_pts = np.column_stack([XX.ravel(), YY.ravel()])
+    sl = slice(3, n_vis - 2, 6)
+
+    # Modes aligned in their respective eigenspaces: TE10 (modes 0,1), TE11 (mode 2), TE21 (modes 5,6)
+    mode_defs = [
+        ("TE10", r"$TE_{10}$", 1, 0, [0, 1]),
+        ("TE11", r"$TE_{11}$", 1, 1, [2]),
+        ("TE21", r"$TE_{21}$", 2, 1, [5, 6]),
+    ]
+
+    def exact_te(pts, n, m):
+        x, y = pts[:, 0], pts[:, 1]
+        return np.column_stack([-float(m) * np.cos(n * x) * np.sin(m * y), float(n) * np.sin(n * x) * np.cos(m * y)])
+
+    def solve_regular_grid_modes(N: int, s_div: float, alpha_stab: float):
+        coords, vectors, is_bnd = generate_cavity_mesh(
+            Nx=N, Ny=N, Lx=Lx, Ly=Lx, interior_type="random", jitter_frac=0.0, seed=42
+        )
+        subs = build_mlpg_subdomains_2d(
+            coords=coords, vectors=vectors, is_boundary=is_bnd, alpha_s=0.80,
+            domain_bounds=(0.0, Lx, 0.0, Lx)
+        )
+        K_curl, M_mat, _ = assemble_mlpg_matrices_2d(
+            subdomains=subs, s_div=0.0, alpha_stab=0.0, assembly_mode="subdomain_galerkin"
+        )
+        K_tot, _, _ = assemble_mlpg_matrices_2d(
+            subdomains=subs, s_div=s_div, alpha_stab=alpha_stab, assembly_mode="subdomain_galerkin"
+        )
+        K_red, M_red, int_idx = apply_pec_boundary_conditions(K_tot, M_mat, is_bnd)
+        Kc_red, _, _ = apply_pec_boundary_conditions(K_curl, M_mat, is_bnd)
+        Kd_red = (K_red - Kc_red) / s_div
+
+        vals, vecs = eigsh(K_red, k=25, M=M_red, sigma=-0.05, which="LM", tol=1e-10)
+        order = np.argsort(vals)
+        vals = np.real(vals[order])
+        vecs = np.real(vecs[:, order])
+
+        phys_dofs = []
+        for i in range(len(vals)):
+            if vals[i] <= 0.05:
+                continue
+            v = vecs[:, i]
+            ec = float(v @ (Kc_red @ v))
+            ed = float(v @ (Kd_red @ v))
+            if (ed / max(ec, 1e-12)) * 100.0 <= 50.0:
+                ef = np.zeros(len(subs), dtype=float)
+                ef[int_idx] = v
+                phys_dofs.append(ef)
+            if len(phys_dofs) >= 10:
+                break
+
+        quad_cache = []
+        for sub in subs:
+            pts, wts = get_disk_quadrature_points_2d(
+                sub.center, sub.radius_s, n_r=4, n_theta=12,
+                domain_bounds=getattr(sub, "domain_bounds", None)
+            )
+            quad_cache.append((pts, wts, sub.eval_shape_functions(pts), sub.stencil_nodes))
+
+        def eval_broken(e_full):
+            return [np.einsum("mqk,k->mq", n_all, e_full[st]) for _, _, n_all, st in quad_cache]
+
+        def b_inner(e1, e2):
+            return sum(float(np.sum(wts * np.sum(a * b, axis=1))) for a, b, (_, wts, _, _) in zip(e1, e2, quad_cache))
+
+        def eval_global(e_full):
+            e_sum = np.zeros((len(vis_pts), 2), dtype=float)
+            m_cnt = np.zeros(len(vis_pts), dtype=float)
+            for sub in subs:
+                diff = vis_pts - sub.center
+                mask = (diff[:, 0] ** 2 + diff[:, 1] ** 2) <= (sub.radius_s ** 2 + 1e-14)
+                if not np.any(mask):
+                    continue
+                n_all = sub.eval_shape_functions(vis_pts[mask])
+                e_sum[mask] += np.einsum("mqk,k->mq", n_all, e_full[sub.stencil_nodes])
+                m_cnt[mask] += 1.0
+            return e_sum / np.maximum(m_cnt[:, None], 1.0)
+
+        ex_plots, num_plots = {}, {}
+        for m_key, _, n_m, m_m, idx_list in mode_defs:
+            ex_q = [exact_te(pts, n_m, m_m) for pts, _, _, _ in quad_cache]
+            ex_q_norm = float(np.sqrt(b_inner(ex_q, ex_q)))
+            ex_unit = [arr / ex_q_norm for arr in ex_q]
+
+            if len(idx_list) == 1:
+                e_raw = phys_dofs[idx_list[0]]
+                eb = eval_broken(e_raw)
+                eb_n = float(np.sqrt(b_inner(eb, eb)))
+                ip = b_inner([arr / eb_n for arr in eb], ex_unit)
+                sgn = 1.0 if ip >= 0.0 else -1.0
+                e_aligned = (sgn / eb_n) * e_raw
+            else:
+                d0, d1 = phys_dofs[idx_list[0]], phys_dofs[idx_list[1]]
+                b0, b1 = eval_broken(d0), eval_broken(d1)
+                s0, s1 = 1.0 / float(np.sqrt(b_inner(b0, b0))), 1.0 / float(np.sqrt(b_inner(b1, b1)))
+                u0 = [arr * s0 for arr in b0]
+                u1 = [arr * s1 for arr in b1]
+                G = np.array([[b_inner(u0, u0), b_inner(u0, u1)], [b_inner(u1, u0), b_inner(u1, u1)]])
+                rhs = np.array([b_inner(u0, ex_unit), b_inner(u1, ex_unit)])
+                coeff = np.linalg.solve(G, rhs)
+                e_comb = coeff[0] * s0 * d0 + coeff[1] * s1 * d1
+                bc = eval_broken(e_comb)
+                bc_n = float(np.sqrt(b_inner(bc, bc)))
+                ip = b_inner([arr / bc_n for arr in bc], ex_unit)
+                sgn = 1.0 if ip >= 0.0 else -1.0
+                e_aligned = (sgn / bc_n) * e_comb
+
+            e_ex_vis = exact_te(vis_pts, n_m, m_m)
+            ex_peak = float(np.max(np.linalg.norm(e_ex_vis, axis=1)))
+            ex_plots[m_key] = e_ex_vis / ex_peak
+            num_plots[m_key] = eval_global(e_aligned) * (ex_q_norm / ex_peak)
+
+        return ex_plots, num_plots
+
+    ex_21, num_21 = solve_regular_grid_modes(N=21, s_div=15.0, alpha_stab=0.0)
+    s_div_49 = 15.0 * ((1.0 / 20.0) / (1.0 / 48.0)) ** 1.5
+    alpha_49 = 4.0 / 48.0
+    _, num_49 = solve_regular_grid_modes(N=49, s_div=s_div_49, alpha_stab=alpha_49)
+
+    fig, axes = plt.subplots(3, 3, figsize=(11.0, 9.4), dpi=300, sharex=True, sharey=True)
+    levels = np.linspace(0.0, 1.0, 21)
+    cf = None
+
+    row_specs = [
+        (ex_21, "Exact Analytical\n" + r"$y$ [m]"),
+        (num_21, r"VNMM-MLPG ($21\times 21$)" + "\n" + r"$y$ [m]"),
+        (num_49, r"VNMM-MLPG ($49\times 49$)" + "\n" + r"$y$ [m]"),
+    ]
+
+    for r_idx, (field_dict, r_lbl) in enumerate(row_specs):
+        for c_idx, (m_key, m_lbl, _, _, _) in enumerate(mode_defs):
+            ax = axes[r_idx, c_idx]
+            fld = field_dict[m_key]
+            ex_f = fld[:, 0].reshape(n_vis, n_vis)
+            ey_f = fld[:, 1].reshape(n_vis, n_vis)
+            mag = np.hypot(ex_f, ey_f)
+
+            cf = ax.contourf(XX, YY, mag, levels=levels, cmap="viridis", extend="max")
+            ax.quiver(
+                XX[sl, sl], YY[sl, sl], ex_f[sl, sl], ey_f[sl, sl],
+                color="white", alpha=0.88, scale=15.0, width=0.0045, headwidth=3.5, pivot="mid",
+            )
+            ax.set_aspect("equal")
+            ax.set_xlim(0.0, Lx)
+            ax.set_ylim(0.0, Lx)
+            ax.set_xticks([0.0, Lx / 2.0, Lx])
+            ax.set_xticklabels([r"$0$", r"$\pi/2$", r"$\pi$"])
+            ax.set_yticks([0.0, Lx / 2.0, Lx])
+            ax.set_yticklabels([r"$0$", r"$\pi/2$", r"$\pi$"])
+
+            if r_idx == 0:
+                ax.set_title(m_lbl, fontsize=11.0, pad=6)
+            if c_idx == 0:
+                ax.set_ylabel(r_lbl, fontsize=10.0)
+            if r_idx == 2:
+                ax.set_xlabel(r"$x$ [m]", fontsize=10.0)
+
+    fig.subplots_adjust(left=0.09, right=0.89, top=0.94, bottom=0.07, wspace=0.08, hspace=0.10)
+    cbar_ax = fig.add_axes([0.91, 0.11, 0.018, 0.79])
+    cbar = fig.colorbar(cf, cax=cbar_ax, ticks=np.linspace(0.0, 1.0, 6))
+    cbar.set_label(r"Normalized Field Magnitude $|\vec{E}| / \|\vec{E}^*\|_{\infty}$", fontsize=10.0)
+    save_figure(fig, "fig_mlpg_modal_fields")
 
 
 def main():
@@ -473,8 +623,9 @@ def main():
     plot_fig4_cavity_jitter()
     plot_fig5_cavity_stabilization()
     plot_fig6_benchmark()
+    plot_fig7_modal_fields()
     print("=" * 65)
-    print("All 6 manuscript figures generated successfully as PDF.")
+    print("All 7 manuscript figures generated successfully as PDF.")
     print("=" * 65)
 
 
