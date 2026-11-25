@@ -13,7 +13,7 @@ Figures produced (saved as PDF):
 4. fig_mlpg_cavity_jitter.pdf        (Figure 4: Cavity Cutoff Error under Jitter)
 5. fig_mlpg_cavity_stabilization.pdf (Figure 5: Orthogonal Energy Stabilization Convergence)
 6. fig_mlpg_benchmark_comparison.pdf (Figure 6: Computational Benchmark VNMM-MLPG vs Gauss)
-7. fig_mlpg_modal_fields.pdf         (Figure 7: Analytical vs Numerical Modal Fields on 21x21 and 49x49 Regular Grids)
+7. fig_mlpg_modal_fields.pdf         (Figure 7: Analytical vs Numerical Modal Fields on 21x21 and 81x81 Regular Grids)
 """
 
 import os
@@ -440,7 +440,7 @@ def plot_fig6_benchmark():
 
 
 def plot_fig7_modal_fields():
-    print("Generating Figure 7: Analytical vs Numerical Modal Fields (21x21 and 49x49 Regular Grids)...")
+    print("Generating Figure 7: Analytical vs Numerical Modal Fields (21x21 and 81x81 Regular Grids)...")
     from scipy.sparse.linalg import eigsh
     from src.mlpg_assembler_2d import assemble_mlpg_matrices_2d, get_disk_quadrature_points_2d
     from src.eigen_solver_cavity_2d import apply_pec_boundary_conditions
@@ -564,9 +564,9 @@ def plot_fig7_modal_fields():
         return ex_plots, num_plots
 
     ex_21, num_21 = solve_regular_grid_modes(N=21, s_div=15.0, alpha_stab=0.0)
-    s_div_49 = 15.0 * ((1.0 / 20.0) / (1.0 / 48.0)) ** 1.5
-    alpha_49 = 4.0 / 48.0
-    _, num_49 = solve_regular_grid_modes(N=49, s_div=s_div_49, alpha_stab=alpha_49)
+    s_div_81 = 15.0 * ((1.0 / 20.0) / (1.0 / 80.0)) ** 1.5
+    alpha_81 = 4.0 / 80.0
+    _, num_81 = solve_regular_grid_modes(N=81, s_div=s_div_81, alpha_stab=alpha_81)
 
     fig, axes = plt.subplots(3, 3, figsize=(11.0, 9.4), dpi=300, sharex=True, sharey=True)
     levels = np.linspace(0.0, 1.0, 21)
@@ -575,7 +575,7 @@ def plot_fig7_modal_fields():
     row_specs = [
         (ex_21, "Exact Analytical\n" + r"$y$ [m]"),
         (num_21, r"VNMM-MLPG ($21\times 21$)" + "\n" + r"$y$ [m]"),
-        (num_49, r"VNMM-MLPG ($49\times 49$)" + "\n" + r"$y$ [m]"),
+        (num_81, r"VNMM-MLPG ($81\times 81$)" + "\n" + r"$y$ [m]"),
     ]
 
     for r_idx, (field_dict, r_lbl) in enumerate(row_specs):
