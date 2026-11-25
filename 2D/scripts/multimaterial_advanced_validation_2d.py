@@ -297,20 +297,19 @@ def run_permittivity_contrast_sweep(eps_list=[2.25, 4.0, 9.8, 16.0]):
 # GERAÇÃO DA FIGURA 4 (PAINEL AVANÇADO)
 # ==============================================================================
 
-def plot_advanced_validation(res_jump, res_jitter, ref_kc, res_eps, output_path=None):
+def plot_advanced_validation(res_jump, res_eps, output_path=None):
     """
-    Gera um painel com 4 subgráficos demonstrando a robustez do método:
+    Gera um painel com 3 subgráficos demonstrando a robustez do método:
     (a) Salto de Descontinuidade Normal Ex(x) em corte 1D.
     (b) Continuidade Tangencial Ey(x) em corte 1D.
-    (c) Estabilidade de Autovalores sob Jitter Nodal (0%, 10%, 20%).
-    (d) Frequência de Corte Fundamental vs Contraste Dielétrico (eps_r in [2.25, 16.0]).
+    (c) Frequência de Corte Fundamental vs Contraste Dielétrico (eps_r in [2.25, 16.0]).
     """
-    fig, axes = plt.subplots(2, 2, figsize=(15, 11))
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5.2))
     
     # --------------------------------------------------------------------------
     # (a) Salto da componente normal Ex(x)
     # --------------------------------------------------------------------------
-    ax1 = axes[0, 0]
+    ax1 = axes[0]
     x_e = res_jump['x_eval']
     x_int = 1.0
     
@@ -337,7 +336,7 @@ def plot_advanced_validation(res_jump, res_jitter, ref_kc, res_eps, output_path=
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="#C62828", alpha=0.9)
     )
 
-    ax1.set_title("(a) Salto de Descontinuidade Normal $E_x(x)$ em $y = L_y / 2$\nZero Borramento (*Smearing*) ou Oscilações de Gibbs", fontsize=11, fontweight="bold")
+    ax1.set_title("(a) Salto de Descontinuidade Normal $E_x(x)$\nZero Borramento (*Smearing*) ou Gibbs", fontsize=11, fontweight="bold")
     ax1.set_xlabel("Coordenada X (m)", fontsize=10)
     ax1.set_ylabel("Componente Normal $E_x$ (V/m)", fontsize=10)
     ax1.set_xlim(0.05, 1.95)
@@ -347,7 +346,7 @@ def plot_advanced_validation(res_jump, res_jitter, ref_kc, res_eps, output_path=
     # --------------------------------------------------------------------------
     # (b) Continuidade da componente tangencial Ey(x)
     # --------------------------------------------------------------------------
-    ax2 = axes[0, 1]
+    ax2 = axes[1]
     ax2.axvline(x=x_int, color="#C62828", linestyle="--", linewidth=1.8, label="Interface $\\Gamma_{\\mathrm{int}}$ ($x=1.0$)")
     ax2.axvspan(0.0, x_int, color="#E3F2FD", alpha=0.45)
     ax2.axvspan(x_int, 2.0, color="#FFF3E0", alpha=0.45)
@@ -364,7 +363,7 @@ def plot_advanced_validation(res_jump, res_jitter, ref_kc, res_eps, output_path=
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="#2E7D32", alpha=0.9)
     )
 
-    ax2.set_title("(b) Continuidade da Componente Tangencial $E_y(x)$ em $y = L_y / 2$\nPreservação Rigorosa de $\\mathbf{n} \\times [\\mathbf{E}] = \\mathbf{0}$", fontsize=11, fontweight="bold")
+    ax2.set_title("(b) Continuidade Tangencial $E_y(x)$\nPreservação Rigorosa de $\\mathbf{n} \\times [\\mathbf{E}] = \\mathbf{0}$", fontsize=11, fontweight="bold")
     ax2.set_xlabel("Coordenada X (m)", fontsize=10)
     ax2.set_ylabel("Componente Tangencial $E_y$ (V/m)", fontsize=10)
     ax2.set_xlim(0.05, 1.95)
@@ -372,62 +371,37 @@ def plot_advanced_validation(res_jump, res_jitter, ref_kc, res_eps, output_path=
     ax2.legend(loc="upper right", fontsize=8.5)
 
     # --------------------------------------------------------------------------
-    # (c) Estudo de Robustez a Jitter Nodal
+    # (c) Varredura de Contraste de Permissividade
     # --------------------------------------------------------------------------
-    ax3 = axes[1, 0]
-    modes_idx = np.arange(1, 7)
-    width = 0.22
-
-    ax3.plot(modes_idx, ref_kc, 'k--o', linewidth=1.8, label="Analítico Exato", zorder=5)
-
-    colors_j = ["#1565C0", "#F57C00", "#7B1FA2"]
-    for idx_j, r in enumerate(res_jitter):
-        j_pct = int(r['jitter'] * 100)
-        ax3.bar(
-            modes_idx + (idx_j - 1) * width, r['kc_num'],
-            width=width, color=colors_j[idx_j], alpha=0.75,
-            edgecolor="black", label=f"VNMM Jitter {j_pct}% (Erro Médio: {r['mean_err']:.2f}%)"
-        )
-
-    ax3.set_title("(c) Estudo de Perturbação Estocástica Nodal (*Jitter Study*)\nEstabilidade Espectral sob Nuvens Irregulares (0% a 20%)", fontsize=11, fontweight="bold")
-    ax3.set_xlabel("Índice do Modo Ressonante", fontsize=10)
-    ax3.set_ylabel("Número de Onda de Corte $k_c$ (rad/m)", fontsize=10)
-    ax3.set_xticks(modes_idx)
-    ax3.set_xticklabels([f"Modo {m}" for m in modes_idx])
-    ax3.grid(True, linestyle=":", alpha=0.6)
-    ax3.legend(loc="upper left", fontsize=8.5)
-
-    # --------------------------------------------------------------------------
-    # (d) Varredura de Contraste de Permissividade
-    # --------------------------------------------------------------------------
-    ax4 = axes[1, 1]
+    ax3 = axes[2]
     eps_vals = [r['eps_r2'] for r in res_eps]
     kc_refs = [r['mode1_kc_ref'] for r in res_eps]
     kc_nums = [r['mode1_kc_num'] for r in res_eps]
     errs_p1 = [r['mode1_err_pct'] for r in res_eps]
 
-    ax4.plot(eps_vals, kc_refs, 'k-d', linewidth=2.0, markersize=8, label="Exato (Modo Fundamental $TE_{01}$)")
-    ax4.plot(eps_vals, kc_nums, 'b--s', linewidth=1.8, markersize=7, label="VNMM 2D (Modo Fundamental $TE_{01}$)")
+    ax3.plot(eps_vals, kc_refs, 'k-d', linewidth=2.0, markersize=8, label="Exato (Modo Fundamental $TE_{01}$)")
+    ax3.plot(eps_vals, kc_nums, 'b--s', linewidth=1.8, markersize=7, label="VNMM 2D (Modo Fundamental $TE_{01}$)")
 
     # Eixo secundário para o erro percentual
-    ax4_twin = ax4.twinx()
-    ax4_twin.bar(eps_vals, errs_p1, width=0.8, color="#D32F2F", alpha=0.35, label="Erro Relativo $k_c$ (%)")
-    ax4_twin.set_ylabel("Erro Relativo do Modo 1 (%)", color="#B71C1C", fontsize=10)
-    ax4_twin.set_ylim(0, 3.5)
-    ax4_twin.tick_params(axis='y', labelcolor="#B71C1C")
+    ax3_twin = ax3.twinx()
+    ax3_twin.bar(eps_vals, errs_p1, width=0.8, color="#D32F2F", alpha=0.35, label="Erro Relativo $k_c$ (%)")
+    ax3_twin.set_ylabel("Erro Relativo do Modo 1 (%)", color="#B71C1C", fontsize=10)
+    ax3_twin.set_ylim(0, 3.5)
+    ax3_twin.tick_params(axis='y', labelcolor="#B71C1C")
 
-    ax4.set_title("(d) Sensibilidade ao Contraste Dielétrico $\\varepsilon_{r2} / \\varepsilon_{r1}$\nErro do Modo Fundamental Inferior a $1.1\\%$ até $\\varepsilon_{r2}=16.0$", fontsize=11, fontweight="bold")
-    ax4.set_xlabel("Permissividade Relativa $\\varepsilon_{r2}$ (Teflon, Standard, Alumina, Cerâmica)", fontsize=10)
-    ax4.set_ylabel("Frequência de Corte $k_c$ (rad/m)", fontsize=10)
-    ax4.set_xticks(eps_vals)
-    ax4.set_xticklabels([f"$\\varepsilon_r={v}$" for v in eps_vals])
-    ax4.grid(True, linestyle=":", alpha=0.6)
-    ax4.legend(loc="upper right", fontsize=8.5)
+    ax3.set_title("(c) Sensibilidade ao Contraste Dielétrico $\\varepsilon_{r2} / \\varepsilon_{r1}$\nErro do Modo Fundamental $< 1.1\\%$ até $\\varepsilon_{r2}=16.0$", fontsize=11, fontweight="bold")
+    ax3.set_xlabel("Permissividade Relativa $\\varepsilon_{r2}$ (Teflon, Standard, Alumina, Cerâmica)", fontsize=10)
+    ax3.set_ylabel("Frequência de Corte $k_c$ (rad/m)", fontsize=10)
+    ax3.set_xticks(eps_vals)
+    ax3.set_xticklabels([f"$\\varepsilon_r={v}$" for v in eps_vals])
+    ax3.grid(True, linestyle=":", alpha=0.6)
+    ax3.legend(loc="upper right", fontsize=8.5)
 
     plt.tight_layout()
 
     if output_path:
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
+        print(f"Gráfico de validações avançadas salvo com sucesso em: {output_path}")
         print(f"Gráfico de validações avançadas salvo com sucesso em: {output_path}")
 
 
@@ -460,12 +434,12 @@ def main():
     for r in res_eps:
         print(f"eps_r2 = {r['eps_r2']:5.2f}: Modo 1 kc = {r['mode1_kc_num']:.4f} (ref: {r['mode1_kc_ref']:.4f}, erro: {r['mode1_err_pct']:.2f}%) | Erro Médio = {r['mean_err_pct']:.2f}%")
 
-    # 4. Gerar Figura 4
+    # 4. Gerar Figura
     fig_dir = ROOT_DIR / "paper" / "VNMM2D-Multimateriais" / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
     plot_file = fig_dir / "VNMM_Interface_Jump_and_Robustness.png"
-    print(f"\nGerando painel gráfico avançado (Figura 4)...")
-    plot_advanced_validation(res_jump, res_jitter, ref_kc, res_eps, output_path=str(plot_file))
+    print(f"\nGerando painel gráfico de interface e contraste...")
+    plot_advanced_validation(res_jump, res_eps, output_path=str(plot_file))
     print("Validações avançadas concluídas com sucesso!")
 
 

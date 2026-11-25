@@ -379,11 +379,11 @@ def plot_quad_junction_geometry(res, eps_map):
     is_inner = (~is_pec) & (~is_int)
 
     ax.quiver(coords[is_inner, 0], coords[is_inner, 1], vectors[is_inner, 0], vectors[is_inner, 1],
-              color="#1565C0", scale=28, width=0.0035, alpha=0.85, label="Nós Internos (±45°)")
+              color="#1565C0", scale=48, width=0.0026, headwidth=3.5, headlength=4.0, alpha=0.85, label="Nós Internos (±45°)")
     ax.quiver(coords[is_int, 0], coords[is_int, 1], vectors[is_int, 0], vectors[is_int, 1],
-              color="#2E7D32", scale=24, width=0.0045, label="Nós de Interface (Tangenciais)")
+              color="#2E7D32", scale=42, width=0.0032, headwidth=3.5, headlength=4.0, label="Nós de Interface (Tangenciais)")
     ax.quiver(coords[is_pec, 0], coords[is_pec, 1], vectors[is_pec, 0], vectors[is_pec, 1],
-              color="#C62828", scale=24, width=0.0045, label="Nós PEC (Escalonados)")
+              color="#C62828", scale=42, width=0.0032, headwidth=3.5, headlength=4.0, label="Nós PEC (Escalonados)")
 
     ax.set_title("Teste 1: Cavidade com Junção Quádrupla de 4 Materiais\nNuvem de Pontos e Diretores Vetoriais",
                  fontsize=12, fontweight='bold')

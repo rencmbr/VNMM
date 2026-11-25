@@ -464,13 +464,15 @@ def plot_dielectric_resonant_modes(
         cf = ax.contourf(Xg, Yg, E_norm, levels=25, cmap="magma", alpha=0.85, zorder=2)
         plt.colorbar(cf, ax=ax, fraction=0.046, pad=0.04, label="$\\|\\mathbf{E}\\| / \\|\\mathbf{E}\\|_{\\max}$")
 
-        # Quiver do campo vetorial
+        # Quiver do campo vetorial (normalizado por E_max para visualização nítida da descontinuidade normal)
         step = 2
+        Ex_plot = E_grid[:, 0].reshape((ny_eval, nx_eval)) / E_max
+        Ey_plot = E_grid[:, 1].reshape((ny_eval, nx_eval)) / E_max
         ax.quiver(
             Xg[::step, ::step], Yg[::step, ::step],
-            E_grid[:, 0].reshape((ny_eval, nx_eval))[::step, ::step],
-            E_grid[:, 1].reshape((ny_eval, nx_eval))[::step, ::step],
-            color="white", alpha=0.9, width=0.0035, scale=25.0, zorder=3
+            Ex_plot[::step, ::step],
+            Ey_plot[::step, ::step],
+            color="white", alpha=0.92, width=0.0055, headwidth=3.8, headlength=4.5, scale=13.0, zorder=3
         )
 
         ref_str = f"Ref: $\\lambda={ref['lambda']:.4f}, k_c={ref['k0']:.4f}$" if ref else ""

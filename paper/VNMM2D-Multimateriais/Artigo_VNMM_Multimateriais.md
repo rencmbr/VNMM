@@ -8,14 +8,7 @@
 
 ## Resumo
 
-Este trabalho apresenta a formulação, implementação e validação sistemática do **Vector Nodal Meshless Method (VNMM 2D)** para a resolução de problemas de autovalores eletromagnéticos em meios arbitrários, incorporando interfaces materiais descontínuas, anisotropia constitutiva complexa e geometrias com singularidades de borda e quina. O método opera sobre uma **nuvem de pontos pura e não-estruturada**, onde cada nó carrega um único grau de liberdade escalar associado à projeção direcional unitária do campo elétrico ao longo de um vetor diretor local ($\mathbf{t}_i$), preservando a conformidade tangencial em espaços $H(\mathbf{curl})$. 
-
-A integração fraca de Galerkin utiliza uma malha de fundo cartesiana uniforme estritamente como suporte de quadratura numérica, enquanto a interpolação independe de qualquer conectividade de malha. A segregação estrita de suportes por subdomínio material e o alinhamento tangencial de nós de interface garantem a continuidade de $E_t$ e o salto abrupto da componente normal $E_n$ sem borramento artificial (*smearing*) ou oscilações de Gibbs. A formulação foi validada através de uma progressão abrangente de benchmarks:
-1. **Consistência e Convergência Nodal:** Galerkin Patch Test com precisão de máquina ($10^{-16}$) e Method of Manufactured Solutions (MMS) com convergência quadrática $\mathcal{O}(h^2)$ para o campo elétrico e linear $\mathcal{O}(h)$ para o rotacional.
-2. **Resiliência a Nuvens Irregulares (*Jitter Study* de 0% a 50%):** Prova de invariância exata da completude polinomial sob severa desordem estocástica e demonstração de que nuvens irregulares moderadas (10% a 25% de perturbação) reduzem o erro médio espectral em mais de 50% frente a grades regulares, com supressão total de modos espúrios ($R_{\mathrm{div}} < 3.3\%$).
-3. **Cavidade Parcialmente Preenchida com Dielétrico:** Concordância estrita dos autovalores fundamentais e superiores frente às raízes analíticas de equações transcendentais de dispersão em ampla faixa de contrastes de permissividade ($\varepsilon_r \in [2.25, 16.0]$).
-4. **Benchmarks Clássicos Anisotrópicos da Literatura:** Excelente concordância numérica com soluções de referência por FEM de altíssima densidade (>400k graus de liberdade) para o guia com saliência em "H" homogêneo e anisotrópico ($\overline{\overline{\varepsilon}}_r$ hermitiano) e para o guia bimaterial anisotrópico com inclusões circulares PEC internas.
-5. **Junção Quádrupla de Quatro Materiais (*Quad-Junction*):** Validação rigorosa frente à singularidade de quatro interfaces ortogonais com contraste $9:1$ encontrando-se em um único vértice, obtendo erro de apenas $0.34\%$ no modo fundamental em relação ao FEM $H_z$ ($100\times 100$).
+Este trabalho apresenta a formulação e a validação do **Vector Nodal Meshless Method (VNMM 2D)** para a resolução de problemas de autovalores eletromagnéticos em meios heterogêneos, descontínuos e anisotrópicos sobre nuvens de pontos não-estruturadas. O método atribui a cada nó um único grau de liberdade escalar correspondente à projeção do campo elétrico ao longo de um vetor diretor unitário ($\mathbf{t}_i$), combinando uma base vetorial polinomial linear completa ($\mathcal{P}^1$), seleção local via árvore *k-d* e regularização variacional *div-curl*. Para modelar interfaces materiais sem borramento numérico (*smearing*) nem oscilações de Gibbs, introduz-se uma **regra de partição estrita de suportes**, confinando cada estêncil ao seu subdomínio material e alinhando tangencialmente os diretores de interface ($\mathbf{t}_j = \boldsymbol{\tau}$), o que impõe continuidade exata em $E_t$ enquanto permite saltos abruptos na componente normal ($[E_n] \neq 0$). Os resultados demonstram consistência de ordem 1 em precisão de máquina ($10^{-16}$), convergência quadrática $\mathcal{O}(h^2)$ no campo elétrico, redução superior a 50% no erro espectral em nuvens moderadamente irregulares (10% a 25% de perturbação) frente a grades regulares, e ausência total de modos espúrios em cavidades com alto contraste dielétrico ($\varepsilon_r \in [2.25, 16.0]$), guias anisotrópicos com quinas reentrantes, inclusões circulares PEC e junções quádruplas de quatro materiais ($0.34\%$ de erro no modo fundamental).
 
 **Palavras-chave:** Métodos Sem Malha Nodais, Nuvens de Pontos, Espaços $H(\mathbf{curl})$, Meios Anisotrópicos, Interfaces Multimateriais, Problemas de Autovalores Eletromagnéticos, Supressão de Modos Espúrios.
 
@@ -23,20 +16,21 @@ A integração fraca de Galerkin utiliza uma malha de fundo cartesiana uniforme 
 
 ## 1. Introdução
 
-A análise eletromagnética de dispositivos em alta frequência (guias de onda carregados com dielétricos, cavidades ressonantes, filtros de micro-ondas e meios girotópicos) depende historicamente da formulação fraca no espaço de Sobolev $H(\mathbf{curl})$. No Método dos Elementos Finitos (FEM) clássico, a aproximação desse espaço é obtida por elementos de aresta de Nédélec, que garantem a continuidade da componente tangencial do campo ao longo das arestas compartilhadas, permitindo saltos na componente normal e evitando modos espúrios. Todavia, a geração e refinamento de malhas conformes tridimensionais ou adaptativas para geometrias com saliências, quinas reentrantes ou inclusões curvas acarretam elevado custo computacional e restrições topológicas severas.
+A modelagem numérica de dispositivos eletromagnéticos de alta frequência — como guias de onda carregados com dielétricos, cavidades ressonantes e componentes com meios girotópicos — fundamenta-se na formulação fraca das equações de Maxwell no espaço de Sobolev $H(\mathbf{curl})$ (Harrington, 2001; Collin, 1991). No Método dos Elementos Finitos (FEM) convencional, aproximações nodais escalares que interpolam independentemente as componentes cartesianas ($E_x, E_y$) falham em problemas vetoriais por três razões clássicas: impõem continuidade $C^0$ artificial na componente normal através de interfaces materiais, não capturam adequadamente singularidades de campo em quinas e bordas condutoras, e violam o complexo discreto de de Rham, contaminando o espectro com modos espúrios irrotacionais (Jin, 2014). Os elementos finitos de aresta de Nédélec superam essas patologias ao associar os graus de liberdade à circulação tangencial nas arestas, garantindo conformidade nativa em $H(\mathbf{curl})$; contudo, dependem criticamente da geração e adaptação de malhas conformes de alta qualidade, o que impõe severo custo geométrico em fronteiras curvas ou reentrantes.
 
-Os Métodos Sem Malha (*Meshless Methods*, MFree) surgiram como uma alternativa atrativa por discretizarem o domínio exclusivamente por meio de um conjunto de nós espalhados, dispensando conectividade pré-definida de elementos. Contudo, a extensão de métodos nodais escalares para problemas vetoriais de Maxwell enfrentou tradicionalmente três obstáculos críticos:
-1. **Poluição Espectral e Modos Espúrios:** O uso de funções de forma nodais convencionais que aproximam componentes cartesianas independentemente falha em reproduzir o espaço nulo do operador rotacional, infestando o espectro discreto com soluções não-físicas de divergente não-nulo;
-2. **Tratamento de Interfaces e Contornos:** A tentativa de compartilhar suportes entre materiais com propriedades distintas induz um borramento numérico (*smearing*) excessivo sobre as interfaces e oscilações de Gibbs em virtude da descontinuidade da componente normal do campo elétrico;
-3. **Sensibilidade à Dispersão e Irregularidade Nodal:** Muitas abordagens sem malha vetoriais anteriores degradam expressivamente sua estabilidade ou precisão quando os nós perdem a regularidade cartesiana ou sofrem variações angulares em suas direções.
+Para eliminar a dependência de conectividade de malha, os Métodos Sem Malha (*Meshless Methods*) constroem aproximações diretamente sobre nuvens de pontos espalhadas pelo domínio (Belytschko et al., 1994). Entretanto, as primeiras adaptações vetoriais baseadas em funções de forma escalares (como EFG, MLPG e PIM) herdaram as mesmas limitações do FEM nodal: surgimento de modos espúrios e travamento das descontinuidades normais em interfaces, exigindo multiplicadores de Lagrange ou projeções auxiliares de divergente nulo. Com o objetivo de obter conformidade vetorial nativa sem malha, Lima e Mesquita (2017) propuseram o *Edge Meshless Method* (EMM), formulando funções de forma vetoriais a partir da circulação do campo ao longo de segmentos de aresta distribuídos no domínio. Ao tomar o limite assintótico em que o comprimento dessas arestas tende a zero, Ortiz et al. (2021, 2023) estabeleceram o **Vector Nodal Meshless Method (VNMM)**, no qual cada aresta degenera em um nó vetorial $(\mathbf{x}_i, \mathbf{t}_i)$ com um único grau de liberdade escalar dado pela projeção direcional $e_i = \mathbf{E}(\mathbf{x}_i)\cdot\mathbf{t}_i$.
 
-O **Vector Nodal Meshless Method (VNMM)** supera essas limitações ao associar a cada nó do domínio um vetor unitário diretor $\mathbf{t}_i$. O grau de liberdade nodal deixa de ser uma componente cartesiana fixa e passa a ser a projeção direcional escalar do campo $\mathbf{E}(\mathbf{x}_i) \cdot \mathbf{t}_i$. As funções de forma locais são construídas para satisfazer estritamente a propriedade de Kronecker com relação às projeções direcionais, garantindo conformidade com o espaço $H(\mathbf{curl})$.
+Ao empregar uma base vetorial polinomial linear completa ($\mathcal{P}^1$) com seleção local de suportes via árvore *k-d*, o VNMM evita a estagnação na convergência do rotacional observada em bases solenoidais incompletas ($\mathcal{L}^1$) e preserva consistência linear exata sobre nuvens arbitrárias. Adicionalmente, como a seleção dinâmica de estênceis em nuvens não-estruturadas rompe a conformidade global de traço, a incorporação de uma regularização variacional *div-curl* ($s_{\mathrm{div}}\mathbf{K}_{\mathrm{div}}$) desloca eventuais modos espúrios de gradiente para fora da banda espectral física sem perturbar os autovalores ressonantes.
 
-O presente artigo demonstra que o VNMM fundamenta-se intrinsecamente na operação sobre **nuvens de pontos não-estruturadas**, demonstrando estabilidade numérica, precisão espectral em guias anisotrópicos e imunidade a modos espúrios sob perturbações nodais estocásticas de até 50%.
+Apesar desses avanços em meios homogêneos, a extensão do VNMM para **meios heterogêneos, descontínuos e anisotrópicos** exige um tratamento preciso das interfaces materiais: o compartilhamento ingênuo de suportes entre dielétricos distintos provoca borramento numérico (*smearing*) da descontinuidade normal e oscilações de Gibbs. Neste artigo, resolve-se esse desafio por meio da **regra de partição estrita de suportes nodais** associada a **diretores puramente tangenciais na interface** ($\mathbf{t}_j = \boldsymbol{\tau}$), acoplando os subdomínios por um único grau de liberdade tangencial e deixando a componente normal livre para reproduzir o salto físico ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$). Demonstra-se ainda que o VNMM se beneficia da operação em **nuvens de pontos irregulares**: a quebra da simetria cartesiana por perturbações estocásticas moderadas (10% a 25%) mitiga a dispersão direcional (*grid-locking*), reduzindo o erro médio espectral em mais de 50%, enquanto resolve com alta acurácia tensores girotópicos hermitianos, singularidades em quinas reentrantes, inclusões cilíndricas PEC e junções múltiplas de quatro materiais sem modos espúrios.
+
+O restante do artigo está organizado da seguinte forma: a Seção 2 apresenta a formulação matemática do VNMM em nuvens de pontos; a Seção 3 detalha o tratamento de meios multimateriais e a forma fraca regularizada; a Seção 4 analisa a consistência polinomial, a sensibilidade a nuvens irregulares e a captura nítida de saltos de interface; a Seção 5 valida cavidades carregadas com dielétricos sob amplos contrastes; a Seção 6 avalia benchmarks em meios anisotrópicos, quinas singulares, inclusões PEC e junção quádrupla; e a Seção 7 sintetiza as conclusões.
 
 ---
 
 ## 2. Formulação Matemática do VNMM em Nuvens de Pontos
+
+Esta seção apresenta a formulação matemática do VNMM 2D sobre nuvens de pontos não-estruturadas, definindo os graus de liberdade baseados em projeções vetoriais direcionais, a base polinomial linear completa ($\mathcal{P}^1$) e o sistema de colocação local utilizado para obter analiticamente as funções de forma vetoriais e seus operadores diferenciais.
 
 ### 2.1 Graus de Liberdade e Projeção Vetorial Nodal
 Considere um domínio bidimensional $\Omega \subset \mathbb{R}^2$ discretizado por uma nuvem de $N$ nós arbitrários $\{\mathbf{x}_i\}_{i=1}^N$. A cada nó $\mathbf{x}_i = (x_i, y_i)^T$ associa-se um vetor diretor unitário:
@@ -67,6 +61,8 @@ $$\nabla \cdot \boldsymbol{\Phi}(P) = \boldsymbol{\beta}_{2, :} + \boldsymbol{\b
 
 ## 3. Tratamento de Meios Multimateriais e Formulação Variacional
 
+Esta seção estende a formulação nodal vetorial para domínios heterogêneos e anisotrópicos, estabelecendo a regra de partição estrita de suportes nodais com diretores tangenciais de interface e a forma fraca de Galerkin regularizada pelo termo de divergência.
+
 ### 3.1 Regra de Partição Estrita de Suportes Nodais
 Para domínios heterogêneos formados pela união de múltiplos materiais distintos ($\Omega = \bigcup_{m=1}^M \Omega_m$) separados por interfaces $\Gamma_{\mathrm{int}}$, adota-se a **regra de partição estrita de suportes**:
 1. **Confinamento Material:** Ao avaliar as funções de forma em um ponto $P \in \Omega_m$, o estêncil de nós vizinhos $\mathcal{S}(P)$ é restrito exclusivamente aos nós pertencentes ao meio $\Omega_m$ e aos nós situados sobre a interface $\Gamma_{\mathrm{int}}$ adjacente. Nós pertencentes a outros meios materiais são estritamente excluídos do conjunto de busca;
@@ -88,12 +84,16 @@ A integração numérica das matrizes de rigidez e massa é efetuada sobre uma m
 
 ## 4. Estudo de Consistência e Robustez em Nuvens de Pontos Irregulares
 
+Esta seção avalia sistematicamente a consistência matemática, a convergência espacial e a estabilidade numérica do VNMM 2D em meios multimateriais sob nuvens de pontos irregulares, abrangendo testes de reprodução polinomial (Patch Test e MMS), análise de sensibilidade a perturbações estocásticas (*jitter* de até 50%) e captura nítida de saltos normais em interfaces dielétricas.
+
 ### 4.1 Consistência Polinomial e Convergência Espacial
 Para certificar a completude das funções de forma em nuvens de pontos sob meios heterogêneos, foram aplicados o Galerkin Patch Test e o Method of Manufactured Solutions (MMS):
 - **Campo Afim do Patch Test:**
   $$\mathbf{E}_{\mathrm{patch}}(x, y) = \begin{bmatrix} 1.5 + 0.8\,x - 0.3\,y \\ -0.7 + 0.4\,x + 1.2\,y \end{bmatrix}, \quad (\nabla \times \mathbf{E}_{\mathrm{patch}})_z = 0.7\text{ V/m}^2$$
 - **Campo Não-Polinomial MMS:**
   $$\mathbf{E}_{\mathrm{MMS}}(x, y) = \begin{bmatrix} \sin\left(\frac{\pi x}{L_x}\right)\cos\left(\frac{\pi y}{L_y}\right) \\ -\cos\left(\frac{\pi x}{L_x}\right)\sin\left(\frac{\pi y}{L_y}\right) \end{bmatrix}, \quad (\nabla \times \mathbf{E}_{\mathrm{MMS}})_z = \left(\frac{\pi}{L_x} + \frac{\pi}{L_y}\right)\sin\left(\frac{\pi x}{L_x}\right)\sin\left(\frac{\pi y}{L_y}\right)$$
+
+A resposta quantitativa de interpolação e as taxas de convergência espacial obtidas para ambos os campos de teste são consolidadas na **Tabela 1**, enquanto a **Figura 1** ilustra a distribuição espacial do erro de interpolação no domínio bimaterial, a reprodução em precisão de máquina do Patch Test, o campo vetorial reconstruído e o confinamento geométrico dos estênceis de suporte locais estritamente particionados por região material.
 
 **Tabela 1:** Desempenho de interpolação do VNMM 2D em domínio bimaterial com nuvem de pontos.
 
@@ -104,10 +104,10 @@ Para certificar a completude das funções de forma em nuvens de pontos sob meio
 | **MMS (Refinada $N=17$)** | Trigonométrico Suave | **$1.147\%$** | **$9.390\%$** | **Taxa $\mathcal{O}(h^2)$** |
 | **Taxa Assintótica** | — | **$5.01\times$** ($\ge 4\times$) | **$2.07\times$** ($\approx 2\times$) | **Ótima Teórica** |
 
-O Patch Test confirma a consistência exata do método (ordem 1 completa), atingindo o piso da precisão de máquina ($10^{-16}$). O teste MMS atesta taxas assintóticas ótimas de convergência: quadrática para o campo elétrico ($\mathcal{O}(h^2)$) e linear para suas derivadas espaciais ($\mathcal{O}(h)$).
-
 ![Resultados de Interpolação](./figures/VNMM_Materials_interpolation_results.png)
-*Figura 1: Painel de interpolação em domínio bimaterial: reprodução em precisão de máquina do Patch Test, distribuição de erro no MMS, campo vetorial reconstruído e estênceis locais estritamente confinados a cada meio material.*
+*Figura 1: Painel de interpolação em domínio bimaterial: distribuição logarítmica do erro no Patch Test (sup. esq.), erro absoluto no MMS (sup. dir.), campo vetorial reconstruído (inf. esq.) e verificação geométrica dos suportes estritamente confinados a cada meio material (inf. dir.).*
+
+A análise dos resultados da Tabela 1 e da Figura 1 confirma conclusivamente que as propriedades fundamentais de consistência e de reprodução polinomial exata de ordem 1 ($\mathcal{P}^1$) são integralmente herdadas pela formulação multimaterial, alcançando o piso do ruído de máquina ($10^{-16}$). Isso demonstra rigorosamente que a partição estrita de suportes por subdomínio e a adoção de diretores tangenciais na interface preservam a integridade matemática do método sem malha original. Além disso, o teste MMS confirma que a presença de interfaces heterogêneas preserva as taxas assintóticas ótimas de convergência espacial: quadrática para o campo elétrico ($\mathcal{O}(h^2)$) e linear para suas derivadas espaciais/rotacional ($\mathcal{O}(h)$), certificando a consistência e a robustez do VNMM em meios descontínuos.
 
 ---
 
@@ -116,7 +116,9 @@ Para atestar a genuína natureza *meshless* do VNMM e comprovar sua insensibilid
 $$\mathbf{x}_i \leftarrow \mathbf{x}_i + \eta \, h_{\min} \begin{bmatrix} \xi_x \\ \xi_y \end{bmatrix}, \quad \xi_x, \xi_y \sim \mathcal{U}(-0.5, 0.5)$$
 onde $\eta \in \{0.00, 0.10, 0.25, 0.40, 0.50\}$ denota a fração de deslocamento estocástico (*jitter*), avaliada sobre múltiplas sementes aleatórias ($N_{\mathrm{seeds}} = 3$). A perturbação foi realizada sobre a cavidade ressonante bimaterial carregada com dielétrico ($[0, \pi]^2$, interface em $x = \pi/2$, $\varepsilon_{r1}=1.0$, $\varepsilon_{r2}=4.0$).
 
-**Tabela 2:** Desempenho estatístico do VNMM 2D sob perturbação estocástica nodal de até 50% de deformação.
+O impacto global da perturbação estocástica sobre a consistência reprodutiva e os autovalores da cavidade está resumido na **Tabela 2**, enquanto a **Tabela 3** discrimina a estabilidade modal dos 6 primeiros modos ressonantes frente às raízes analíticas exatas. Em complemento, a **Figura 2** exibe a configuração geométrica da nuvem deformada sob 25% de jitter, as curvas de erro relativo percentual em $k_c$ com barras de dispersão estatística ($\mu \pm \sigma$) e a evolução contínua da razão de divergência residual ($R_{\mathrm{div}}$) atestando a pureza física do espectro.
+
+**Tabela 2:** Desempenho estatístico global do VNMM 2D sob perturbação estocástica nodal de até 50% de deformação.
 
 | Jitter $\eta$ | Erro Patch Test ($L_2^{\mathrm{rel}}$) | Erro MMS ($L_2^{\mathrm{rel}}$) | $k_c$ Modo 1 ($\mu \pm \sigma$) | Erro Modo 1 (%) | Erro Médio 6 Modos (%) | Resíduo $R_{\mathrm{div}}$ (%) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -126,23 +128,60 @@ onde $\eta \in \{0.00, 0.10, 0.25, 0.40, 0.50\}$ denota a fração de deslocamen
 | **40% (Severo)** | $3.22 \times 10^{-16}$ | $5.67\%$ | $0.6365 \pm 0.002$ | $4.65 \pm 0.39\%$ | $3.32 \pm 0.12\%$ | $2.71\%$ |
 | **50% (Extremo)** | $5.24 \times 10^{-16}$ | $7.97\%$ | $0.6463 \pm 0.001$ | $6.27 \pm 0.10\%$ | $5.27 \pm 0.26\%$ | $3.26\%$ |
 
-A interpretação desses resultados consolidados revela dois fenômenos fundamentais:
-1. **Invariância Exata da Consistência de Ordem 1:** O erro do Patch Test vetorial permaneceu rigorosamente em $10^{-16}$ em **todos os regimes de perturbação**, desde a malha perfeitamente regular (0%) até o estado de alta desordem espacial (50%). Isso comprova algebricamente que as propriedades reprodutivas das funções de forma locais não dependem da periodicidade cartesiana dos pontos;
-2. **Supressão do Bloqueio Cartesiano (*Grid-Locking*):** Sob distribuição perfeitamente regular (0%), os eixos preferenciais da malha acumulam ressonâncias direcionais, resultando em um erro médio de $2.46\%$. Com uma perturbação moderada da nuvem ($\eta = 10\%$ e $\eta = 25\%$), o erro médio nos autovalores caiu para **$1.13\%$** e **$1.22\%$**, respectivamente — uma **melhoria superior a 50%**. A quebra estocástica de simetria diversifica as distâncias e direções relativas no estêncil, atenuando a dispersão numérica preferencial;
-3. **Pureza Física sob Altas Deformações:** Mesmo sob severa distorção de 50%, a razão média de energia de divergência residual manteve-se restrita a $R_{\mathrm{div}} = 3.26\%$ (bem abaixo do limite máximo de $5.0\%$), garantindo ausência total de modos espúrios em toda a faixa.
+**Tabela 3:** Número de onda de corte $k_c$ (rad/m) e erro relativo dos 6 primeiros modos ressonantes calculados pelo VNMM 2D para cada nível de perturbação estocástica ($\eta \in [0\%, 50\%]$).
+
+| Modo | Analítico Exato | $\eta = 0\%$ (Regular) | $\eta = 10\%$ (Leve) | $\eta = 25\%$ (Moderado) | $\eta = 40\%$ (Severo) | $\eta = 50\%$ (Extremo) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1** | $0.6082$ | $0.5824$ ($4.23\%$) | $0.6036$ ($0.75\%$) | $0.5937$ ($2.37\%$) | $0.5799$ ($4.65\%$) | $0.5701$ ($6.27\%$) |
+| **2** | $0.6421$ | $0.6018$ ($6.28\%$) | $0.6425$ ($0.06\%$) | $0.6342$ ($1.24\%$) | $0.6194$ ($3.54\%$) | $0.6088$ ($5.19\%$) |
+| **3** | $1.0385$ | $1.0370$ ($0.14\%$) | $1.0399$ ($0.14\%$) | $1.0269$ ($1.12\%$) | $1.0097$ ($2.78\%$) | $0.9923$ ($4.45\%$) |
+| **4** | $1.0992$ | $1.1119$ ($1.16\%$) | $1.1180$ ($1.71\%$) | $1.0978$ ($0.13\%$) | $1.0724$ ($2.44\%$) | $1.0509$ ($4.40\%$) |
+| **5** | $1.3918$ | $1.4092$ ($1.25\%$) | $1.3928$ ($0.07\%$) | $1.3829$ ($0.64\%$) | $1.3452$ ($3.35\%$) | $1.3065$ ($6.13\%$) |
+| **6** | $1.5328$ | $1.5590$ ($1.71\%$) | $1.5698$ ($2.42\%$) | $1.5481$ ($1.00\%$) | $1.4843$ ($3.17\%$) | $1.4537$ ($5.16\%$) |
 
 ![Estudo Detalhado de Jitter](./figures/VNMM_Jitter_Detailed_Study.png)
-*Figura 2: Estudo estatístico de sensibilidade a nuvens de pontos irregulares (0% a 50% de jitter): (a) Autovalores calculados pelo VNMM vs soluções exatas analíticas; (b) Erro percentual relativo com barras de dispersão estocástica ($\pm \sigma$); (c) Evolução do erro médio do espectro evidenciando o platô ótimo de precisão em 10%–25%; (d) Monitoramento contínuo da divergência residual ($R_{\mathrm{div}} < 3.3\%$).*
+*Figura 2: Estudo estatístico de sensibilidade a nuvens de pontos irregulares (0% a 50% de jitter): (a) Geometria da nuvem nodal sob jitter de 25%; (b) Erro relativo percentual em $k_c$ com barras de dispersão ($\mu \pm \sigma$); (c) Monitoramento contínuo da divergência residual ($R_{\mathrm{div}} < 3.3\%$) e do erro de interpolação MMS.*
+
+A interpretação desses resultados quantitativos e visuais consolida três conclusões fundamentais:
+1. **Invariância Exata da Consistência de Ordem 1:** O erro do Patch Test vetorial permaneceu rigorosamente em $10^{-16}$ em **todos os regimes de perturbação**, desde a malha perfeitamente regular (0%) até o estado de alta desordem espacial (50%). Isso comprova algebricamente que as propriedades reprodutivas das funções de forma locais não dependem da periodicidade cartesiana dos pontos;
+2. **Atenuação da Dispersão Numérica e Supressão do Bloqueio Cartesiano (*Grid-Locking*):** Sob distribuição perfeitamente regular (0%), os eixos preferenciais da malha acumulam ressonâncias direcionais, resultando em um erro médio de $2.46\%$. Com uma perturbação moderada da nuvem ($\eta = 10\%$ e $\eta = 25\%$), o erro médio nos autovalores caiu para **$1.13\%$** e **$1.22\%$**, respectivamente — uma **melhoria superior a 50%**. A quebra estocástica de simetria diversifica as distâncias e direções relativas no estêncil, atenuando a dispersão numérica preferencial;
+3. **Pureza Física sob Altas Deformações:** Mesmo sob severa distorção de 50%, a razão média de energia de divergência residual manteve-se restrita a $R_{\mathrm{div}} = 3.26\%$ (bem abaixo do limite máximo de $5.0\%$), garantindo ausência total de modos espúrios em toda a faixa.
 
 ---
 
 ### 4.3 Captura Nítida de Descontinuidades Normais ($[E_n] \neq 0$)
-Para avaliar o comportamento local do campo elétrico sobre a interface bimaterial, executou-se um corte transversal unidimensional em $y = 0.5\text{ m}$ sobre um campo onde a componente normal sofre um salto de $4:1$ ($E_{1x} = 1.500\text{ V/m} \to E_{2x} = 0.375\text{ V/m}$):
-- **Componente Normal $E_x(x)$:** O degrau de $4:1$ na interface $x = 1.0\text{ m}$ foi capturado com precisão nítida (erro máximo $< 0.033\text{ V/m}$), com ausência estrita de amortecimento artificial ou oscilações espúrias de Gibbs (Figura 3a);
-- **Componente Tangencial $E_y(x)$:** A continuidade física $C^0$ foi rigorosamente preservada através de $\Gamma_{\mathrm{int}}$, com erro máximo inferior a $0.014\text{ V/m}$ (Figura 3b).
+Para avaliar o comportamento local do campo elétrico sobre a interface bimaterial, executou-se um corte transversal unidimensional em $y = 0.5\text{ m}$ sobre um campo onde a componente normal sofre um salto físico exato de $4:1$ ($E_{1x} = 1.500\text{ V/m} \to E_{2x} = 0.375\text{ V/m}$), enquanto a componente tangencial permanece contínua ($E_{1y} = E_{2y} = 0.500\text{ V/m}$).
+
+A estabilidade espectral dos 6 primeiros modos ressonantes na cavidade bimaterial sob diferentes níveis de perturbação nodal ($\eta \in \{0\%, 10\%, 20\%\}$) é detalhada na **Tabela 4**, enquanto a **Figura 3** ilustra os perfis transversais 1D capturando com nitidez o salto normal de $4:1$ sem oscilações de Gibbs, a continuidade estrita $C^0$ da componente tangencial e a resposta espectral do modo fundamental frente a contrastes dielétricos elevados ($\varepsilon_{r2} \in [2.25, 16.0]$).
+
+**Tabela 4:** Desempenho espectral dos 6 primeiros modos ressonantes na cavidade bimaterial sob perturbação nodal ($\eta \in \{0\%, 10\%, 20\%\}$).
+
+| Modo | Classificação | $k_c$ Analítico (rad/m) | $\eta = 0\%$ (Regular) | $\eta = 10\%$ (Leve) | $\eta = 20\%$ (Moderado) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **1** | $TE(0, 1)$ | $0.6082$ | $0.6018$ ($1.04\%$) | $0.6068$ ($0.23\%$) | $0.6022$ ($0.98\%$) |
+| **2** | $TE(1, 1)$ | $0.6421$ | $0.5824$ ($9.30\%$) | $0.6474$ ($0.82\%$) | $0.6394$ ($0.43\%$) |
+| **3** | $TE(0, 2)$ | $1.0385$ | $1.0370$ ($0.14\%$) | $1.0426$ ($0.40\%$) | $1.0285$ ($0.96\%$) |
+| **4** | $TE(1, 2)$ | $1.0992$ | $1.1119$ ($1.16\%$) | $1.1226$ ($2.12\%$) | $1.1013$ ($0.19\%$) |
+| **5** | $TE(2, 1)$ | $1.3918$ | $1.4092$ ($1.25\%$) | $1.4123$ ($1.47\%$) | $1.4036$ ($0.84\%$) |
+| **6** | $TE(0, 3)$ | $1.5328$ | $1.5590$ ($1.71\%$) | $1.5790$ ($3.02\%$) | $1.5694$ ($2.39\%$) |
+| **Erro Médio** | — | — | **$2.43\%$** | **$1.34\%$** | **$0.97\%$** |
 
 ![Validações Avançadas](./figures/VNMM_Interface_Jump_and_Robustness.png)
-*Figura 3: Desempenho do VNMM em interfaces e contraste material: (a) Perfil transversal 1D de $E_x(x)$ evidenciando o salto nítido de 4:1 na interface sem oscilações espúrias; (b) Perfil transversal 1D de $E_y(x)$ atestando continuidade estrita $C^0$; (c) Estabilidade espectral dos 6 primeiros modos sob jitter nodal; (d) Número de onda de corte fundamental vs contraste dielétrico ($\varepsilon_r \in [2.25, 16.0]$).*
+*Figura 3: Desempenho do VNMM em interfaces dielétricas e contraste de permissividade: (a) Perfil transversal 1D de $E_x(x)$ evidenciando a captura nítida do salto de 4:1 sem oscilações de Gibbs; (b) Perfil transversal 1D de $E_y(x)$ atestando continuidade tangencial estrita $C^0$; (c) Número de onda de corte fundamental vs contraste dielétrico ($\varepsilon_{r2} \in [2.25, 16.0]$).*
+
+Os resultados da Tabela 4 e da Figura 3 consolidam conclusões cruciais sobre a capacidade do VNMM de resolver descontinuidades eletromagnéticas:
+1. **Captura Fiel do Salto Normal sem Amortecimento (*Smearing*):** O perfil 1D em $E_x(x)$ reproduz o salto de $4:1$ com fidelidade estrita (erro máximo $< 0.033\text{ V/m}$) exatamente na interface $x = 1.0\text{ m}$, isento de amortecimento numérico ou artefatos espúrios de Gibbs;
+2. **Conformidade em $H(\mathbf{curl})$ e Continuidade Tangencial:** O perfil de $E_y(x)$ preserva a continuidade física $C^0$ (erro máximo $< 0.014\text{ V/m}$), comprovando que o grau de liberdade compartilhado ao longo do diretor tangencial impõe a continuidade física com precisão;
+3. **Estabilidade Espectral sob Desordem Nodal:** A perturbação estocástica da nuvem reduz o erro espectral médio dos 6 modos de $2.43\%$ para $0.97\%$, confirmando que a precisão do método na presença de interfaces descontínuas beneficia-se da flexibilidade das nuvens de pontos não estruturadas.
+
+---
+
+### 4.4 Síntese e Conclusões da Análise de Consistência e Robustez
+
+Os estudos numéricos desenvolvidos nesta seção consolidam três conclusões essenciais sobre o comportamento do VNMM 2D em meios multimateriais:
+1. **Completude e Reprodução Polinomial Invariantes:** A formulação baseada em projeções direcionais locais preserva integralmente a consistência de ordem 1 ($\mathcal{P}^1$) em precisão de máquina ($10^{-16}$) sob qualquer topologia de nuvem nodal, mesmo sob severa desordem espacial estocástica (até 50% de jitter);
+2. **Atenuação da Dispersão Numérica Preferencial:** Nuvens de pontos com perturbação estocástica moderada (10% a 25%) superam as grades cartesianas regulares rígidas, atenuando os erros de bloqueio direcional (*grid-locking*) e reduzindo o erro médio dos autovalores em mais de 50%, com garantia matemática de pureza espectral ($R_{\mathrm{div}} < 3.3\%$);
+3. **Resolução Nítida de Condições de Interface:** A partição estrita de suportes por subdomínio combinada com diretores puramente tangenciais na interface física desacopla com precisão as componentes normais descontínuas, garantindo o salto exato $[E_n] \neq 0$ e a continuidade $[E_t] = 0$ sem amortecimento espúrio, validando a formulação como uma alternativa sólida e sem malha para problemas eletromagnéticos heterogêneos.
 
 ---
 
@@ -153,7 +192,9 @@ Avaliou-se a cavidade $[0, \pi]^2$ bipartida por uma interface em $x = \pi/2$ co
 - Para modos sem variação vertical ($m = 0$): $k_{x1} \cot(k_{x1} d) + k_{x2} \cot(k_{x2} (a - d)) = 0$
 - Para modos com variação vertical ($m \ge 1$): $\frac{\beta_1}{\varepsilon_{r1}} \tan(\beta_1 d) + \frac{\beta_2}{\varepsilon_{r2}} \tan(\beta_2 (a - d)) = 0$
 
-**Tabela 3:** Comparação entre autovalores do VNMM 2D e soluções analíticas exatas para os primeiros 8 modos ressonantes $TE_z$.
+A comparação quantitativa entre os autovalores calculados pelo VNMM 2D e as soluções analíticas exatas para os primeiros 8 modos ressonantes $TE_z$ é apresentada na **Tabela 5**, enquanto a **Figura 4** exibe a distribuição espacial normalizada da magnitude do campo elétrico ($\|\mathbf{E}\|/\|\mathbf{E}\|_{\max}$) e os vetores brancos de campo para os quatro primeiros modos. Em particular, as setas vetoriais na Figura 4 evidenciam a concentração de energia na região dielétrica ($\Omega_2$) e a nítida descontinuidade da componente normal ($E_x$) na interface $x = \pi/2$ — claramente observável nos Modos 2, 3 e 4 devido ao contraste dielétrico $4:1$ — enquanto a componente tangencial ($E_y$) mantém-se contínua.
+
+**Tabela 5:** Comparação entre autovalores do VNMM 2D e soluções analíticas exatas para os primeiros 8 modos ressonantes $TE_z$.
 
 | Modo | Classificação | $\lambda$ Analítico | $\lambda$ VNMM 2D | $k_c$ Analítico (rad/m) | $k_c$ VNMM (rad/m) | Erro Relativo $k_c$ (%) | Resíduo $R_{\mathrm{div}}$ (%) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -166,17 +207,21 @@ Avaliou-se a cavidade $[0, \pi]^2$ bipartida por uma interface em $x = \pi/2$ co
 | **7** | $TE(1, 3)$ | $2.583093$ | $2.500588$ | $1.607200$ | $1.581325$ | **$1.61\%$** | $0.574\%$ |
 | **8** | $TE(2, 2)$ | $2.747205$ | $2.877572$ | $1.657469$ | $1.696341$ | **$2.35\%$** | $1.809\%$ |
 
-O método alcançou **erro médio de apenas $1.75\%$** em todo o espectro, com erro máximo de $3.66\%$, mantendo todos os modos com razão de divergência $R_{\mathrm{div}} < 2.0\%$, provando a completa supressão de poluição espectral.
-
 ![Modos Ressonantes na Cavidade Carregada](./figures/VNMM_Dielectric_Cavity_Modes.png)
-*Figura 4: Distribuição espacial normalizada $\|\mathbf{E}\|/\|\mathbf{E}\|_{\max}$ dos primeiros quatro modos ressonantes na cavidade bimaterial carregada, ilustrando a concentração física de energia eletromagnética no interior do dielétrico ($\varepsilon_{r2}=4.0$).*
+*Figura 4: Distribuição espacial normalizada $\|\mathbf{E}\|/\|\mathbf{E}\|_{\max}$ e vetores de campo elétrico (setas brancas) dos primeiros quatro modos ressonantes na cavidade bimaterial carregada, destacando a concentração de energia no dielétrico ($\varepsilon_{r2}=4.0$) e a descontinuidade da componente normal na interface nos Modos 2, 3 e 4.*
+
+Os resultados da Tabela 5 e da Figura 4 confirmam que o VNMM alcançou **erro médio de apenas $1.75\%$** em todo o espectro (com erro máximo de $3.66\%$), mantendo todos os modos físicos com razão de divergência $R_{\mathrm{div}} < 2.0\%$, o que comprova a completa supressão de modos espúrios e a reprodução física fiel das condições de interface.
 
 ---
 
 ### 5.2 Varredura Paramétrica de Contraste Dielétrico
-A resposta espectral foi avaliada frente a materiais tecnológicos de micro-ondas em simulações bimateriais independentes ($\Omega_1$ ar, $\Omega_2$ dielétrico): Teflon ($\varepsilon_{r2} = 2.25$), Dielétrico Padrão ($\varepsilon_{r2} = 4.00$), Alumina ($\varepsilon_{r2} = 9.80$) e Cerâmica Avançada ($\varepsilon_{r2} = 16.00$).
+A resposta espectral foi avaliada frente a materiais tecnológicos de micro-ondas em simulações bimateriais independentes ($\Omega_1$ ar com $\varepsilon_{r1} = 1.0$, $\Omega_2$ dielétrico): Teflon ($\varepsilon_{r2} = 2.25$), Dielétrico Padrão ($\varepsilon_{r2} = 4.00$), Alumina ($\varepsilon_{r2} = 9.80$) e Cerâmica Avançada ($\varepsilon_{r2} = 16.00$).
 
-**Tabela 4:** Precisão do número de onda de corte fundamental sob diferentes contrastes dielétricos.
+Para isolar rigorosamente a influência do contraste constitutivo e descartar efeitos concorrentes decorrentes de refinamento de malha ($h$-refinement), **utilizou-se exatamente a mesma nuvem de nós e a mesma grade de integração de fundo em todos os quatro casos** ($N_{x1}=11$, $N_{x2}=11$, $N_y=21$, totalizando uma densidade nodal fixa sobre a cavidade $[\pi \times \pi]\text{ m}$).
+
+A **Tabela 6** reúne os números de onda de corte fundamentais obtidos pelo VNMM 2D em comparação com os valores analíticos exatos para cada material avaliado, complementando a curva paramétrica apresentada anteriormente na **Figura 3c**.
+
+**Tabela 6:** Precisão do número de onda de corte fundamental sob diferentes contrastes dielétricos com nuvem de pontos fixa.
 
 | Material Dielétrico | Permissividade $\varepsilon_{r2}$ | $k_c$ Analítico Exato | $k_c$ VNMM 2D | Erro Relativo (%) |
 | :--- | :---: | :---: | :---: | :---: |
@@ -185,7 +230,9 @@ A resposta espectral foi avaliada frente a materiais tecnológicos de micro-onda
 | **Alumina** | $9.80$ | $0.4029\text{ rad/m}$ | $0.4006\text{ rad/m}$ | **$0.58\%$** |
 | **Cerâmica de Micro-ondas** | $16.00$ | $0.3183\text{ rad/m}$ | $0.3167\text{ rad/m}$ | **$0.52\%$** |
 
-O erro no modo fundamental permaneceu estritamente **abaixo de $1.1\%$** em toda a faixa de permissividades, rastreando fielmente a curva teórica (Figura 3d).
+Os resultados da Tabela 6 e da Figura 3c demonstram que o erro no modo fundamental permaneceu estritamente **abaixo de $1.1\%$** em toda a faixa de permissividades, rastreando fielmente a curva teórica. Observa-se um comportamento físico notável: o erro relativo do modo fundamental diminui monotonicamente à medida que o contraste dielétrico se eleva ($1.05\% \to 0.52\%$). Isso ocorre porque, no modo fundamental, o aumento expressivo de $\varepsilon_{r2}$ confina quase a totalidade da energia eletromagnética no interior do bloco dielétrico ($\Omega_2$). A interface plana atua progressivamente como uma parede magnética virtual de alta impedância para a região de ar ($\Omega_1$), atenuando a amplitude que vaza para o ar e tornando a distribuição espacial do modo fundamental fortemente concentrada e suavemente resolvida no subdomínio $\Omega_2$.
+
+Ressalta-se que, para modos de ordens superiores com comprimentos de onda substancialmente reduzidos no meio dielétrico ($\lambda_d = \lambda_0 / \sqrt{\varepsilon_{r2}}$), a prática recomendada de discretização dita o adensamento nodal local proporcional a $\sqrt{\varepsilon_{r2}}$. Contudo, a capacidade do VNMM de capturar o modo fundamental com erro decrescente sob nuvem invariante evidencia a robustez e a estabilidade da partição estrita de suportes frente a saltos severos de permissividade.
 
 ---
 
@@ -196,12 +243,14 @@ Para demonstrar a versatilidade da formulação sobre nuvens de pontos em proble
 ### 6.1 Guia com Saliência em "H" Homogêneo e Anisotrópico (Geometria Não-Convexa com Quinas)
 O primeiro benchmark investiga a resposta em domínios não-convexos com quinas reentrantes que induzem singularidades no campo elétrico, preenchido por um meio girotópico caracterizado por um tensor de permissividade hermitiano complexo:
 $$\mu_r = 1.0, \quad \overline{\overline{\varepsilon}}_r = \begin{bmatrix} 1 & -j \\ j & 4 \end{bmatrix}$$
-O domínio ocupa $x \in [-2.5, 2.5]\text{ m}$ e $y \in [-1.5, 1.5]\text{ m}$, com reentrâncias simétricas centrais em $x \in [-1.0, 1.0]\text{ m}$ que estrangulam o canal condutor a $|y| \le 0.5\text{ m}$ (Figura 5). A discretização foi realizada sobre uma nuvem de pontos com diretores alternados a $\pm 45^\circ$ no interior e tangenciais nas paredes PEC.
+O domínio ocupa $x \in [-2.5, 2.5]\text{ m}$ e $y \in [-1.5, 1.5]\text{ m}$, com reentrâncias simétricas centrais em $x \in [-1.0, 1.0]\text{ m}$ que estrangulam o canal condutor a $|y| \le 0.5\text{ m}$. A discretização foi realizada sobre uma nuvem de pontos com diretores alternados a $\pm 45^\circ$ no interior e tangenciais nas paredes PEC.
+
+A **Figura 5** ilustra a geometria do guia com saliência em "H", os parâmetros constitutivos anisotrópicos e as quinas reentrantes responsáveis pelas singularidades de campo, enquanto a **Tabela 7** compara os 5 primeiros autovalores obtidos pelo VNMM 2D frente ao FEM de aresta de alta densidade (427.492 arestas), ao FEM Misto [7] e ao EMM [8].
 
 ![Geometria do Guia em H](./figures/Geometria_Guia_H_Anisotropico.png)
 *Figura 5: Geometria e parâmetros constitutivos do guia de onda com saliência em "H" homogêneo e anisotrópico com quinas reentrantes (Teste 4.3.2).*
 
-**Tabela 5:** Comparação dos primeiros 5 autovalores no guia com saliência em "H" entre o VNMM 2D e o FEM de aresta de alta densidade (427.492 arestas).
+**Tabela 7:** Comparação dos primeiros 5 autovalores no guia com saliência em "H" entre o VNMM 2D e o FEM de aresta de alta densidade (427.492 arestas).
 
 | Modo | Solução Ref. FEM (427k arestas) | FEM Misto [7] | EMM [8] (1.529 ares) | VNMM 2D (Nuvem Nodal) | Erro Relativo (%) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -211,20 +260,22 @@ O domínio ocupa $x \in [-2.5, 2.5]\text{ m}$ e $y \in [-1.5, 1.5]\text{ m}$, co
 | **4** | $0.998524$ | $0.998524$ | $0.987213$ | $0.914897$ | **$8.38\%$** |
 | **5** | $1.638579$ | $1.638369$ | $1.615863$ | $1.638612$ | **$0.00\%$** |
 
-O VNMM modelou as singularidades induzidas pelas quinas sem instabilidade numérica, apresentando erro de apenas $1.71\%$ no modo dominante e concordância exata ($0.00\%$) no 5º modo ressonante frente ao FEM de mais de 400 mil graus de liberdade.
+Os resultados da Tabela 7 confirmam que o VNMM encontra corretamente os autovalores do guia sem a presença de modos espúrios, contornando com eficácia os problemas de singularidade de campo causados pelas quinas reentrantes e bordas condutoras na geometria. Mesmo em presença de um tensor girotópico hermitiano complexo, o método apresentou erro de apenas $1.71\%$ no modo dominante e concordância exata ($0.00\%$) no 5º modo ressonante frente ao FEM de mais de 400 mil graus de liberdade.
 
 ---
 
 ### 6.2 Guia Bimaterial Anisotrópico com Cilindros PEC Internos (Fronteiras Curvas)
 O segundo teste acopla simultaneamente interface bimaterial descontínua, anisotropia tensorial distinta em cada meio e obstáculos condutores circulares internos:
-- **Geometria:** Domínio retangular $[-2, 2] \times [-1, 1]\text{ m}$ dividido em $x = 0$ entre $\Omega_1 = [-2, 0] \times [-1, 1]\text{ m}$ e $\Omega_2 = [0, 2] \times [-1, 1]\text{ m}$. Cada subdomínio encerra um obstáculo circular condutor PEC de raio $r = 1/3\text{ m}$ centrado em $(-1, 0)$ e $(1, 0)$, respectivamente (Figura 6);
+- **Geometria:** Domínio retangular $[-2, 2] \times [-1, 1]\text{ m}$ dividido em $x = 0$ entre $\Omega_1 = [-2, 0] \times [-1, 1]\text{ m}$ e $\Omega_2 = [0, 2] \times [-1, 1]\text{ m}$. Cada subdomínio encerra um obstáculo circular condutor PEC de raio $r = 1/3\text{ m}$ centrado em $(-1, 0)$ e $(1, 0)$, respectivamente;
 - **Meio 1 ($\Omega_1$):** $\mu_{r1} = 1.0, \quad \overline{\overline{\varepsilon}}_{r1} = \operatorname{diag}(1, 2)$ (anisotropia biaxial);
 - **Meio 2 ($\Omega_2$):** $\mu_{r2} = 3.0, \quad \overline{\overline{\varepsilon}}_{r2} = \begin{bmatrix} 3 & -2j \\ 2j & 8 \end{bmatrix}$ (anisotropia girotópica com permeabilidade $\mu_r \neq 1$).
+
+A **Figura 6** apresenta a configuração geométrica e material do guia bimaterial com inclusões cilíndricas PEC e interface plana em $x = 0$, enquanto a **Tabela 8** confronta os primeiros 5 autovalores obtidos pelo VNMM 2D com o FEM de referência (340.363 arestas), FEM Misto [7] e EMM [8].
 
 ![Geometria do Guia Bimaterial com Cilindros PEC](./figures/Geometria_Guia_Bimaterial_Circ.png)
 *Figura 6: Geometria do guia bimaterial anisotrópico com inclusões cilíndricas PEC e interface plana em $x = 0$ (Teste 4.3.3).*
 
-**Tabela 6:** Comparação dos primeiros 5 autovalores no guia bimaterial com inclusões PEC entre o VNMM 2D e o FEM de referência (340.363 arestas).
+**Tabela 8:** Comparação dos primeiros 5 autovalores no guia bimaterial com inclusões PEC entre o VNMM 2D e o FEM de referência (340.363 arestas).
 
 | Modo | Solução Ref. FEM (340k arestas) | FEM Misto [7] | EMM [8] (8.566 ares) | VNMM 2D (Nuvem Nodal) | Erro Relativo (%) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -234,7 +285,7 @@ O segundo teste acopla simultaneamente interface bimaterial descontínua, anisot
 | **4** | $0.423569$ | — | $0.423277$ | $0.414830$ | **$2.06\%$** |
 | **5** | $0.625603$ | — | $0.624568$ | $0.637011$ | **$1.82\%$** |
 
-Mesmo com a complexidade combinada de fronteiras curvas PEC internas, interfaces materiais em $x = 0$ e tensores complexos, o VNMM obteve erro no modo dominante de apenas **$0.45\%$** e erro inferior a $3.3\%$ em todos os modos, comprovando a robustez da formulação nodal.
+A análise da Tabela 8 demonstra que o VNMM encontra todos os autovalores sem contaminação por modos espúrios, mesmo diante do acoplamento simultâneo entre meios anisotrópicos distintos, interface material descontínua em $x = 0$ e fronteiras curvas de condutores PEC internos. A imposição tangencial dos diretores nas fronteiras circulares e na interface assegura tanto a condição de contorno PEC quanto a continuidade tangencial entre meios anisotrópicos, alcançando erro de apenas **$0.45\%$** no modo dominante e erro inferior a $3.3\%$ em todos os modos avaliados.
 
 ---
 
@@ -245,14 +296,14 @@ Para avaliar o comportamento do método diante de uma singularidade clássica de
 - **$Q_3$ ($x < 0, y < 0$):** $\varepsilon_{r3} = 2.0$;
 - **$Q_4$ ($x > 0, y < 0$):** $\varepsilon_{r4} = 9.0$ (contraste máximo $9:1$ no vértice central).
 
-Na nuvem de pontos ($624$ nós totais: $528$ ativos e $96$ nós PEC escalonados, com quadratura de Gauss $3\times 3$ e penalidade $s_{\text{div}} = 10.0$), os nós das quatro semi-interfaces ($x = 0$ e $y = 0$) recebem diretores estritamente tangenciais ($\hat{x}$ ou $\hat{y}$), mantendo-se alinhados com os nós internos e omitindo-se um nó exatamente sobre o ponto de junção quádrupla $(0, 0)$ para evitar super-restrição angular. Cada quadrante seleciona seus estênceis apenas entre seus próprios nós e os nós das duas semi-interfaces adjacentes (Figura 7).
+Na nuvem de pontos ($624$ nós totais: $528$ ativos e $96$ nós PEC escalonados, com quadratura de Gauss $3\times 3$ e penalidade $s_{\text{div}} = 10.0$), os nós das quatro semi-interfaces ($x = 0$ e $y = 0$) recebem diretores estritamente tangenciais ($\hat{x}$ ou $\hat{y}$), mantendo-se alinhados com os nós internos e omitindo-se um nó exatamente sobre o ponto de junção quádrupla $(0, 0)$ para evitar super-restrição angular. Como referência independente de alta precisão, resolveu-se a formulação escalar exata em $H_z$ via Elementos Finitos ($Q_1$) em malha refinada $100 \times 100$ ($10.201$ nós), naturalmente livre de modos espúrios.
+
+A **Figura 7** ilustra a distribuição da nuvem de pontos, os diretores internos alternados a $\pm 45^\circ$ e a atribuição de diretores tangenciais nas quatro semi-interfaces com partição estrita por quadrante, enquanto a **Tabela 9** compara os 6 primeiros autovalores obtidos pelo VNMM 2D com a solução de referência em FEM $H_z$.
 
 ![Geometria e Nuvem da Junção Quádrupla](./figures/Geometria_Nuvem_Quad_Junction.png)
 *Figura 7: Cavidade com junção quádrupla de 4 materiais distintos encontrando-se em $(0,0)$, ilustrando a nuvem de pontos e a atribuição de diretores tangenciais nas 4 semi-interfaces.*
 
-Como referência independente de alta precisão, resolveu-se a formulação escalar exata em $H_z$ via Elementos Finitos ($Q_1$) em malha refinada $100 \times 100$ ($10.201$ nós), naturalmente livre de modos espúrios.
-
-**Tabela 7:** Comparação dos primeiros 6 autovalores na cavidade com junção quádrupla (4 materiais) entre o VNMM 2D e o FEM $H_z$ ($100\times 100$).
+**Tabela 9:** Comparação dos primeiros 6 autovalores na cavidade com junção quádrupla (4 materiais) entre o VNMM 2D e o FEM $H_z$ ($100\times 100$).
 
 | Modo | Ref. FEM ($H_z$, 100×100) | VNMM 2D (Nuvem Nodal) | Erro Relativo (%) | $R_{\text{div}}$ (%) |
 | :---: | :---: | :---: | :---: | :---: |
@@ -263,20 +314,17 @@ Como referência independente de alta precisão, resolveu-se a formulação esca
 | **5** | $2.554525$ | $2.474523$ | **$3.13\%$** | $1.75\%$ |
 | **6** | $3.788495$ | $3.922816$ | **$3.55\%$** | $1.64\%$ |
 
-![Modos Ressonantes na Junção Quádrupla](./figures/VNMM_Quad_Junction_Modes.png)
-*Figura 8: Distribuição espacial de $|\vec{E}|$ e vetores de campo dos 4 primeiros modos $\text{TE}_z$ na cavidade com junção quádrupla, evidenciando o salto nítido das componentes normais nas interfaces ortogonais e a ausência de modos espúrios ($R_{\text{div}} \le 1.22\%$).*
-
-Os resultados demonstram que o VNMM captura com precisão a física singular do encontro de quatro materiais: o modo fundamental apresenta erro de apenas **$0.34\%$**, os modos 3 e 4 atingem erros em torno de **$1\%$** e todos os modos exibem baixa energia de divergência ($R_{\text{div}} < 1.8\%$), comprovando que a arquitetura de partição de suportes e diretores tangenciais se estende naturalmente para vértices de múltiplos materiais.
+Os resultados da Tabela 9 e da Figura 7 demonstram que o VNMM captura com precisão a física singular do encontro de quatro materiais sem gerar modos espúrios ($R_{\text{div}} < 1.8\%$ em todos os modos): o modo fundamental apresenta erro de apenas **$0.34\%$** e os modos 3 e 4 atingem erros em torno de **$1\%$**, comprovando que a estratégia de partição estrita de suportes e diretores tangenciais generaliza-se naturalmente para vértices de múltiplos materiais com elevado contraste ($9:1$).
 
 ---
 
 ## 7. Conclusões
 
-O desenvolvimento e a validação do **Vector Nodal Meshless Method (VNMM 2D)** sobre nuvens de pontos confirmam seu potencial para resolver problemas eletromagnéticos avançados:
-1. **Completude Reprodutiva e Invariância Nodal:** A formulação baseada em projeções direcionais preserva consistência polinomial de primeira ordem em precisão de máquina ($10^{-16}$) independentemente da irregularidade geométrica dos pontos (de 0% a 50% de perturbação estocástica);
-2. **Superioridade de Nuvens Irregulares:** A quebra de alinhamentos cartesianos regulares via perturbação estocástica atenua o viés direcional da discretização (*grid-locking*), reduzindo o erro médio dos autovalores em mais de 50% (para $\approx 1.1\%$) em relação a arranjos regulares rígidos;
-3. **Resolução de Descontinuidades e Junções Múltiplas Sem Borramento:** A segregação estrita de suportes por material captura o salto de descontinuidade normal de forma nítida, preservando a continuidade tangencial sem oscilações de Gibbs — inclusive em junções quádruplas de quatro meios distintos com contraste $9:1$ (erro de $0.34\%$ no modo fundamental);
-4. **Generalidade Física em Meios Anisotrópicos Complexos:** A formulação resolveu com alta acurácia (erros de $0.45\%$ a $3.2\%$) problemas de autovalores com tensores dielétricos hermitianos, geometrias com quinas vivas e inclusões circulares PEC, equiparando-se a modelos de referência de elementos finitos de aresta com centenas de milhares de graus de liberdade.
+O desenvolvimento e a validação do **Vector Nodal Meshless Method (VNMM 2D)** sobre nuvens de pontos confirmam sua eficácia na resolução de problemas de autovalores eletromagnéticos em meios heterogêneos e anisotrópicos:
+1. **Completude Reprodutiva e Invariância Nodal:** A formulação baseada em projeções direcionais preserva a consistência polinomial de primeira ordem ($\mathcal{P}^1$) em precisão de máquina ($10^{-16}$) independentemente da irregularidade geométrica dos pontos (0% a 50% de perturbação estocástica). Isso ocorre porque a condição de colocação local ($\mathbf{N}_i(\mathbf{x}_k)\cdot\mathbf{t}_k = \delta_{ik}$) é imposta exatamente em cada estêncil sobre uma base vetorial completa $\mathcal{P}^1$, tornando a reprodução linear independente do alinhamento cartesiano;
+2. **Superioridade de Nuvens Irregulares:** Nuvens com perturbação moderada (10% a 25%) reduzem o erro médio dos autovalores em mais de 50% (para $\approx 1.1\%$) em comparação a grades cartesianas rígidas, mantendo $R_{\mathrm{div}} < 3.3\%$. A razão física desse ganho é que a quebra da simetria cartesiana diversifica as distâncias e orientações relativas nos estênceis, dissipando a dispersão numérica direcional (*grid-locking*), enquanto a regularização de divergência ($s_{\mathrm{div}}\mathbf{K}_{\mathrm{div}}$) expulsa os modos espúrios irrotacionais do espectro;
+3. **Resolução de Descontinuidades e Junções Múltiplas Sem Borramento:** A segregação estrita de suportes por subdomínio material impede a interpolação cruzada entre meios distintos, enquanto o uso de um único diretor tangencial ($\mathbf{t}_j = \boldsymbol{\tau}$) em cada nó de interface garante a continuidade exata de $E_t$ e deixa a componente normal $E_n$ livre para satisfazer o salto físico ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$) sem oscilações de Gibbs — viabilizando precisão de $0.34\%$ mesmo em junções quádruplas com contraste $9:1$;
+4. **Generalidade Física em Meios Anisotrópicos, Singularidades e Contornos PEC:** A conformidade em $H(\mathbf{curl})$ aliada à penalização de divergência e à colocação escalonada de diretores tangenciais em contornos PEC permite computar autovalores livres de modos espúrios em guias com tensores girotrópicos hermitianos, contornando singularidades de campo em quinas reentrantes (erro de $1.71\%$ no guia em "H") e modelando inclusões circulares PEC em meios anisotrópicos (erro de $0.45\%$ no modo dominante).
 
 ---
 
