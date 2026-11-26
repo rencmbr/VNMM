@@ -7,15 +7,15 @@
 %% natbib.dtx  (with options: `package,all')
 %% =============================================
 %% IMPORTANT NOTICE:
-%% 
+%%
 %% This program can be redistributed and/or modified under the terms
 %% of the LaTeX Project Public License Distributed from CTAN
 %% archives in directory macros/latex/base/lppl.txt; either
 %% version 1 of the License, or any later version.
-%% 
+%%
 %% This is a generated file.
 %% It may not be distributed without the original source file natbib.dtx.
-%% 
+%%
 %% Full documentation can be obtained by LaTeXing that original file.
 %% Only a few abbreviated comments remain here to describe the usage.
 %% =============================================
@@ -1047,21 +1047,39 @@
 \AtBeginDocument{\providecommand{\harvardand}{and}}
 \newcommand\harvardurl[1]{\textbf{URL:} \textit{#1}}
 \providecommand\bibsection{}
+\if@twocolumn
 \@ifundefined{chapter}{%
-  \renewcommand\bibsection{% 
-   \bmsection*{\fontsize{10}{13}\selectfont\bfseries{{REFERENCES}}\@mkboth{\MakeUppercase{\refname}}{\MakeUppercase{\refname}}}%
+  \renewcommand\bibsection{%
+   \bmsubsection*{\fontsize{10}{12}\selectfont{{References}}\@mkboth{{\refname}}{{\refname}}}%
   }%
 }{%
   \@ifxundefined\NAT@sectionbib{%
     \renewcommand\bibsection{%
-      \chapter*{\bibname\@mkboth{\MakeUppercase{\bibname}}{\MakeUppercase{\bibname}}}%
+      \chapter*{\bibname\@mkboth{{\bibname}}{{\bibname}}}%
     }%
   }{%
     \renewcommand\bibsection{%
-      \bmsection*{\bibname\ifx\@mkboth\@gobbletwo\else\markright{\MakeUppercase{\bibname}}\fi}%
+      \bmsection*{\bibname\ifx\@mkboth\@gobbletwo\else\markright{{\bibname}}\fi}%
     }%
   }%
 }%
+\else
+\@ifundefined{chapter}{%
+  \renewcommand\bibsection{%
+   \bmsubsection*{\fontsize{11}{13}\selectfont{{References}}\@mkboth{{\refname}}{{\refname}}}%
+  }%
+}{%
+  \@ifxundefined\NAT@sectionbib{%
+    \renewcommand\bibsection{%
+      \chapter*{\bibname\@mkboth{{\bibname}}{{\bibname}}}%
+    }%
+  }{%
+    \renewcommand\bibsection{%
+      \bmsection*{\bibname\ifx\@mkboth\@gobbletwo\else\markright{{\bibname}}\fi}%
+    }%
+  }%
+}%
+\fi
 \@ifclassloaded{amsart}{\renewcommand\bibsection{\bmsection*{\fontsize{10}{13}\selectfont\bfseries{{\refname}}}}}{}%
 \@ifclassloaded{amsbook}{\renewcommand\bibsection{\chapter*{\bibname}}}{}%
 \@ifxundefined\bib@heading{}{\let\bibsection\bib@heading}%
@@ -1097,7 +1115,7 @@
 \def\bibcleanup{\vskip-\lastskip}%
 \providecommand\reset@font{\relax}
 \providecommand\bibname{Bibliography}
-\providecommand\refname{REFERENCES} %
+\providecommand\refname{References} %
 \newcommand\NAT@citeundefined{\gdef \NAT@undefined {%
     \PackageWarningNoLine{natbib}{There were undefined citations}}}
 \let \NAT@undefined \relax
@@ -1106,7 +1124,7 @@
 \let \NAT@multiple \relax
 \AtEndDocument{\NAT@undefined\NAT@multiple}
 \providecommand\@mkboth[2]{}
-\providecommand\MakeUppercase{\uppercase}
+\providecommand{\uppercase}
 \providecommand{\@extra@b@citeb}{}
 \gdef\@extra@binfo{}
 \def\NAT@anchor#1#2{%
@@ -1256,7 +1274,7 @@
 \def\NAT@xcom#1,@@{#1}
 \InputIfFileExists{natbib.cfg}
        {\typeout{Local config file natbib.cfg used}}{}
-%% 
+%%
 %% <<<<< End of generated file <<<<<<
 %%
 %% End of file `natbib.sty'.
