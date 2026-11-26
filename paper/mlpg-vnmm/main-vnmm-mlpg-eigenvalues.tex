@@ -20,12 +20,12 @@
 
 \begin{document}
 
-\title{A Truly Cell-Free Vector Nodal Meshless Method via Meshless Local Petrov--Galerkin (VNMM-MLPG) for 2D Electromagnetic Eigenvalue Problems}
+\title{A Truly Cell-Free Vector Nodal Meshless Method via Meshless Local Petrov--Galerkin for Two-Dimensional Electromagnetic Eigenvalue Problems}
 
-\author[1]{Renato C. Mesquita*}
-\author[2]{Williams L. de Nicomedes}
-\author[3]{B\protect\'{a}rbara M. F. Gon\protect\c{c}alves}
-\author[4]{Luilly A. G. Ortiz}
+\author[1]{Renato C. Mesquita*}[https://orcid.org/0000-0003-1837-1355]
+\author[2]{Williams L. de Nicomedes}[https://orcid.org/0000-0002-7928-8419]
+\author[3]{B\protect\'{a}rbara M. F. Gon\protect\c{c}alves}[https://orcid.org/0000-0002-7973-0318]
+\author[4]{Luilly A. G. Ortiz}[https://orcid.org/0000-0001-5167-2585]
 
 \authormark{MESQUITA \textsc{et al.}}
 \titlemark{CELL-FREE VNMM-MLPG FOR 2D MAXWELL EIGENPROBLEMS}
@@ -37,11 +37,11 @@
 
 \corres{Renato C. Mesquita, Department of Electrical Engineering, Universidade Federal de Minas Gerais, Av. Ant\^{o}nio Carlos, 6627, Belo Horizonte, MG, 31270-901, Brazil. \email{renato@ufmg.br}}
 
-\fundingInfo{Brazilian National Council for Scientific and Technological Development (CNPq); Minas Gerais State Research Foundation (FAPEMIG); Coordination for the Improvement of Higher Education Personnel (CAPES).}
+\fundingInfo{Brazilian National Council for Scientific and Technological Development (CNPq), Grant/Award Number: 305185/2026-8; Minas Gerais State Research Foundation (FAPEMIG); Coordination for the Improvement of Higher Education Personnel (CAPES).}
 
 \abstract[ABSTRACT]{Source-free electromagnetic eigenvalue problems in $H(\mathbf{curl})$ govern the resonant frequencies and modal fields of microwave cavities, waveguide filters, and RF resonators. However, meshless vector discretizations of these problems remain challenging due to spurious gradient modes and background quadrature overhead. While the Vector Nodal Meshless Method (VNMM) constructs node-based vector approximations on unstructured point clouds via directional nodal degrees of freedom, prior implementations relied on Cartesian background integration cells, introducing intra-cell stencil discontinuities and limiting meshless autonomy. This paper presents a truly cell-free VNMM via Meshless Local Petrov--Galerkin (VNMM-MLPG) for 2D electromagnetic eigenvalue problems. Combining linear ($\mathcal{P}^1$) vector point interpolation with weak forms over autonomous circular subdomains eliminates background grids. Because fixed linear stencils yield constant curl and divergence per disk, Stokes' and Gauss' theorems show that boundary-vanishing weights (MLPG1) produce zero stiffness, motivating a Local Galerkin (MLPG6) scheme. To avoid the asymmetry and complex spectra of row-by-row MLPG without lens-intersection quadratures, we formulate a closed-form overlapping \textit{Symmetric Subdomain Galerkin} assembly yielding a real symmetric positive-semidefinite stiffness $\mathbf{K}$ and positive-definite mass $\mathbf{M}$, whose continuous multiplicity-weighted Rayleigh quotient homogenizes at second order on regular rectangular lattices. Modal decomposition further reveals two harmonic linear gradient modes in the local div-curl kernel, which are controlled via a VMS-inspired orthogonal energy stabilization paired with a resolution-scaled divergence penalty. Following auxiliary local-equilibrium verification tests, 2D PEC cavity benchmarks show zero spurious modes across the tested 10-mode band, monotonic convergence down to $0.78\%\text{--}0.79\%$ error with empirical cutoff rates of $p = 1.72$ (regular) and $p = 1.61$ ($25\%$ jitter) under linear stabilization, and $20\%\text{--}24\%$ sparser operators assembled 2.0$\times$--3.7$\times$ faster than calibrated cell-based VNMM-Gauss.}
 
-\keywords{Vector Nodal Meshless Method (VNMM) | Meshless Local Petrov--Galerkin (MLPG) | Point Interpolation Method (PIM) | Truly cell-free methods | Maxwell eigenvalue problems | Div-curl regularization | Orthogonal energy stabilization | Curl-curl vector discretization}
+\keywords{Vector Nodal Meshless Method (VNMM) | Meshless Local Petrov--Galerkin (MLPG) | Point Interpolation Method (PIM) | Truly cell-free methods | Maxwell eigenvalue problems | Div-curl regularization | Orthogonal energy stabilization}
 
 \maketitle
 
@@ -1360,6 +1360,9 @@ where $\mathcal{R}_h^{\mathrm{eig}}(\vec{E}, \vec{E}_h) \equiv a_h(\vec{E}, \vec
 
 \paragraph*{Hypotheses Governing the Numerical Interpretation of Spectral Convergence:}
 Accordingly, the spectral convergence behavior established in Section~\ref{subsec:stage5_cavity} ($p = 1.72$ regular, $p = 1.61$ at $25\%$ jitter) constitutes \textbf{systematic numerical evidence} interpreted under four working conditions. Condition (H1) assumes $H^2$-regularity of physical cavity modes (satisfied on convex rectilinear domains without re-entrant corners). Condition (H2) assumes uniformly well-conditioned stencils ($\kappa_2(\widehat{\mathbf{A}}_I) \le C_A$) and quasi-uniform spacing \eqref{eq:quasi_uniformity_hypothesis}. Condition (H3) relies on periodic disk coverage on regular grids ($\Omega_{\mathrm{cov}} = \Omega$, $\alpha_s \in [\sqrt{2}/2, 1]$) supporting \eqref{eq:multiplicity_homogenization} (inactive under $25\%$ jitter). Finally, (H4) invokes full-rank stencil-overlap connectivity verified numerically via \eqref{eq:condensed_positive_definite_proof} for fixed-mesh $\mathbf{K}_{\mathrm{red}} > 0$, alongside the empirical shifting of spurious gradient modes outside the 10-mode operational band under the calibrated scalings ($s_{\mathrm{div}} \propto (h_{\mathrm{char}}/L)^{-1.5}$, $\alpha_{\mathrm{stab}} = c_{\mathrm{stab}}\,h_{\mathrm{char}}/L$). Establishing uniform discrete coercivity, asymptotic smallness of $\mathcal{R}_h^{\mathrm{eig}}$, and discrete compactness in $H(\mathbf{curl})$ \cite{boffi2006finite, boffi2013mixed} remains open. Whereas Stage~3 verifies local approximation under exact local equilibrium ($\mathcal{R}_h \equiv 0$), the target eigenproblem convergence rests on the numerical evidence in Section~\ref{subsec:stage5_cavity}.
+
+\bmsection*{Acknowledgments}
+The authors gratefully acknowledge the financial support of the Brazilian National Council for Scientific and Technological Development (CNPq), the Minas Gerais State Research Foundation (FAPEMIG), and the Coordination for the Improvement of Higher Education Personnel (CAPES). In particular, R. C. Mesquita acknowledges financial support from CNPq through the Senior Research Productivity Fellowship (Process: 305185/2026-8).
 
 \bmsection*{Conflict of Interest Statement}
 The authors declare that they have no conflict of interest.

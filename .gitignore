@@ -81,3 +81,6 @@ reports/*.png
 scratch/
 
 review_notes/
+
+# Local submission form notes
+paper/mlpg-vnmm/wiley_submission_form.txt
