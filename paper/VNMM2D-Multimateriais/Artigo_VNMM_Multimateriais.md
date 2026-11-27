@@ -24,69 +24,84 @@ Ao empregar uma base vetorial polinomial linear completa ($\mathcal{P}^1$) com s
 
 Apesar desses avanços em meios homogêneos, a extensão do VNMM para **meios heterogêneos, descontínuos e anisotrópicos** exige um tratamento preciso das interfaces materiais: o compartilhamento ingênuo de suportes entre dielétricos distintos provoca borramento numérico (*smearing*) da descontinuidade normal e oscilações de Gibbs. Neste artigo, resolve-se esse desafio por meio da **regra de partição estrita de suportes nodais** associada a **diretores puramente tangenciais na interface** ($\mathbf{t}_j = \boldsymbol{\tau}$), acoplando os subdomínios por um único grau de liberdade tangencial e deixando a componente normal livre para reproduzir o salto físico ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$). Demonstra-se ainda que o VNMM se beneficia da operação em **nuvens de pontos irregulares**: a quebra da simetria cartesiana por perturbações estocásticas moderadas (10% a 25%) mitiga a dispersão direcional (*grid-locking*), reduzindo o erro médio espectral em mais de 50%, enquanto resolve com alta acurácia tensores girotópicos hermitianos, singularidades em quinas reentrantes, inclusões cilíndricas PEC e junções múltiplas de quatro materiais sem modos espúrios.
 
-O restante do artigo está organizado da seguinte forma: a Seção 2 apresenta a formulação matemática do VNMM em nuvens de pontos; a Seção 3 detalha o tratamento de meios multimateriais e a forma fraca regularizada; a Seção 4 analisa a consistência polinomial, a sensibilidade a nuvens irregulares e a captura nítida de saltos de interface; a Seção 5 valida cavidades carregadas com dielétricos sob amplos contrastes; a Seção 6 avalia benchmarks em meios anisotrópicos, quinas singulares, inclusões PEC e junção quádrupla; e a Seção 7 sintetiza as conclusões.
+O restante do artigo está organizado da seguinte forma: a Seção 2 apresenta a formulação matemática do VNMM 2D em nuvens de pontos, o algoritmo de seleção de suportes invariante à escala, as condições de partição estrita multimaterial e a forma fraca regularizada; a Seção 3 analisa a consistência polinomial, a sensibilidade a nuvens irregulares e a captura nítida de saltos de interface; a Seção 4 valida cavidades carregadas com dielétricos sob amplos contrastes; a Seção 5 avalia benchmarks em meios anisotrópicos, quinas singulares, inclusões PEC e junção quádrupla; e a Seção 6 sintetiza as conclusões.
 
 ---
 
-## 2. Formulação Matemática do VNMM em Nuvens de Pontos
+## 2. Formulação Matemática do VNMM 2D Multimaterial em Nuvens de Pontos
 
-Esta seção apresenta a formulação matemática do VNMM 2D sobre nuvens de pontos não-estruturadas, definindo os graus de liberdade baseados em projeções vetoriais direcionais, a base polinomial linear completa ($\mathcal{P}^1$) e o sistema de colocação local utilizado para obter analiticamente as funções de forma vetoriais e seus operadores diferenciais.
+Esta seção estabelece a formulação matemática do Método Sem Malha Nodal Vetorial bidimensional (VNMM 2D) para domínios heterogêneos e anisotrópicos sobre nuvens de pontos não-estruturadas. Inicialmente, definem-se os graus de liberdade baseados em projeções direcionais, a base vetorial polinomial completa $\mathcal{P}^1$ e o sistema de colocação local. Em seguida, detalha-se o algoritmo de seleção automática de nós de suporte invariante à escala acoplado às condições de partição estrita para meios multimateriais e, por fim, apresenta-se a formulação fraca de Galerkin regularizada.
 
-### 2.1 Graus de Liberdade e Projeção Vetorial Nodal
-Considere um domínio bidimensional $\Omega \subset \mathbb{R}^2$ discretizado por uma nuvem de $N$ nós arbitrários $\{\mathbf{x}_i\}_{i=1}^N$. A cada nó $\mathbf{x}_i = (x_i, y_i)^T$ associa-se um vetor diretor unitário:
+### 2.1 Graus de Liberdade, Projeções Vetoriais Nodais e Contornos PEC
+Considere um domínio bidimensional $\Omega \subset \mathbb{R}^2$ discretizado por uma nuvem de $N$ nós arbitrários $\{\mathbf{x}_i\}_{i=1}^N$ espalhados em seu interior e contornos $\partial\Omega$. Diferentemente de métodos sem malha escalares que atribuem graus de liberdade independentes às componentes cartesianas ($E_x, E_y$), o VNMM associa a cada nó $\mathbf{x}_i = (x_i, y_i)^T$ um único vetor diretor unitário:
 $$\mathbf{t}_i = \begin{bmatrix} \cos\theta_i \\ \sin\theta_i \end{bmatrix}$$
-O grau de liberdade escalar $e_i$ associado ao nó $i$ representa o produto interno entre o campo elétrico e o diretor do nó:
-$$e_i = \mathbf{E}(\mathbf{x}_i) \cdot \mathbf{t}_i$$
 
-Nas fronteiras de condutores elétricos perfeitos (PEC) e interfaces entre materiais, os vetores diretores são obrigatoriamente alinhados à tangente da fronteira ($\mathbf{t}_i = \boldsymbol{\tau}$). No interior de cada subdomínio, adota-se o padrão alternado ortogonal ($\pm 45^\circ$, isto é, $\theta_i \in \{\pi/4, 3\pi/4\}$), garantindo diversidade angular e prevenindo colinearidades locais.
+Em qualquer ponto de avaliação $\mathbf{x} = (x, y) \in \Omega$, o campo elétrico aproximado $\mathbf{E}^h(\mathbf{x})$ é expresso como uma combinação linear das funções de forma vetoriais nodais $\mathbf{N}_i(\mathbf{x})$ associadas aos $M_{\mathrm{supp}}$ nós do estêncil de suporte local:
+$$\mathbf{E}^h(x, y) = \sum_{i=1}^{M_{\mathrm{supp}}} \mathbf{N}_i(x, y)\, e_i$$
+onde $e_i$ representa o grau de liberdade escalar associado ao nó $i$, definido fisicamente como a projeção direcional pontual do campo elétrico ao longo do diretor nodal:
+$$e_i = \mathbf{E}(\mathbf{x}_i) \cdot \mathbf{t}_i \quad [\text{V/m}]$$
+
+Para assegurar consistência local em $H(\mathbf{curl})$ e imposição direta das condições essenciais de contorno, exige-se que as funções de forma satisfaçam a propriedade de delta de Kronecker vetorial:
+$$\mathbf{N}_i(\mathbf{x}_k) \cdot \mathbf{t}_k = \delta_{ik} = \begin{cases} 1, & \text{se } k = i \\ 0, & \text{se } k \neq i \end{cases}$$
+
+Nas fronteiras de Condutores Elétricos Perfeitos (PEC), onde a condição física impõe $\hat{n} \times \mathbf{E} = \mathbf{0}$, os diretores nodais são alinhados à tangente do contorno ($\mathbf{t}_k = \boldsymbol{\tau}$), permitindo impor a condição de Dirichlet homogênea diretamente por colocação nodal ($e_k = 0, \; \forall \mathbf{x}_k \in \partial\Omega_{\mathrm{PEC}}$) sem multiplicadores de Lagrange. No interior de cada subdomínio, adota-se o padrão alternado ortogonal ($\pm 45^\circ$, isto é, $\theta_i \in \{\pi/4, 3\pi/4\}$) para garantir diversidade angular local. A análise funcional detalhada dessa projeção direcional e da distinção entre colocação nodal pontual e traço contínuo de contorno em nuvens não-estruturadas é apresentada no artigo de referência do VNMM estabilizado (Mesquita et al., 2026).
 
 ### 2.2 Base Vetorial Polinomial Linear Completa ($\mathcal{P}^1$)
-Para cada ponto de avaliação $P(x_P, y_P)$, adota-se a base vetorial polinomial linear completa de 6 monômios:
-$$\mathcal{P}^1 = \left\{ \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \; \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \; \begin{bmatrix} \Delta x \\ 0 \end{bmatrix}, \; \begin{bmatrix} \Delta y \\ 0 \end{bmatrix}, \; \begin{bmatrix} 0 \\ \Delta x \end{bmatrix}, \; \begin{bmatrix} 0 \\ \Delta y \end{bmatrix} \right\}$$
-onde $\Delta x = x - x_P$ e $\Delta y = y - y_P$. A função de forma vetorial local associada ao nó de suporte $i$ é expressa por:
+Formulações iniciais do VNMM empregavam a base solenoidal incompleta $\mathcal{L}^1$ (3 nós de suporte), herdada dos elementos de aresta de Nédélec de primeiro tipo. Contudo, quando combinada com seleção dinâmica de suportes em nuvens arbitrárias, a base $\mathcal{L}^1$ força o anulamento artificial das derivadas longitudinais ($\partial E_x/\partial x$, $\partial E_y/\partial y$), gerando *aliasing* modal de derivadas e estagnação $\mathcal{O}(1)$ na convergência do rotacional.
+
+Para eliminar essa limitação, adota-se o espaço vetorial polinomial linear completo $\mathcal{P}^1 = \mathcal{P}_1 \times \mathcal{P}_1$, composto por 6 monômios independentes ($M_{\mathrm{supp}} = 6$ nós de suporte) em coordenadas locais transladadas ($\Delta x = x - x_P$, $\Delta y = y - y_P$) centradas no ponto de avaliação $P(x_P, y_P)$:
+$$\mathcal{P}^1 = \operatorname{span} \left\{ \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \; \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \; \begin{bmatrix} \Delta x \\ 0 \end{bmatrix}, \; \begin{bmatrix} \Delta y \\ 0 \end{bmatrix}, \; \begin{bmatrix} 0 \\ \Delta x \end{bmatrix}, \; \begin{bmatrix} 0 \\ \Delta y \end{bmatrix} \right\}$$
+
+A função de forma vetorial local associada ao nó de suporte $i$ é escrita como:
 $$\mathbf{N}_i(\Delta x, \Delta y) = \begin{bmatrix} \beta_{1i} + \beta_{3i}\Delta x + \beta_{4i}\Delta y \\ \beta_{2i} + \beta_{5i}\Delta x + \beta_{6i}\Delta y \end{bmatrix}$$
 
-### 2.3 Sistema de Colocação Local e Operadores Diferenciais
-Para um conjunto de 6 nós de suporte vizinhos $\mathcal{S}(P) = \{n_1, \dots, n_6\}$ selecionados via busca espacial por árvore KD (*KDTree*), impõe-se a condição de interpolação estrita:
-$$\mathbf{N}_i(\mathbf{x}_k) \cdot \mathbf{t}_k = \delta_{ik}, \quad \forall n_k \in \mathcal{S}(P)$$
-Isso resulta no sistema algébrico local $\mathbf{A} \boldsymbol{\beta} = \mathbf{I}_6 \implies \boldsymbol{\beta} = \mathbf{A}^{-1}$, cuja $k$-ésima linha da matriz $\mathbf{A}$ é dada por:
-$$\mathbf{A}_{k, :} = \begin{bmatrix} t_{kx} & t_{ky} & \Delta x_k t_{kx} & \Delta y_k t_{kx} & \Delta x_k t_{ky} & \Delta y_k t_{ky} \end{bmatrix}$$
+Com 6 graus de liberdade independentes, o espaço $\mathcal{P}^1$ resolve simultaneamente todas as quatro componentes do tensor jacobiano local $\mathbf{J}^h = \nabla \mathbf{E}^h$, capturando tanto a parte rotacional quanto as variações longitudinais de fluxo. A demonstração completa de que essa transição elimina o *aliasing* de derivadas e restaura a convergência ótima do campo e de seu rotacional encontra-se detalhada em Mesquita et al. (2026).
 
-Avaliando diretamente no ponto $P$ ($\Delta x = \Delta y = 0$), as funções de forma e suas derivadas espaciais são obtidas de forma analítica e imediata a partir das linhas de $\boldsymbol{\beta}$:
+### 2.3 Sistema de Colocação Local e Operadores Diferenciais
+Para um conjunto qualificado de 6 nós de suporte vizinhos $\mathcal{S}(P) = \{n_1, \dots, n_6\}$, a imposição da propriedade de delta de Kronecker vetorial ($\mathbf{N}_i(\mathbf{x}_k) \cdot \mathbf{t}_k = \delta_{ik}$) resulta no sistema algébrico local:
+$$\mathbf{A} \boldsymbol{\beta} = \mathbf{I}_6 \implies \boldsymbol{\beta} = \mathbf{A}^{-1}$$
+onde a $k$-ésima linha da matriz de colocação $\mathbf{A} \in \mathbb{R}^{6 \times 6}$ é dada por:
+$$\mathbf{A}_{k, :} = \begin{bmatrix} t_{kx} & t_{ky} & \Delta x_k t_{kx} & \Delta y_k t_{kx} & \Delta x_k t_{ky} & \Delta y_k t_{ky} \end{bmatrix}, \quad k = 1, \dots, 6$$
+sendo $\Delta x_k = x_k - x_P$ e $\Delta y_k = y_k - y_P$.
+
+Avaliando diretamente no ponto $P$ ($\Delta x = \Delta y = 0$), as funções de forma vetoriais e seus operadores diferenciais espaciais são obtidos analiticamente a partir das linhas de $\boldsymbol{\beta}$ (indexadas a partir de 0):
 $$\boldsymbol{\Phi}(P) = \boldsymbol{\beta}_{0:2, :} \in \mathbb{R}^{2 \times 6}$$
 $$(\nabla \times \boldsymbol{\Phi})_z(P) = \boldsymbol{\beta}_{4, :} - \boldsymbol{\beta}_{3, :} \in \mathbb{R}^{1 \times 6}$$
 $$\nabla \cdot \boldsymbol{\Phi}(P) = \boldsymbol{\beta}_{2, :} + \boldsymbol{\beta}_{5, :} \in \mathbb{R}^{1 \times 6}$$
 
----
+A caracterização algébrica das singularidades de $\mathbf{A}$ pelo Princípio da Ortogonalidade do Espaço Nulo e sua fatoração adimensional $\mathbf{A} = \widehat{\mathbf{A}}\mathbf{D}_h$ para preservação de condicionamento sob refinamento espacial ($h \to 0$) são formuladas rigorosamente em Mesquita et al. (2026).
 
-## 3. Tratamento de Meios Multimateriais e Formulação Variacional
+### 2.4 Seleção Automática de Nós de Suporte e Partição Estrita Multimaterial
+A escolha adequada do estêncil $\mathcal{S}(P)$ em nuvens não-estruturadas requer simultaneamente bom condicionamento algébrico e respeito estrito às descontinuidades materiais do domínio.
 
-Esta seção estende a formulação nodal vetorial para domínios heterogêneos e anisotrópicos, estabelecendo a regra de partição estrita de suportes nodais com diretores tangenciais de interface e a forma fraca de Galerkin regularizada pelo termo de divergência.
+#### Algoritmo de Seleção Invariante à Escala
+Em nuvens de pontos arbitrárias, utilizam-se as quatro fases do algoritmo de seleção automática proposto em Mesquita et al. (2026):
+1. **Busca Espacial via Árvore *k-d*:** Uma árvore *k-d* ($\mathcal{O}(N \log N)$) recupera os $K_{\mathrm{initial}} \ge 12$ vizinhos mais próximos de $P$, definindo a escala espacial característica local $h_{\mathrm{local}}(\mathbf{x}_P) = \frac{1}{6}\sum_{k=1}^6 \|\mathbf{x}_{(k)} - \mathbf{x}_P\|$;
+2. **Geração Ordenada de Sextetos Candidatos:** Fixando o nó mais próximo de $P$ como âncora, geram-se combinações de 6 nós ordenadas por distância média crescente;
+3. **Montagem da Matriz Adimensional $\widehat{\mathbf{A}}$:** Normalizam-se as coordenadas locais ($\hat{x}_k = \Delta x_k / h_{\mathrm{local}}, \; \hat{y}_k = \Delta y_k / h_{\mathrm{local}}$), removendo o decaimento quártico $\det(\mathbf{A}) \sim \mathcal{O}(h^4)$ e a inflação artificial do número de condição $\kappa_2(\mathbf{A}) \sim \mathcal{O}(1/h)$;
+4. **Qualificação por Determinante com Parada Antecipada:** Aceita-se imediatamente o primeiro sexteto candidato que satisfizer $|\det(\widehat{\mathbf{A}})| \ge \widehat{\mathrm{Tol}} > 0$, filtrando configurações singulares ou mal-condicionadas sem dilatação de suporte.
 
-### 3.1 Regra de Partição Estrita de Suportes Nodais
-Para domínios heterogêneos formados pela união de múltiplos materiais distintos ($\Omega = \bigcup_{m=1}^M \Omega_m$) separados por interfaces $\Gamma_{\mathrm{int}}$, adota-se a **regra de partição estrita de suportes**:
-1. **Confinamento Material:** Ao avaliar as funções de forma em um ponto $P \in \Omega_m$, o estêncil de nós vizinhos $\mathcal{S}(P)$ é restrito exclusivamente aos nós pertencentes ao meio $\Omega_m$ e aos nós situados sobre a interface $\Gamma_{\mathrm{int}}$ adjacente. Nós pertencentes a outros meios materiais são estritamente excluídos do conjunto de busca;
-2. **Graus de Liberdade de Interface:** Os nós dispostos ao longo da interface física $\Gamma_{\mathrm{int}}$ possuem seus diretores orientados exclusivamente ao longo da tangente unitária ($\mathbf{t}_j = \boldsymbol{\tau}$). Como a componente tangencial do campo elétrico $E_t$ é fisicamente contínua ($E_{1t} = E_{2t}$), um único grau de liberdade na interface acopla ambos os materiais de forma exata e não-redundante. A componente normal $E_n$ é livre para sofrer o salto físico ditado pela razão de permissividades ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$) sem nenhum borramento artificial.
+#### Condições para Domínios Multimateriais (Regra de Partição Estrita de Suportes)
+Quando o domínio é heterogêneo ($\Omega = \bigcup_{m=1}^M \Omega_m$) com interfaces físicas $\Gamma_{\mathrm{int}}$, o algoritmo de seleção via árvore *k-d* deve obedecer estritamente a duas condições adicionais:
+1. **Confinamento ao Subdomínio Material:** Ao avaliar as funções de forma em um ponto de integração $P \in \Omega_m$, o conjunto de busca de nós candidatos é restrito exclusivamente aos nós pertencentes ao meio $\Omega_m$ e aos nós posicionados diretamente sobre a interface $\Gamma_{\mathrm{int}}$ adjacente (implementado por meio de árvores *k-d* particionadas por material). Nós pertencentes a outros meios materiais são estritamente excluídos do estêncil;
+2. **Graus de Liberdade Tangenciais de Interface:** Os nós alocados ao longo de $\Gamma_{\mathrm{int}}$ têm seus diretores alinhados exclusivamente à tangente unitária da interface ($\mathbf{t}_j = \boldsymbol{\tau}$). Como a componente tangencial do campo elétrico é fisicamente contínua ($E_{1t} = E_{2t}$), um único grau de liberdade escalar na interface acopla ambos os materiais de forma exata e não-redundante. Em contrapartida, a segregação dos suportes permite que a componente normal $E_n$ sofra livremente o salto físico ditado pela razão de permissividades ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$), eliminando borramento numérico (*smearing*) e oscilações de Gibbs.
 
-### 3.2 Forma Fraca de Galerkin com Penalização de Divergente
-A formulação fraca de Maxwell para meios gerais com anisotropia de permissividade $\overline{\overline{\varepsilon}}_r$ e permeabilidade $\mu_r$ é dada por:
+### 2.5 Forma Fraca de Galerkin com Regularização de Divergente
+Como a seleção dinâmica de estênceis em nuvens irregulares resulta em uma aproximação globalmente não-conforme ($V_h \not\subset H(\mathbf{curl}; \Omega)$), incorpora-se a regularização variacional *div-curl* (Mesquita et al., 2026) à forma fraca de Maxwell para meios anisotrópicos gerais caracterizados pelo tensor de permissividade $\overline{\overline{\varepsilon}}_r$ e permeabilidade $\mu_r$:
 $$\int_{\Omega} \frac{1}{\mu_r} (\nabla \times \mathbf{E})_z (\nabla \times \mathbf{v})_z^* \, d\Omega + s_{\mathrm{div}} \int_{\Omega} \frac{1}{\mu_r} (\nabla \cdot \mathbf{E}) (\nabla \cdot \mathbf{v})^* \, d\Omega = k_0^2 \int_{\Omega} \mathbf{v}^* \cdot (\overline{\overline{\varepsilon}}_r \mathbf{E}) \, d\Omega$$
-onde $s_{\mathrm{div}} \ge 0$ é o coeficiente de regularização de divergente que expulsa os modos espúrios de rotacional nulo para fora do espectro físico de interesse, e $(\cdot)^*$ denota a transposta conjugada para tensores hermitianos complexos.
+onde $s_{\mathrm{div}} \ge 0$ é o parâmetro de penalidade de divergente que desloca os modos espúrios irrotacionais para fora do espectro físico de interesse, e $(\cdot)^*$ denota a transposta conjugada para tensores hermitianos complexos.
 
-A discretização resulta no problema espectral generalizado:
+A discretização conduz ao problema de autovalores generalizado:
 $$(\mathbf{K}_{\mathrm{curl}} + s_{\mathrm{div}} \mathbf{K}_{\mathrm{div}}) \mathbf{c} = \lambda \mathbf{M} \mathbf{c}$$
-onde $\lambda = k_0^2$. As condições de contorno em paredes de Condutor Elétrico Perfeito (PEC) impõem $E_t = 0$. Como os nós de contorno possuem seus vetores diretores tangenciais às paredes, a condição de Dirichlet homogênea é imposta diretamente eliminando-se as linhas e colunas dos nós PEC das matrizes globais:
-$$e_k = 0, \quad \forall k \in \partial\Omega_{\mathrm{PEC}}$$
-
-A integração numérica das matrizes de rigidez e massa é efetuada sobre uma malha cartesiana de fundo uniforme (*background integration grid*), onde a quadratura de Gauss de $2 \times 2$ pontos por célula serve como suporte métrico neutro, mantendo a formulação independente de conectividade entre nós.
+com $\lambda = k_0^2$. As condições de contorno PEC ($e_k = 0, \; \forall k \in \partial\Omega_{\mathrm{PEC}}$) são impostas eliminando-se diretamente as respectivas linhas e colunas das matrizes globais. A integração numérica é realizada sobre uma grade cartesiana de fundo uniforme com quadratura de Gauss ($2 \times 2$, ou $3 \times 3$ próxima a vértices singulares), atuando estritamente como suporte métrico sem exigir conectividade entre os nós.
 
 ---
 
-## 4. Estudo de Consistência e Robustez em Nuvens de Pontos Irregulares
+## 3. Estudo de Consistência e Robustez em Nuvens de Pontos Irregulares
 
 Esta seção avalia sistematicamente a consistência matemática, a convergência espacial e a estabilidade numérica do VNMM 2D em meios multimateriais sob nuvens de pontos irregulares, abrangendo testes de reprodução polinomial (Patch Test e MMS), análise de sensibilidade a perturbações estocásticas (*jitter* de até 50%) e captura nítida de saltos normais em interfaces dielétricas.
 
-### 4.1 Consistência Polinomial e Convergência Espacial
+### 3.1 Consistência Polinomial e Convergência Espacial
 Para certificar a completude das funções de forma em nuvens de pontos sob meios heterogêneos, foram aplicados o Galerkin Patch Test e o Method of Manufactured Solutions (MMS):
 - **Campo Afim do Patch Test:**
   $$\mathbf{E}_{\mathrm{patch}}(x, y) = \begin{bmatrix} 1.5 + 0.8\,x - 0.3\,y \\ -0.7 + 0.4\,x + 1.2\,y \end{bmatrix}, \quad (\nabla \times \mathbf{E}_{\mathrm{patch}})_z = 0.7\text{ V/m}^2$$
@@ -111,7 +126,7 @@ A análise dos resultados da Tabela 1 e da Figura 1 confirma conclusivamente que
 
 ---
 
-### 4.2 Análise Estatística de Sensibilidade a Nuvens Irregulares (*Jitter Study* de 0% a 50%)
+### 3.2 Análise Estatística de Sensibilidade a Nuvens Irregulares (*Jitter Study* de 0% a 50%)
 Para atestar a genuína natureza *meshless* do VNMM e comprovar sua insensibilidade à perda de ordenamento cartesiano, aplicou-se uma perturbação estocástica aleatória na posição de todos os nós internos:
 $$\mathbf{x}_i \leftarrow \mathbf{x}_i + \eta \, h_{\min} \begin{bmatrix} \xi_x \\ \xi_y \end{bmatrix}, \quad \xi_x, \xi_y \sim \mathcal{U}(-0.5, 0.5)$$
 onde $\eta \in \{0.00, 0.10, 0.25, 0.40, 0.50\}$ denota a fração de deslocamento estocástico (*jitter*), avaliada sobre múltiplas sementes aleatórias ($N_{\mathrm{seeds}} = 3$). A perturbação foi realizada sobre a cavidade ressonante bimaterial carregada com dielétrico ($[0, \pi]^2$, interface em $x = \pi/2$, $\varepsilon_{r1}=1.0$, $\varepsilon_{r2}=4.0$).
@@ -149,7 +164,7 @@ A interpretação desses resultados quantitativos e visuais consolida três conc
 
 ---
 
-### 4.3 Captura Nítida de Descontinuidades Normais ($[E_n] \neq 0$)
+### 3.3 Captura Nítida de Descontinuidades Normais ($[E_n] \neq 0$)
 Para avaliar o comportamento local do campo elétrico sobre a interface bimaterial, executou-se um corte transversal unidimensional em $y = 0.5\text{ m}$ sobre um campo onde a componente normal sofre um salto físico exato de $4:1$ ($E_{1x} = 1.500\text{ V/m} \to E_{2x} = 0.375\text{ V/m}$), enquanto a componente tangencial permanece contínua ($E_{1y} = E_{2y} = 0.500\text{ V/m}$).
 
 A estabilidade espectral dos 6 primeiros modos ressonantes na cavidade bimaterial sob diferentes níveis de perturbação nodal ($\eta \in \{0\%, 10\%, 20\%\}$) é detalhada na **Tabela 4**, enquanto a **Figura 3** ilustra os perfis transversais 1D capturando com nitidez o salto normal de $4:1$ sem oscilações de Gibbs, a continuidade estrita $C^0$ da componente tangencial e a resposta espectral do modo fundamental frente a contrastes dielétricos elevados ($\varepsilon_{r2} \in [2.25, 16.0]$).
@@ -176,7 +191,7 @@ Os resultados da Tabela 4 e da Figura 3 consolidam conclusões cruciais sobre a 
 
 ---
 
-### 4.4 Síntese e Conclusões da Análise de Consistência e Robustez
+### 3.4 Síntese e Conclusões da Análise de Consistência e Robustez
 
 Os estudos numéricos desenvolvidos nesta seção consolidam três conclusões essenciais sobre o comportamento do VNMM 2D em meios multimateriais:
 1. **Completude e Reprodução Polinomial Invariantes:** A formulação baseada em projeções direcionais locais preserva integralmente a consistência de ordem 1 ($\mathcal{P}^1$) em precisão de máquina ($10^{-16}$) sob qualquer topologia de nuvem nodal, mesmo sob severa desordem espacial estocástica (até 50% de jitter);
@@ -185,9 +200,9 @@ Os estudos numéricos desenvolvidos nesta seção consolidam três conclusões e
 
 ---
 
-## 5. Resolução de Autovalores em Cavidades e Guias de Onda
+## 4. Resolução de Autovalores em Cavidades e Guias de Onda
 
-### 5.1 Cavidade Carregada com Dielétrico: Comparação Analítica Transcendental
+### 4.1 Cavidade Carregada com Dielétrico: Comparação Analítica Transcendental
 Avaliou-se a cavidade $[0, \pi]^2$ bipartida por uma interface em $x = \pi/2$ com $\varepsilon_{r1} = 1.0$ e $\varepsilon_{r2} = 4.0$. Os autovalores numéricos obtidos pelo VNMM foram confrontados diretamente com as raízes analíticas exatas das equações transcendentais de dispersão:
 - Para modos sem variação vertical ($m = 0$): $k_{x1} \cot(k_{x1} d) + k_{x2} \cot(k_{x2} (a - d)) = 0$
 - Para modos com variação vertical ($m \ge 1$): $\frac{\beta_1}{\varepsilon_{r1}} \tan(\beta_1 d) + \frac{\beta_2}{\varepsilon_{r2}} \tan(\beta_2 (a - d)) = 0$
@@ -214,7 +229,7 @@ Os resultados da Tabela 5 e da Figura 4 confirmam que o VNMM alcançou **erro m�
 
 ---
 
-### 5.2 Varredura Paramétrica de Contraste Dielétrico
+### 4.2 Varredura Paramétrica de Contraste Dielétrico
 A resposta espectral foi avaliada frente a materiais tecnológicos de micro-ondas em simulações bimateriais independentes ($\Omega_1$ ar com $\varepsilon_{r1} = 1.0$, $\Omega_2$ dielétrico): Teflon ($\varepsilon_{r2} = 2.25$), Dielétrico Padrão ($\varepsilon_{r2} = 4.00$), Alumina ($\varepsilon_{r2} = 9.80$) e Cerâmica Avançada ($\varepsilon_{r2} = 16.00$).
 
 Para isolar rigorosamente a influência do contraste constitutivo e descartar efeitos concorrentes decorrentes de refinamento de malha ($h$-refinement), **utilizou-se exatamente a mesma nuvem de nós e a mesma grade de integração de fundo em todos os quatro casos** ($N_{x1}=11$, $N_{x2}=11$, $N_y=21$, totalizando uma densidade nodal fixa sobre a cavidade $[\pi \times \pi]\text{ m}$).
@@ -236,11 +251,11 @@ Ressalta-se que, para modos de ordens superiores com comprimentos de onda substa
 
 ---
 
-## 6. Benchmarks em Meios Anisotrópicos e Geometrias Singulares
+## 5. Benchmarks em Meios Anisotrópicos e Geometrias Singulares
 
 Para demonstrar a versatilidade da formulação sobre nuvens de pontos em problemas de alta complexidade física, foram reproduzidos dois problemas clássicos de referência da literatura (Ortiz, 2023; Jiang et al., 2014):
 
-### 6.1 Guia com Saliência em "H" Homogêneo e Anisotrópico (Geometria Não-Convexa com Quinas)
+### 5.1 Guia com Saliência em "H" Homogêneo e Anisotrópico (Geometria Não-Convexa com Quinas)
 O primeiro benchmark investiga a resposta em domínios não-convexos com quinas reentrantes que induzem singularidades no campo elétrico, preenchido por um meio girotópico caracterizado por um tensor de permissividade hermitiano complexo:
 $$\mu_r = 1.0, \quad \overline{\overline{\varepsilon}}_r = \begin{bmatrix} 1 & -j \\ j & 4 \end{bmatrix}$$
 O domínio ocupa $x \in [-2.5, 2.5]\text{ m}$ e $y \in [-1.5, 1.5]\text{ m}$, com reentrâncias simétricas centrais em $x \in [-1.0, 1.0]\text{ m}$ que estrangulam o canal condutor a $|y| \le 0.5\text{ m}$. A discretização foi realizada sobre uma nuvem de pontos com diretores alternados a $\pm 45^\circ$ no interior e tangenciais nas paredes PEC.
@@ -264,7 +279,7 @@ Os resultados da Tabela 7 confirmam que o VNMM encontra corretamente os autovalo
 
 ---
 
-### 6.2 Guia Bimaterial Anisotrópico com Cilindros PEC Internos (Fronteiras Curvas)
+### 5.2 Guia Bimaterial Anisotrópico com Cilindros PEC Internos (Fronteiras Curvas)
 O segundo teste acopla simultaneamente interface bimaterial descontínua, anisotropia tensorial distinta em cada meio e obstáculos condutores circulares internos:
 - **Geometria:** Domínio retangular $[-2, 2] \times [-1, 1]\text{ m}$ dividido em $x = 0$ entre $\Omega_1 = [-2, 0] \times [-1, 1]\text{ m}$ e $\Omega_2 = [0, 2] \times [-1, 1]\text{ m}$. Cada subdomínio encerra um obstáculo circular condutor PEC de raio $r = 1/3\text{ m}$ centrado em $(-1, 0)$ e $(1, 0)$, respectivamente;
 - **Meio 1 ($\Omega_1$):** $\mu_{r1} = 1.0, \quad \overline{\overline{\varepsilon}}_{r1} = \operatorname{diag}(1, 2)$ (anisotropia biaxial);
@@ -289,7 +304,7 @@ A análise da Tabela 8 demonstra que o VNMM encontra todos os autovalores sem co
 
 ---
 
-### 6.3 Cavidade com Junção Quádrupla de Quatro Materiais (*Quad-Junction*)
+### 5.3 Cavidade com Junção Quádrupla de Quatro Materiais (*Quad-Junction*)
 Para avaliar o comportamento do método diante de uma singularidade clássica de múltiplas interfaces ortogonais se encontrando em um único vértice (teste de estresse para formulações sem malha), analisou-se uma cavidade quadrada PEC $\Omega = [-1, 1] \times [-1, 1]\text{ m}$ dividida em quatro quadrantes com permissividades distintas ($\mu_r = 1.0$ em todo o domínio), encontrando-se no ponto central $(0, 0)$:
 - **$Q_1$ ($x < 0, y > 0$):** $\varepsilon_{r1} = 1.0$;
 - **$Q_2$ ($x > 0, y > 0$):** $\varepsilon_{r2} = 4.0$;
@@ -318,7 +333,7 @@ Os resultados da Tabela 9 e da Figura 7 demonstram que o VNMM captura com precis
 
 ---
 
-## 7. Conclusões
+## 6. Conclusões
 
 O desenvolvimento e a validação do **Vector Nodal Meshless Method (VNMM 2D)** sobre nuvens de pontos confirmam sua eficácia na resolução de problemas de autovalores eletromagnéticos em meios heterogêneos e anisotrópicos:
 1. **Completude Reprodutiva e Invariância Nodal:** A formulação baseada em projeções direcionais preserva a consistência polinomial de primeira ordem ($\mathcal{P}^1$) em precisão de máquina ($10^{-16}$) independentemente da irregularidade geométrica dos pontos (0% a 50% de perturbação estocástica). Isso ocorre porque a condição de colocação local ($\mathbf{N}_i(\mathbf{x}_k)\cdot\mathbf{t}_k = \delta_{ik}$) é imposta exatamente em cada estêncil sobre uma base vetorial completa $\mathcal{P}^1$, tornando a reprodução linear independente do alinhamento cartesiano;
@@ -338,4 +353,5 @@ O desenvolvimento e a validação do **Vector Nodal Meshless Method (VNMM 2D)** 
 6. Ortiz, L. A. G., Mesquita, R. C., & Lima, N. Z. (2021). Nodal meshless method with vectorial shape functions based on H(curl). *IEEE Transactions on Magnetics*, 57(6), 1-4.
 7. Jiang, W., Liu, N., Tang, Y., & Liu, Q. H. (2014). Mixed finite element method for 2D vector Maxwell’s eigenvalue problem in anisotropic media. *Progress In Electromagnetics Research*, 148, 159-170.
 8. Lima, N. Z., & Mesquita, R. C. (2017). Edge meshless method applied to vector electromagnetic problems. *IEEE Transactions on Magnetics*, 53(6), 1-4.
+9. Mesquita, R. C., Silva, E. J., Gonçalves, B. M. F., & Ortiz, L. A. G. (2026). A Stabilized Vector Nodal Meshless Method for $H(\mathbf{curl})$ 2D Electromagnetic Problems on Irregular Point Clouds. *Engineering Analysis with Boundary Elements* (submetido).
 

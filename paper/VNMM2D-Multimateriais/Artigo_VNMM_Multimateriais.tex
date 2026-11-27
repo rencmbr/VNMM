@@ -43,28 +43,40 @@ By employing a complete linear polynomial vector basis ($\mathcal{P}^1$) with $k
 
 Despite these advances in homogeneous domains, extending VNMM to \textbf{heterogeneous, discontinuous, and anisotropic media} introduces a critical challenge: sharing support stencils across distinct dielectrics smears the physical normal discontinuity ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$) and induces Gibbs oscillations. This work resolves that limitation through a \textbf{strict material support partition rule} combined with \textbf{tangential interface directors} ($\mathbf{t}_j = \boldsymbol{\tau}$), coupling adjacent media via a single tangential degree of freedom while leaving the normal component free to jump sharply. Moreover, we demonstrate that VNMM naturally thrives on \textbf{unstructured irregular point clouds}: breaking Cartesian grid symmetry via moderate stochastic jitter (10\%--25\%) mitigates directional dispersion (\textit{grid-locking}) and reduces mean eigenvalue errors by over 50\%, while accurately resolving complex Hermitian gyrotropic tensors, reentrant corner singularities, curved PEC inclusions, and multi-material intersections without spurious modes.
 
-The remainder of this paper is organized as follows. Section~2 presents the 2D VNMM mathematical formulation on point clouds. Section~3 details the multimaterial support partition rule and the regularized Galerkin weak form. Section~4 investigates polynomial completeness, stochastic jitter sensitivity, and sharp interface jump resolution. Section~5 validates dielectric-loaded cavities across wide permittivity contrasts. Section~6 evaluates benchmarks in anisotropic waveguides, corner singularities, curved PEC inclusions, and a four-material junction, followed by concluding remarks in Section~7.
+The remainder of this paper is organized as follows. Section~2 presents the 2D VNMM mathematical formulation on point clouds, the scale-invariant automated support selection algorithm, the strict multimaterial support partition conditions, and the regularized Galerkin weak form. Section~3 investigates polynomial completeness, stochastic jitter sensitivity, and sharp interface jump resolution. Section~4 validates dielectric-loaded cavities across wide permittivity contrasts. Section~5 evaluates benchmarks in anisotropic waveguides, corner singularities, curved PEC inclusions, and a four-material junction, followed by concluding remarks in Section~6.
 
-\section{Mathematical Formulation of VNMM on Point Clouds}
+\section{Mathematical Formulation of the Multimaterial 2D VNMM on Point Clouds}
 
-This section presents the mathematical formulation of the 2D VNMM on unstructured point clouds, defining the directional scalar degrees of freedom, the complete linear polynomial vector basis ($\mathcal{P}^1$), and the local collocation system used to obtain the vector shape functions and their spatial differential operators analytically.
+This section establishes the mathematical formulation of the two-dimensional Vector Nodal Meshless Method (2D VNMM) for heterogeneous and anisotropic media on unstructured point clouds. First, we define the directional projection degrees of freedom, the complete linear polynomial vector basis ($\mathcal{P}^1$), and the local collocation system. Next, we describe the scale-invariant automated support selection algorithm coupled with strict multimaterial partition conditions, followed by the divergence-regularized weak Galerkin formulation.
 
-\subsection{Degrees of Freedom and Nodal Vector Projections}
-Consider a two-dimensional domain $\Omega \subset \mathbb{R}^2$ discretized by a cloud of $N$ arbitrary nodes $\{\mathbf{x}_i\}_{i=1}^N$. Each node $\mathbf{x}_i = (x_i, y_i)^T$ is assigned a unit director vector:
+\subsection{Degrees of Freedom, Nodal Vector Projections, and PEC Boundaries}
+Consider a two-dimensional domain $\Omega \subset \mathbb{R}^2$ discretized by a cloud of $N$ arbitrary nodes $\{\mathbf{x}_i\}_{i=1}^N$ distributed throughout the interior and boundaries $\partial\Omega$. Unlike scalar meshless methods that assign separate degrees of freedom to Cartesian components ($E_x, E_y$), VNMM associates each node $\mathbf{x}_i = (x_i, y_i)^T$ with a single unit director vector:
 \begin{equation}
 \mathbf{t}_i = \begin{bmatrix} \cos\theta_i \\ \sin\theta_i \end{bmatrix}
 \end{equation}
-The nodal scalar degree of freedom $e_i$ represents the projection of the electric field along the nodal director:
+
+At any evaluation point $\mathbf{x} = (x, y) \in \Omega$, the approximated electric field $\mathbf{E}^h(\mathbf{x})$ is expressed as a linear combination of local vector nodal shape functions $\mathbf{N}_i(\mathbf{x})$ associated with the $M_{\mathrm{supp}}$ nodes in the local support stencil:
 \begin{equation}
-e_i = \mathbf{E}(\mathbf{x}_i) \cdot \mathbf{t}_i
+\mathbf{E}^h(x, y) = \sum_{i=1}^{M_{\mathrm{supp}}} \mathbf{N}_i(x, y)\, e_i
+\end{equation}
+where $e_i$ denotes the scalar nodal degree of freedom representing the pointwise directional projection of the electric field along the nodal director:
+\begin{equation}
+e_i = \mathbf{E}(\mathbf{x}_i) \cdot \mathbf{t}_i \quad [\text{V/m}]
 \end{equation}
 
-Along Perfect Electric Conductor (PEC) boundaries and material interfaces, director vectors are aligned with the boundary tangent ($\mathbf{t}_i = \boldsymbol{\tau}$). In the interior of each subdomain, an alternating orthogonal checkerboard pattern ($\pm 45^\circ$, i.e., $\theta_i \in \{\pi/4, 3\pi/4\}$) is assigned to ensure local angular diversity and avoid collinearities.
+To ensure local $H(\mathbf{curl})$ consistency and direct enforcement of essential boundary conditions, the vector shape functions are required to satisfy the vector Kronecker delta projection property:
+\begin{equation}
+\mathbf{N}_i(\mathbf{x}_k) \cdot \mathbf{t}_k = \delta_{ik} = \begin{cases} 1, & \text{if } k = i \\ 0, & \text{if } k \neq i \end{cases}
+\end{equation}
+
+Along Perfect Electric Conductor (PEC) boundaries, where $\hat{n} \times \mathbf{E} = \mathbf{0}$, director vectors are aligned with the boundary tangent ($\mathbf{t}_k = \boldsymbol{\tau}$), allowing homogeneous Dirichlet conditions to be enforced directly via nodal collocation ($e_k = 0, \; \forall \mathbf{x}_k \in \partial\Omega_{\mathrm{PEC}}$) without Lagrange multipliers. In the interior of each subdomain, an alternating orthogonal checkerboard pattern ($\pm 45^\circ$, i.e., $\theta_i \in \{\pi/4, 3\pi/4\}$) is assigned to ensure local angular diversity. A detailed functional analysis of this directional projection scheme and the distinction between pointwise nodal collocation and continuous boundary trace on unconstrained point clouds is presented in \cite{mesquita_eabe}.
 
 \subsection{Complete Linear Polynomial Vector Basis (\texorpdfstring{$\mathcal{P}^1$}{P1})}
-At any evaluation point $P(x_P, y_P)$, the complete linear polynomial vector basis consists of 6 monomials:
+Early VNMM formulations employed the incomplete 3-node solenoidal space $\mathcal{L}^1$ inherited from lowest-order N\'ed\'elec edge elements. However, when combined with dynamic support selection on arbitrary point clouds, the $\mathcal{L}^1$ basis artificially forces longitudinal field derivatives ($\partial E_x/\partial x$, $\partial E_y/\partial y$) to vanish, triggering derivative modal aliasing and $\mathcal{O}(1)$ curl-convergence stagnation.
+
+To overcome this limitation, we adopt the complete linear polynomial vector space $\mathcal{P}^1 = \mathcal{P}_1 \times \mathcal{P}_1$, comprising 6 independent monomials ($M_{\mathrm{supp}} = 6$ support nodes) in local translated coordinates ($\Delta x = x - x_P$, $\Delta y = y - y_P$) centered at the evaluation point $P(x_P, y_P)$:
 \begin{equation}
-\mathcal{P}^1 = \left\{
+\mathcal{P}^1 = \operatorname{span}\left\{
 \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \;
 \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \;
 \begin{bmatrix} \Delta x \\ 0 \end{bmatrix}, \;
@@ -73,20 +85,23 @@ At any evaluation point $P(x_P, y_P)$, the complete linear polynomial vector bas
 \begin{bmatrix} 0 \\ \Delta y \end{bmatrix}
 \right\}
 \end{equation}
-where $\Delta x = x - x_P$ and $\Delta y = y - y_P$. The local vector shape function associated with support node $i$ is written as:
+The local vector shape function associated with support node $i$ is written as:
 \begin{equation}
 \mathbf{N}_i(\Delta x, \Delta y) = \begin{bmatrix} \beta_{1i} + \beta_{3i}\Delta x + \beta_{4i}\Delta y \\ \beta_{2i} + \beta_{5i}\Delta x + \beta_{6i}\Delta y \end{bmatrix}
 \end{equation}
 
+With 6 independent degrees of freedom, the $\mathcal{P}^1$ space resolves all four components of the local Jacobian tensor $\mathbf{J}^h = \nabla \mathbf{E}^h$ simultaneously, capturing both rotational and longitudinal flux variations. A complete proof that this transition eliminates derivative aliasing and restores optimal convergence of the field and its curl is provided in \cite{mesquita_eabe}.
+
 \subsection{Local Collocation System and Differential Operators}
-For a set of 6 neighboring support nodes $\mathcal{S}(P) = \{n_1, \dots, n_6\}$ selected via $k$-d tree spatial search, the strict interpolation condition is enforced:
+For a qualified set of 6 neighboring support nodes $\mathcal{S}(P) = \{n_1, \dots, n_6\}$, enforcing the vector Kronecker delta condition ($\mathbf{N}_i(\mathbf{x}_k) \cdot \mathbf{t}_k = \delta_{ik}$) yields the local algebraic placement system:
 \begin{equation}
-\mathbf{N}_i(\mathbf{x}_k) \cdot \mathbf{t}_k = \delta_{ik}, \quad \forall n_k \in \mathcal{S}(P)
+\mathbf{A}\boldsymbol{\beta} = \mathbf{I}_6 \implies \boldsymbol{\beta} = \mathbf{A}^{-1}
 \end{equation}
-This yields the local algebraic system $\mathbf{A}\boldsymbol{\beta} = \mathbf{I}_6 \implies \boldsymbol{\beta} = \mathbf{A}^{-1}$, where the $k$-th row of $\mathbf{A}$ is given by:
+where the $k$-th row of the placement matrix $\mathbf{A} \in \mathbb{R}^{6 \times 6}$ is given by:
 \begin{equation}
-\mathbf{A}_{k,:} = \begin{bmatrix} t_{kx} & t_{ky} & \Delta x_k t_{kx} & \Delta y_k t_{kx} & \Delta x_k t_{ky} & \Delta y_k t_{ky} \end{bmatrix}
+\mathbf{A}_{k,:} = \begin{bmatrix} t_{kx} & t_{ky} & \Delta x_k t_{kx} & \Delta y_k t_{kx} & \Delta x_k t_{ky} & \Delta y_k t_{ky} \end{bmatrix}, \quad k = 1, \dots, 6
 \end{equation}
+with $\Delta x_k = x_k - x_P$ and $\Delta y_k = y_k - y_P$.
 
 Evaluating directly at point $P$ ($\Delta x = \Delta y = 0$), the vector shape functions and their spatial differential operators are obtained analytically from the rows of $\boldsymbol{\beta}$ (0-indexed):
 \begin{align}
@@ -94,20 +109,29 @@ Evaluating directly at point $P$ ($\Delta x = \Delta y = 0$), the vector shape f
 (\nabla \times \boldsymbol{\Phi})_z(P) &= \boldsymbol{\beta}_{4, :} - \boldsymbol{\beta}_{3, :} \in \mathbb{R}^{1 \times 6} \\
 \nabla \cdot \boldsymbol{\Phi}(P) &= \boldsymbol{\beta}_{2, :} + \boldsymbol{\beta}_{5, :} \in \mathbb{R}^{1 \times 6}
 \end{align}
+The algebraic characterization of singularities in $\mathbf{A}$ via the Null-Space Orthogonality Principle and its dimensionless factorization $\mathbf{A} = \widehat{\mathbf{A}}\mathbf{D}_h$ to preserve matrix conditioning under spatial refinement ($h \to 0$) are rigorously established in \cite{mesquita_eabe}.
 
-\section{Treatment of Multimaterial Media and Variational Formulation}
+\subsection{Automated Support Selection and Strict Material Partition Rule}
+Selecting a valid support stencil $\mathcal{S}(P)$ on unstructured point clouds requires ensuring both algebraic well-conditioning and strict respect for material discontinuities.
 
-This section extends the vector nodal formulation to heterogeneous and anisotropic media by introducing the strict material support partition rule with tangential interface directors and the divergence-regularized weak Galerkin formulation.
-
-\subsection{Strict Material Support Partition Rule}
-For heterogeneous domains composed of distinct materials ($\Omega = \bigcup_{m=1}^M \Omega_m$) separated by interfaces $\Gamma_{\mathrm{int}}$, the \textbf{strict support partition rule} is enforced:
+\paragraph{Scale-Invariant Support Selection Algorithm.}
+On arbitrary point clouds, candidate sextets are selected using the 4-phase automated support selection algorithm introduced in \cite{mesquita_eabe}:
 \begin{enumerate}
-  \item \textbf{Subdomain Confinement:} When evaluating shape functions at an integration point $P \in \Omega_m$, candidate support nodes are strictly restricted to nodes belonging to medium $\Omega_m$ and nodes lying directly on the adjacent interface $\Gamma_{\mathrm{int}}$. Nodes from other media are excluded from the neighborhood search.
-  \item \textbf{Tangential Interface Degrees of Freedom:} Nodes located along physical interfaces $\Gamma_{\mathrm{int}}$ have their director vectors aligned exclusively with the interface tangent ($\mathbf{t}_j = \boldsymbol{\tau}$). Because the tangential electric field is physically continuous ($E_{1t} = E_{2t}$), a single scalar degree of freedom on the interface couples both media exactly. The normal component $E_n$ remains free to undergo the natural physical step jump governed by the permittivity ratio ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$) without artificial smearing.
+  \item \textbf{Spatial Neighborhood Query via $k$-d Tree:} An orthogonal $k$-d tree ($\mathcal{O}(N \log N)$) retrieves the $K_{\mathrm{initial}} \ge 12$ nearest neighbors of $P$, defining the local characteristic spacing $h_{\mathrm{local}}(\mathbf{x}_P) = \frac{1}{6}\sum_{k=1}^6 \|\mathbf{x}_{(k)} - \mathbf{x}_P\|$.
+  \item \textbf{Proximity-Ordered Candidate Generation:} Anchoring the nearest node to $P$, candidate 6-node combinations are generated in order of increasing mean distance.
+  \item \textbf{Dimensionless Matrix Assembly:} Local coordinates are normalized ($\hat{x}_k = \Delta x_k/h_{\mathrm{local}}, \; \hat{y}_k = \Delta y_k/h_{\mathrm{local}}$) to assemble the dimensionless matrix $\widehat{\mathbf{A}}$, eliminating quartic determinant decay ($\det(\mathbf{A}) \sim \mathcal{O}(h^4)$) and artificial condition-number inflation ($\kappa_2(\mathbf{A}) \sim \mathcal{O}(1/h)$).
+  \item \textbf{Determinant Qualification with Early Stopping:} The first candidate sextet satisfying $|\det(\widehat{\mathbf{A}})| \ge \widehat{\mathrm{Tol}} > 0$ is immediately accepted, screening out singular or ill-conditioned stencils without support dilation.
+\end{enumerate}
+
+\paragraph{Conditions for Multimaterial Domains (Strict Support Partition Rule).}
+For heterogeneous domains composed of distinct materials ($\Omega = \bigcup_{m=1}^M \Omega_m$) separated by interfaces $\Gamma_{\mathrm{int}}$, the $k$-d tree neighborhood search must strictly enforce two additional physical conditions:
+\begin{enumerate}
+  \item \textbf{Subdomain Confinement:} When evaluating shape functions at an integration point $P \in \Omega_m$, candidate support nodes are strictly restricted to nodes belonging to medium $\Omega_m$ and nodes lying directly on the adjacent interface $\Gamma_{\mathrm{int}}$ (implemented via material-partitioned $k$-d trees). Nodes from other media are strictly excluded from the search.
+  \item \textbf{Tangential Interface Degrees of Freedom:} Nodes located along physical interfaces $\Gamma_{\mathrm{int}}$ have their director vectors aligned exclusively with the interface tangent ($\mathbf{t}_j = \boldsymbol{\tau}$). Because the tangential electric field is physically continuous ($E_{1t} = E_{2t}$), a single scalar degree of freedom on the interface couples both media exactly. Meanwhile, support segregation allows the normal component $E_n$ to undergo the natural physical step jump governed by the permittivity ratio ($\varepsilon_1 E_{1n} = \varepsilon_2 E_{2n}$) without artificial smearing or Gibbs oscillations.
 \end{enumerate}
 
 \subsection{Weak Galerkin Formulation with Divergence Regularization}
-The generalized variational Maxwell eigenvalue formulation for arbitrary anisotropic media characterized by permittivity tensor $\overline{\overline{\varepsilon}}_r$ and permeability $\mu_r$ is:
+Because dynamic stencil selection on irregular point clouds yields a globally non-conforming approximation ($V_h \not\subset H(\mathbf{curl}; \Omega)$), variational div-curl regularization \cite{mesquita_eabe} is incorporated into the generalized Maxwell eigenvalue weak form for arbitrary anisotropic media characterized by permittivity tensor $\overline{\overline{\varepsilon}}_r$ and permeability $\mu_r$:
 \begin{equation}
 \int_{\Omega} \frac{1}{\mu_r} (\nabla \times \mathbf{E})_z (\nabla \times \mathbf{v})_z^* \, d\Omega + s_{\mathrm{div}} \int_{\Omega} \frac{1}{\mu_r} (\nabla \cdot \mathbf{E}) (\nabla \cdot \mathbf{v})^* \, d\Omega = k_0^2 \int_{\Omega} \mathbf{v}^* \cdot (\overline{\overline{\varepsilon}}_r \mathbf{E}) \, d\Omega
 \end{equation}
@@ -117,12 +141,7 @@ Discretization leads to the generalized eigenvalue problem:
 \begin{equation}
 (\mathbf{K}_{\mathrm{curl}} + s_{\mathrm{div}} \mathbf{K}_{\mathrm{div}}) \mathbf{c} = \lambda \mathbf{M} \mathbf{c}
 \end{equation}
-where $\lambda = k_0^2$. Homogeneous Dirichlet boundary conditions on PEC walls ($E_t = 0$) are applied directly by eliminating the corresponding boundary rows and columns:
-\begin{equation}
-e_k = 0, \quad \forall k \in \partial\Omega_{\mathrm{PEC}}
-\end{equation}
-
-Numerical integration of the stiffness and mass matrices is performed on a background Cartesian cell grid, where Gauss quadrature ($2 \times 2$ or $3 \times 3$ near singular points) serves solely as a metric support, keeping the method fully independent of nodal connectivity.
+where $\lambda = k_0^2$. Homogeneous Dirichlet boundary conditions on PEC walls ($E_t = 0$) are applied directly by eliminating the corresponding boundary rows and columns ($e_k = 0, \; \forall k \in \partial\Omega_{\mathrm{PEC}}$). Numerical integration is performed on a uniform background Cartesian cell grid using Gauss quadrature ($2 \times 2$, or $3 \times 3$ near singular vertices), serving strictly as a metric support without requiring nodal connectivity.
 
 \section{Consistency and Robustness Study on Irregular Point Clouds}
 
@@ -481,6 +500,7 @@ The development and systematic validation of the \textbf{2D Vector Nodal Meshles
 \bibitem{ortiz2021} L. A. G. Ortiz, R. C. Mesquita, and N. Z. Lima, ``Nodal meshless method with vectorial shape functions based on H(curl),'' \textit{IEEE Trans. Magn.}, vol. 57, no. 6, pp. 1--4, 2021.
 \bibitem{jiang2014} W. Jiang, N. Liu, Y. Tang, and Q. H. Liu, ``Mixed finite element method for 2D vector Maxwell's eigenvalue problem in anisotropic media,'' \textit{Prog. Electromagn. Res.}, vol. 148, pp. 159--170, 2014.
 \bibitem{lima2017} N. Z. Lima and R. C. Mesquita, ``Edge meshless method applied to vector electromagnetic problems,'' \textit{IEEE Trans. Magn.}, vol. 53, no. 6, pp. 1--4, 2017.
+\bibitem{mesquita_eabe} R. C. Mesquita, E. J. da Silva, B. M. F. Gon\c{c}alves, and L. A. G. Ortiz, ``A stabilized vector nodal meshless method for $H(\mathbf{curl})$ 2D electromagnetic problems on irregular point clouds,'' \textit{Eng. Anal. Bound. Elem.} (submitted), 2026.
 \end{thebibliography}
 
 \end{document}
