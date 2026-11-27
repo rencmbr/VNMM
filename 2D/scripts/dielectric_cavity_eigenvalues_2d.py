@@ -480,7 +480,7 @@ def plot_dielectric_resonant_modes(
 
         ax.set_title(
             f"Mode {m_idx + 1}: VNMM $\\lambda = {mode['lambda']:.4f}$ ($k_c = {mode['kc']:.4f}$)\n"
-            f"{ref_str} (Erro: {err_kc:.2f}%) | $R_{{\\mathrm{{div}}}} = {mode['r_div']:.2f}\\%$",
+            f"{ref_str} (Error: {err_kc:.2f}%) | $R_{{\\mathrm{{div}}}} = {mode['r_div']:.2f}\\%$",
             fontsize=10.5, fontweight="bold"
         )
         ax.set_xlabel("X (m)", fontsize=10)

@@ -54,16 +54,16 @@ def run_normal_jump_test(domain, Nx1=15, Nx2=15, Ny=15, num_eval_points=120):
 
     # Campo analítico descontínuo:
     # Ey é contínuo em x = x_int
-    # Ex possui salto de eps1/eps2 = 1/4 em x = x_int
+    # Ex possui salto de eps1/eps2 = 1/4 em x = x_int (no corte y = Ly/2, sin(ky*y) = 1.0 -> Ex1 = 1.500, Ex2 = 0.375 V/m)
     def eval_E_discont(x, y):
         ky = np.pi / Ly
         Ey = np.sin(ky * y) * np.cos(np.pi * x / (2.0 * Lx))
         if x < x_int:
-            Ex = 1.0 * np.cos(ky * y) * (1.0 + 0.5 * (x / x_int))
+            Ex = 1.0 * np.sin(ky * y) * (1.0 + 0.5 * (x / x_int))
         elif x > x_int:
-            Ex = (eps1 / eps2) * np.cos(ky * y) * (1.0 + 0.5 * ((Lx - x) / (Lx - x_int)))
+            Ex = (eps1 / eps2) * np.sin(ky * y) * (1.0 + 0.5 * ((Lx - x) / (Lx - x_int)))
         else:
-            Ex = 0.5 * (1.5 + 1.5 * eps1 / eps2) * np.cos(ky * y)
+            Ex = 0.5 * (1.5 + 1.5 * eps1 / eps2) * np.sin(ky * y)
         return np.array([Ex, Ey])
 
     nodes, vectors, mat_ids = generate_material_nodes(domain, Nx1=Nx1, Nx2=Nx2, Ny=Ny, jitter_frac=0.0)
@@ -317,28 +317,28 @@ def plot_advanced_validation(res_jump, res_eps, output_path=None):
     ax1.axvline(x=x_int, color="#C62828", linestyle="--", linewidth=1.8, label="Interface $\\Gamma_{\\mathrm{int}}$ ($x=1.0$)")
     
     # Regiões sombreadas
-    ax1.axvspan(0.0, x_int, color="#E3F2FD", alpha=0.45, label="Região 1 ($\\varepsilon_{r1}=1.0$)")
-    ax1.axvspan(x_int, 2.0, color="#FFF3E0", alpha=0.45, label="Região 2 ($\\varepsilon_{r2}=4.0$)")
+    ax1.axvspan(0.0, x_int, color="#E3F2FD", alpha=0.45, label="Region 1 ($\\varepsilon_{r1}=1.0$)")
+    ax1.axvspan(x_int, 2.0, color="#FFF3E0", alpha=0.45, label="Region 2 ($\\varepsilon_{r2}=4.0$)")
     
     # Plotar exato e VNMM
     idx1 = x_e < x_int
     idx2 = x_e > x_int
-    ax1.plot(x_e[idx1], res_jump['Ex_exact'][idx1], 'k-', linewidth=2.0, label="Analítico Exato")
+    ax1.plot(x_e[idx1], res_jump['Ex_exact'][idx1], 'k-', linewidth=2.0, label="Exact Analytical")
     ax1.plot(x_e[idx2], res_jump['Ex_exact'][idx2], 'k-', linewidth=2.0)
     
-    ax1.scatter(x_e[::2], res_jump['Ex_num'][::2], color="#0D47A1", marker="o", s=28, zorder=4, label="VNMM 2D (Interpolado)")
+    ax1.scatter(x_e[::2], res_jump['Ex_num'][::2], color="#0D47A1", marker="o", s=28, zorder=4, label="2D VNMM (Interpolated)")
     
     ax1.annotate(
-        "Salto Físico Abrupto (4:1)\n$E_{2x} = \\frac{\\varepsilon_{1}}{\\varepsilon_{2}} E_{1x}$",
-        xy=(x_int, 0.9), xytext=(x_int + 0.18, 1.15),
+        "Sharp Physical Jump (4:1)\n$E_{2x} = \\frac{\\varepsilon_{1}}{\\varepsilon_{2}} E_{1x}$",
+        xy=(x_int, 0.9), xytext=(x_int + 0.16, 1.05),
         arrowprops=dict(facecolor='black', shrink=0.08, width=1.2, headwidth=6),
         fontsize=9.5, fontweight="bold",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="#C62828", alpha=0.9)
     )
 
-    ax1.set_title("(a) Salto de Descontinuidade Normal $E_x(x)$\nZero Borramento (*Smearing*) ou Gibbs", fontsize=11, fontweight="bold")
-    ax1.set_xlabel("Coordenada X (m)", fontsize=10)
-    ax1.set_ylabel("Componente Normal $E_x$ (V/m)", fontsize=10)
+    ax1.set_title("(a) Normal Jump Discontinuity $E_x(x)$\nZero Numerical Smearing or Gibbs Oscillations", fontsize=11, fontweight="bold")
+    ax1.set_xlabel("Coordinate X (m)", fontsize=10)
+    ax1.set_ylabel("Normal Component $E_x$ (V/m)", fontsize=10)
     ax1.set_xlim(0.05, 1.95)
     ax1.grid(True, linestyle=":", alpha=0.6)
     ax1.legend(loc="upper right", fontsize=8.5)
@@ -351,21 +351,21 @@ def plot_advanced_validation(res_jump, res_eps, output_path=None):
     ax2.axvspan(0.0, x_int, color="#E3F2FD", alpha=0.45)
     ax2.axvspan(x_int, 2.0, color="#FFF3E0", alpha=0.45)
 
-    ax2.plot(x_e, res_jump['Ey_exact'], 'k-', linewidth=2.0, label="Analítico Exato")
-    ax2.scatter(x_e[::2], res_jump['Ey_num'][::2], color="#2E7D32", marker="s", s=28, zorder=4, label="VNMM 2D (Interpolado)")
+    ax2.plot(x_e, res_jump['Ey_exact'], 'k-', linewidth=2.0, label="Exact Analytical")
+    ax2.scatter(x_e[::2], res_jump['Ey_num'][::2], color="#2E7D32", marker="s", s=28, zorder=4, label="2D VNMM (Interpolated)")
 
     ax2.annotate(
-        "Continuidade Tangencial Estrita $C^0$\n$E_{1y} = E_{2y}$",
+        "Strict $C^0$ Tangential Continuity\n$E_{1y} = E_{2y}$",
         xy=(x_int, res_jump['Ey_exact'][np.argmin(np.abs(x_e - x_int))]),
-        xytext=(x_int - 0.55, 0.45),
+        xytext=(x_int - 0.65, 0.42),
         arrowprops=dict(facecolor='black', shrink=0.08, width=1.2, headwidth=6),
         fontsize=9.5, fontweight="bold",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="#2E7D32", alpha=0.9)
     )
 
-    ax2.set_title("(b) Continuidade Tangencial $E_y(x)$\nPreservação Rigorosa de $\\mathbf{n} \\times [\\mathbf{E}] = \\mathbf{0}$", fontsize=11, fontweight="bold")
-    ax2.set_xlabel("Coordenada X (m)", fontsize=10)
-    ax2.set_ylabel("Componente Tangencial $E_y$ (V/m)", fontsize=10)
+    ax2.set_title("(b) Tangential Continuity $E_y(x)$\nStrict Preservation of $\\mathbf{n} \\times [\\mathbf{E}] = \\mathbf{0}$", fontsize=11, fontweight="bold")
+    ax2.set_xlabel("Coordinate X (m)", fontsize=10)
+    ax2.set_ylabel("Tangential Component $E_y$ (V/m)", fontsize=10)
     ax2.set_xlim(0.05, 1.95)
     ax2.grid(True, linestyle=":", alpha=0.6)
     ax2.legend(loc="upper right", fontsize=8.5)
@@ -379,19 +379,19 @@ def plot_advanced_validation(res_jump, res_eps, output_path=None):
     kc_nums = [r['mode1_kc_num'] for r in res_eps]
     errs_p1 = [r['mode1_err_pct'] for r in res_eps]
 
-    ax3.plot(eps_vals, kc_refs, 'k-d', linewidth=2.0, markersize=8, label="Exato (Modo Fundamental $TE_{01}$)")
-    ax3.plot(eps_vals, kc_nums, 'b--s', linewidth=1.8, markersize=7, label="VNMM 2D (Modo Fundamental $TE_{01}$)")
+    ax3.plot(eps_vals, kc_refs, 'k-d', linewidth=2.0, markersize=8, label="Exact (Fundamental Mode $TE_{01}$)")
+    ax3.plot(eps_vals, kc_nums, 'b--s', linewidth=1.8, markersize=7, label="2D VNMM (Fundamental Mode $TE_{01}$)")
 
     # Eixo secundário para o erro percentual
     ax3_twin = ax3.twinx()
-    ax3_twin.bar(eps_vals, errs_p1, width=0.8, color="#D32F2F", alpha=0.35, label="Erro Relativo $k_c$ (%)")
-    ax3_twin.set_ylabel("Erro Relativo do Modo 1 (%)", color="#B71C1C", fontsize=10)
+    ax3_twin.bar(eps_vals, errs_p1, width=0.8, color="#D32F2F", alpha=0.35, label="Relative $k_c$ Error (%)")
+    ax3_twin.set_ylabel("Mode 1 Relative Error (%)", color="#B71C1C", fontsize=10)
     ax3_twin.set_ylim(0, 3.5)
     ax3_twin.tick_params(axis='y', labelcolor="#B71C1C")
 
-    ax3.set_title("(c) Sensibilidade ao Contraste Dielétrico $\\varepsilon_{r2} / \\varepsilon_{r1}$\nErro do Modo Fundamental $< 1.1\\%$ até $\\varepsilon_{r2}=16.0$", fontsize=11, fontweight="bold")
-    ax3.set_xlabel("Permissividade Relativa $\\varepsilon_{r2}$ (Teflon, Standard, Alumina, Cerâmica)", fontsize=10)
-    ax3.set_ylabel("Frequência de Corte $k_c$ (rad/m)", fontsize=10)
+    ax3.set_title("(c) Dielectric Contrast Sensitivity $\\varepsilon_{r2} / \\varepsilon_{r1}$\nFundamental Mode Error $< 1.1\\%$ up to $\\varepsilon_{r2}=16.0$", fontsize=11, fontweight="bold")
+    ax3.set_xlabel("Relative Permittivity $\\varepsilon_{r2}$ (Teflon, Standard, Alumina, Ceramic)", fontsize=10)
+    ax3.set_ylabel("Cutoff Wavenumber $k_c$ (rad/m)", fontsize=10)
     ax3.set_xticks(eps_vals)
     ax3.set_xticklabels([f"$\\varepsilon_r={v}$" for v in eps_vals])
     ax3.grid(True, linestyle=":", alpha=0.6)

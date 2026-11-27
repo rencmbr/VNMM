@@ -27,14 +27,14 @@ def generate_h_ridge_geometry_figure():
     x_coords = [-2.5, -1.0, -1.0,  1.0,  1.0,  2.5,  2.5,  1.0, 1.0, -1.0, -1.0, -2.5, -2.5]
     y_coords = [-1.5, -1.5, -0.5, -0.5, -1.5, -1.5,  1.5,  1.5, 0.5,  0.5,  1.5,  1.5, -1.5]
 
-    ax.fill(x_coords, y_coords, color="#E3F2FD", alpha=0.85, label="Meio Homogêneo Anisotrópico")
-    ax.plot(x_coords, y_coords, color="#0D47A1", linewidth=2.5, label="Fronteira Condutora Perfeita (PEC)")
+    ax.fill(x_coords, y_coords, color="#E3F2FD", alpha=0.85, label="Homogeneous Anisotropic Medium")
+    ax.plot(x_coords, y_coords, color="#0D47A1", linewidth=2.5, label="Perfect Electric Conductor (PEC) Boundary")
 
-    ax.annotate("Saliência Superior\n[-1, 1] x [0.5, 1.5]", xy=(0, 0.5), xytext=(0, 0.95),
+    ax.annotate("Upper Notch\n[-1, 1] x [0.5, 1.5]", xy=(0, 0.5), xytext=(0, 0.95),
                 ha="center", fontsize=9, color="#C62828", fontweight="bold",
                 arrowprops=dict(arrowstyle="->", color="#C62828", lw=1.2))
 
-    ax.annotate("Saliência Inferior\n[-1, 1] x [-1.5, -0.5]", xy=(0, -0.5), xytext=(0, -0.95),
+    ax.annotate("Lower Notch\n[-1, 1] x [-1.5, -0.5]", xy=(0, -0.5), xytext=(0, -0.95),
                 ha="center", fontsize=9, color="#C62828", fontweight="bold",
                 arrowprops=dict(arrowstyle="->", color="#C62828", lw=1.2))
 
@@ -42,7 +42,7 @@ def generate_h_ridge_geometry_figure():
     ax.text(-1.75, 0.0, props_text, fontsize=9.5, ha="center", va="center",
             bbox=dict(boxstyle="round,pad=0.5", facecolor="white", edgecolor="#0D47A1", alpha=0.9))
 
-    ax.set_title("Geometria do Guia de Onda com Saliência em 'H' (Teste 4.3.2)", fontsize=11, fontweight="bold", pad=12)
+    ax.set_title("Geometry of the Anisotropic H-Shaped Ridge Waveguide", fontsize=11, fontweight="bold", pad=12)
     ax.set_xlabel("x (m)", fontsize=10)
     ax.set_ylabel("y (m)", fontsize=10)
     ax.set_xlim(-2.8, 2.8)
@@ -62,16 +62,16 @@ def generate_bimaterial_circular_geometry_figure():
     """Figura 2: Guia bimaterial anisotrópico com cilindros circulares PEC."""
     fig, ax = plt.subplots(figsize=(7.5, 4.6), dpi=300)
 
-    r1 = plt.Rectangle((-2.0, -1.0), 2.0, 2.0, facecolor="#E8F5E9", edgecolor="none", alpha=0.85, label=r"Meio 1 ($\Omega_1$)")
-    r2 = plt.Rectangle((0.0, -1.0), 2.0, 2.0, facecolor="#FFF3E0", edgecolor="none", alpha=0.85, label=r"Meio 2 ($\Omega_2$)")
+    r1 = plt.Rectangle((-2.0, -1.0), 2.0, 2.0, facecolor="#E8F5E9", edgecolor="none", alpha=0.85, label=r"Medium 1 ($\Omega_1$)")
+    r2 = plt.Rectangle((0.0, -1.0), 2.0, 2.0, facecolor="#FFF3E0", edgecolor="none", alpha=0.85, label=r"Medium 2 ($\Omega_2$)")
     ax.add_patch(r1)
     ax.add_patch(r2)
 
-    ax.axvline(0.0, color="#2E7D32", linestyle="--", linewidth=2.2, label=r"Interface Bimaterial ($x=0$)")
-    ax.plot([-2, 2, 2, -2, -2], [-1, -1, 1, 1, -1], color="#1A237E", linewidth=2.2, label="Paredes Externas PEC")
+    ax.axvline(0.0, color="#2E7D32", linestyle="--", linewidth=2.2, label=r"Bimaterial Interface ($x=0$)")
+    ax.plot([-2, 2, 2, -2, -2], [-1, -1, 1, 1, -1], color="#1A237E", linewidth=2.2, label="Outer PEC Walls")
 
     r_circ = 1.0 / 3.0
-    c1 = plt.Circle((-1.0, 0.0), r_circ, facecolor="#CFD8DC", edgecolor="#B71C1C", linewidth=2.0, label="Cilindros PEC Internos ($r=1/3$)")
+    c1 = plt.Circle((-1.0, 0.0), r_circ, facecolor="#CFD8DC", edgecolor="#B71C1C", linewidth=2.0, label="Internal PEC Cylinders ($r=1/3$)")
     c2 = plt.Circle((1.0, 0.0), r_circ, facecolor="#CFD8DC", edgecolor="#B71C1C", linewidth=2.0)
     ax.add_patch(c1)
     ax.add_patch(c2)
@@ -90,7 +90,7 @@ def generate_bimaterial_circular_geometry_figure():
                 xytext=(-0.5, 0.25), fontsize=8.5, color="#B71C1C", fontweight="bold",
                 arrowprops=dict(arrowstyle="->", color="#B71C1C", lw=1.0))
 
-    ax.set_title("Geometria do Guia Bimaterial Anisotrópico com Cilindros PEC (Teste 4.3.3)", fontsize=11, fontweight="bold", pad=12)
+    ax.set_title("Geometry of the Bimaterial Anisotropic Waveguide with PEC Cylinders", fontsize=11, fontweight="bold", pad=12)
     ax.set_xlabel("x (m)", fontsize=10)
     ax.set_ylabel("y (m)", fontsize=10)
     ax.set_xlim(-2.3, 2.3)

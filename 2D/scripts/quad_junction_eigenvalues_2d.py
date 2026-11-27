@@ -367,25 +367,25 @@ def plot_quad_junction_geometry(res, eps_map):
 
     # Paredes PEC e Interfaces internas
     ax.plot([-1, 1, 1, -1, -1], [-1, -1, 1, 1, -1], 'k-', linewidth=2.5, label="PEC Boundary")
-    ax.plot([-1, 1], [0, 0], color="#2E7D32", linestyle="--", linewidth=2.0, label="Interfaces Dielétricas (x=0, y=0)")
+    ax.plot([-1, 1], [0, 0], color="#2E7D32", linestyle="--", linewidth=2.0, label="Dielectric Interfaces (x=0, y=0)")
     ax.plot([0, 0], [-1, 1], color="#2E7D32", linestyle="--", linewidth=2.0)
 
     # Destaque para o vértice quádruplo (0,0)
     ax.plot(0, 0, marker='*', markersize=14, color="#FF6F00", markeredgecolor="black",
-            linestyle='None', label="Junção Quádrupla (0,0) [Sem Nó]")
+            linestyle='None', label="Quad-Junction (0,0) [No Node]")
 
     # Vetores diretores
     is_int = np.isin(tags, ['H_L', 'H_R', 'V_T', 'V_B'])
     is_inner = (~is_pec) & (~is_int)
 
     ax.quiver(coords[is_inner, 0], coords[is_inner, 1], vectors[is_inner, 0], vectors[is_inner, 1],
-              color="#1565C0", scale=48, width=0.0026, headwidth=3.5, headlength=4.0, alpha=0.85, label="Nós Internos (±45°)")
+              color="#1565C0", scale=48, width=0.0026, headwidth=3.5, headlength=4.0, alpha=0.85, label="Interior Nodes (±45°)")
     ax.quiver(coords[is_int, 0], coords[is_int, 1], vectors[is_int, 0], vectors[is_int, 1],
-              color="#2E7D32", scale=42, width=0.0032, headwidth=3.5, headlength=4.0, label="Nós de Interface (Tangenciais)")
+              color="#2E7D32", scale=42, width=0.0032, headwidth=3.5, headlength=4.0, label="Interface Nodes (Tangential)")
     ax.quiver(coords[is_pec, 0], coords[is_pec, 1], vectors[is_pec, 0], vectors[is_pec, 1],
-              color="#C62828", scale=42, width=0.0032, headwidth=3.5, headlength=4.0, label="Nós PEC (Escalonados)")
+              color="#C62828", scale=42, width=0.0032, headwidth=3.5, headlength=4.0, label="PEC Nodes (Staggered)")
 
-    ax.set_title("Teste 1: Cavidade com Junção Quádrupla de 4 Materiais\nNuvem de Pontos e Diretores Vetoriais",
+    ax.set_title("Cavity with Four-Material Corner Junction\nPoint Cloud and Vector Directors",
                  fontsize=12, fontweight='bold')
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")

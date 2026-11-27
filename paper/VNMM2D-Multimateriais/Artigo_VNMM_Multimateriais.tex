@@ -148,7 +148,7 @@ where $\lambda = k_0^2$. Homogeneous Dirichlet boundary conditions on PEC walls 
 This section systematically evaluates the mathematical consistency, spatial convergence, and numerical stability of the multimaterial 2D VNMM on irregular point clouds, covering polynomial reproduction tests (Patch Test and MMS), statistical sensitivity to stochastic nodal jitter up to 50\%, and sharp resolution of normal field jumps across dielectric interfaces.
 
 \subsection{Polynomial Completeness and Spatial Convergence}
-To verify the consistency of VNMM shape functions on multimaterial point clouds, the Galerkin Patch Test and Method of Manufactured Solutions (MMS) were conducted:
+To verify the consistency of VNMM shape functions on multimaterial point clouds, the Galerkin Patch Test and Method of Manufactured Solutions (MMS) were conducted on the bimaterial domain $[0, 2.0] \times [0, 1.0]\text{ m}$ (interface at $x = 1.0\text{ m}$, $\varepsilon_{r1} = 1.0$, $\varepsilon_{r2} = 4.0$) using $16 \times 8$ integration cells with $2 \times 2$ Gauss quadrature, evaluated over $288$ sampling points under $5\%$ nodal jitter across three refinement levels ($N \in \{9, 17, 33\}$, corresponding to $153$, $561$, and $2,145$ nodes):
 \begin{itemize}
   \item \textbf{Affine Patch Test Field:}
   \begin{equation}
@@ -171,10 +171,11 @@ The quantitative interpolation errors and asymptotic spatial convergence rates a
 \toprule
 Test & Vector Field & Relative $L_2$ Error ($\mathbf{E}$) & Relative Error $\mathrm{curl}(\mathbf{E})$ & Status \\
 \midrule
-\textbf{Galerkin Patch Test} & Complete Affine Linear & $\mathbf{2.85 \times 10^{-16}}$ & $\mathbf{1.00 \times 10^{-14}}$ & \textbf{Machine Precision} \\
-\textbf{MMS (Base $N=9$)} & Smooth Trigonometric & $5.742\%$ & $19.461\%$ & Consistent \\
-\textbf{MMS (Refined $N=17$)} & Smooth Trigonometric & $\mathbf{1.147\%}$ & $\mathbf{9.390\%}$ & \textbf{$\mathcal{O}(h^2)$ Convergence} \\
-\textbf{Asymptotic Rate} & --- & $\mathbf{5.01\times}$ ($\ge 4\times$) & $\mathbf{2.07\times}$ ($\approx 2\times$) & \textbf{Optimal Theoretical} \\
+\textbf{Galerkin Patch Test ($N=9$, 153 nodes)} & Complete Affine Linear & $\mathbf{2.85 \times 10^{-16}}$ & $\mathbf{1.00 \times 10^{-14}}$ & \textbf{Machine Precision} \\
+\textbf{MMS (Coarse $N=9$, 153 nodes)} & Smooth Trigonometric & $6.023\%$ & $21.534\%$ & Consistent \\
+\textbf{MMS (Medium $N=17$, 561 nodes)} & Smooth Trigonometric & $1.169\%$ & $9.239\%$ & Consistent \\
+\textbf{MMS (Fine $N=33$, 2,145 nodes)} & Smooth Trigonometric & $\mathbf{0.635\%}$ & $\mathbf{4.641\%}$ & \textbf{Asymptotic Convergence} \\
+\textbf{Overall Reduction ($N=9 \to 33$)} & --- & $\mathbf{9.49\times}$ & $\mathbf{4.64\times}$ & \textbf{$\mathcal{O}(h)$ Curl Convergence} \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -186,14 +187,14 @@ Test & Vector Field & Relative $L_2$ Error ($\mathbf{E}$) & Relative Error $\mat
 \label{fig:interp}
 \end{figure}
 
-The results in Table~\ref{tab:interp} and Figure~\ref{fig:interp} confirm that the exact first-order completeness and polynomial reproducing properties ($\mathcal{P}^1$) are fully inherited by the multimaterial formulation, reaching the machine precision floor ($10^{-16}$). This rigorously proves that the strict domain-based support partitioning and the assignment of tangential interface directors introduce no spurious distortions and do not compromise the fundamental consistency and reproduction properties established in homogeneous media. Furthermore, the MMS test confirms that the presence of heterogeneous interfaces preserves the optimal asymptotic spatial convergence rates: quadratic for the electric field ($\mathcal{O}(h^2)$) and linear for its curl ($\mathcal{O}(h)$), mathematically certifying the robustness and consistency of VNMM in piecewise continuous media.
+The results in Table~\ref{tab:interp} and Figure~\ref{fig:interp} confirm that the exact first-order completeness and polynomial reproducing properties ($\mathcal{P}^1$) are fully inherited by the multimaterial formulation, reaching the machine precision floor ($10^{-16}$). This rigorously proves that the strict domain-based support partitioning and the assignment of tangential interface directors introduce no spurious distortions and do not compromise the fundamental consistency and reproduction properties established in homogeneous media. Furthermore, the three-level MMS refinement ($N=9 \to 17 \to 33$) confirms that the presence of heterogeneous interfaces preserves linear spatial convergence ($\mathcal{O}(h)$) for the curl ($21.534\% \to 9.239\% \to 4.641\%$, a $4.64\times$ reduction) alongside consistent reduction in the electric field error ($6.023\% \to 0.635\%$, a $9.49\times$ reduction), certifying the robustness and consistency of VNMM in piecewise continuous media.
 
 \subsection{Statistical Sensitivity Analysis under Nodal Jitter (0\% to 50\%)}
 To demonstrate the genuine meshless nature of VNMM and its robustness to spatial irregularity, a random stochastic perturbation was applied to all interior nodes:
 \begin{equation}
 \mathbf{x}_i \leftarrow \mathbf{x}_i + \eta \, h_{\min} \begin{bmatrix} \xi_x \\ \xi_y \end{bmatrix}, \quad \xi_x, \xi_y \sim \mathcal{U}(-0.5, 0.5)
 \end{equation}
-where $\eta \in \{0.00, 0.10, 0.25, 0.40, 0.50\}$ denotes the jitter fraction, evaluated across multiple random seeds ($N_{\mathrm{seeds}} = 3$) on the dielectric-loaded cavity ($[0, \pi]^2$, interface at $x = \pi/2$, $\varepsilon_{r1}=1.0$, $\varepsilon_{r2}=4.0$).
+where $\eta \in \{0.00, 0.10, 0.25, 0.40, 0.50\}$ denotes the jitter fraction, evaluated across multiple random seeds ($N_{\mathrm{seeds}} = 3$) on the dielectric-loaded cavity ($[0, \pi]^2$, interface at $x = \pi/2$, $\varepsilon_{r1}=1.0$, $\varepsilon_{r2}=4.0$), discretized with $441$ total nodes ($361$ active and $80$ staggered PEC boundary nodes), a $16 \times 16$ background integration grid with $2 \times 2$ Gauss quadrature, and penalty factor $s_{\mathrm{div}} = 6.0$.
 
 The global statistical performance across jitter levels is summarized in Table~\ref{tab:jitter}, while Table~\ref{tab:jitter_modes} details the cutoff wavenumbers and relative errors of the first 6 resonant modes against analytical roots. In addition, Figure~\ref{fig:jitter} illustrates the geometry of the perturbed point cloud under 25\% displacement, the relative error curves in $k_c$ with statistical dispersion bars ($\mu \pm \sigma$), and the continuous monitoring of residual divergence energy ratio ($R_{\mathrm{div}} < 3.3\%$) verifying spectral purity.
 
@@ -249,7 +250,7 @@ These quantitative and visual results reveal three key physical and numerical in
 \end{enumerate}
 
 \subsection{Sharp Capture of Normal Jump Discontinuities (\texorpdfstring{$[E_n] \neq 0$}{[En] != 0})}
-To assess the local field behavior across material interfaces, a 1D transverse cut at $y = 0.5\text{ m}$ was evaluated for a field exhibiting an exact $4:1$ physical normal jump ($E_{1x} = 1.500\text{ V/m} \to E_{2x} = 0.375\text{ V/m}$), while the tangential component remains strictly continuous ($E_{1y} = E_{2y} = 0.500\text{ V/m}$).
+To assess the local field behavior across material interfaces, a 1D transverse cut at $y = 0.5\text{ m}$ was evaluated on the $[0, 2.0] \times [0, 1.0]\text{ m}$ domain ($153$ nodes, interface at $x = 1.0\text{ m}$) for a field exhibiting an exact $4:1$ physical normal jump ($E_{1x} = 1.500\text{ V/m} \to E_{2x} = 0.375\text{ V/m}$), while the tangential component remains strictly continuous ($E_{1y} = E_{2y}$). For the dielectric contrast sweep up to $\varepsilon_{r2} = 16.0$, the $[0, \pi]^2$ cavity discretization ($441$ nodes, $16 \times 16$ background cells, $2 \times 2$ Gauss quadrature, $s_{\mathrm{div}} = 6.0$) was employed.
 
 The spectral stability of the first 6 resonant modes in the bimaterial cavity under nodal perturbation ($\eta \in \{0\%, 10\%, 20\%\}$) is summarized in Table~\ref{tab:jump_stability}, while Figure~\ref{fig:jump} illustrates the 1D transverse profiles capturing the sharp 4:1 normal jump without Gibbs oscillations, strict $C^0$ tangential continuity across the interface, and the fundamental mode tracking the exact analytical dispersion curve across permittivity contrasts ($\varepsilon_{r2} \in [2.25, 16.0]$).
 
@@ -298,7 +299,7 @@ The numerical benchmarks presented in this section establish three foundational 
 \section{Eigenvalue Solutions in Cavities and Waveguides}
 
 \subsection{Dielectric-Loaded Cavity: Transcendental Analytical Comparison}
-The rectangular cavity $[0, \pi]^2$ with an interface at $x = \pi/2$ ($\varepsilon_{r1} = 1.0$, $\varepsilon_{r2} = 4.0$) was benchmarked against the exact roots of transcendental dispersion equations:
+The rectangular cavity $[0, \pi]^2$ with an interface at $x = \pi/2$ ($\varepsilon_{r1} = 1.0$, $\varepsilon_{r2} = 4.0$) was discretized with $441$ total nodes ($361$ active and $80$ staggered PEC boundary nodes), a $16 \times 16$ background integration grid with $2 \times 2$ Gauss quadrature, and divergence penalty $s_{\mathrm{div}} = 6.0$, and benchmarked against the exact roots of transcendental dispersion equations:
 \begin{align}
 k_{x1} \cot(k_{x1} d) + k_{x2} \cot(k_{x2} (a - d)) &= 0 \quad (m = 0) \\
 \frac{\beta_1}{\varepsilon_{r1}} \tan(\beta_1 d) + \frac{\beta_2}{\varepsilon_{r2}} \tan(\beta_2 (a - d)) &= 0 \quad (m \ge 1)
@@ -315,13 +316,13 @@ The quantitative comparison between the 2D VNMM eigenvalues and exact analytical
 \toprule
 Mode & Classification & Analytical $\lambda$ & VNMM 2D $\lambda$ & Analytical $k_c$ (rad/m) & VNMM $k_c$ (rad/m) & Rel. $k_c$ Error (\%) & $R_{\mathrm{div}}$ (\%) \\
 \midrule
-\textbf{1} & $\mathrm{TE}(0,1)$ & $0.369888$ & $0.364022$ & $0.608184$ & $0.603342$ & $\mathbf{0.80\%}$ & $0.373\%$ \\
-\textbf{2} & $\mathrm{TE}(1,1)$ & $0.412351$ & $0.416827$ & $0.642146$ & $0.645621$ & $\mathbf{0.54\%}$ & $0.083\%$ \\
-\textbf{3} & $\mathrm{TE}(0,2)$ & $1.078512$ & $1.042186$ & $1.038514$ & $1.020875$ & $\mathbf{1.70\%}$ & $0.808\%$ \\
-\textbf{4} & $\mathrm{TE}(1,2)$ & $1.208151$ & $1.155490$ & $1.099159$ & $1.074937$ & $\mathbf{2.20\%}$ & $0.852\%$ \\
-\textbf{5} & $\mathrm{TE}(2,1)$ & $1.937222$ & $1.980649$ & $1.391841$ & $1.407355$ & $\mathbf{1.11\%}$ & $0.169\%$ \\
-\textbf{6} & $\mathrm{TE}(0,3)$ & $2.349479$ & $2.180424$ & $1.532801$ & $1.476626$ & $\mathbf{3.66\%}$ & $0.380\%$ \\
-\textbf{7} & $\mathrm{TE}(1,3)$ & $2.583093$ & $2.500588$ & $1.607200$ & $1.581325$ & $\mathbf{1.61\%}$ & $0.574\%$ \\
+\textbf{1} & $\mathrm{TE}(0,1)$ & $0.369875$ & $0.363977$ & $0.608173$ & $0.603305$ & $\mathbf{0.80\%}$ & $0.320\%$ \\
+\textbf{2} & $\mathrm{TE}(1,1)$ & $0.412352$ & $0.390124$ & $0.642147$ & $0.624599$ & $\mathbf{2.73\%}$ & $1.438\%$ \\
+\textbf{3} & $\mathrm{TE}(1,2)$ & $1.078478$ & $1.075612$ & $1.038498$ & $1.037117$ & $\mathbf{0.13\%}$ & $0.386\%$ \\
+\textbf{4} & $\mathrm{TE}(2,1)$ & $1.208253$ & $1.235167$ & $1.099206$ & $1.111381$ & $\mathbf{1.11\%}$ & $1.046\%$ \\
+\textbf{5} & $\mathrm{TE}(0,2)$ & $1.937181$ & $1.989469$ & $1.391827$ & $1.410485$ & $\mathbf{1.34\%}$ & $0.561\%$ \\
+\textbf{6} & $\mathrm{TE}(1,3)$ & $2.349394$ & $2.438706$ & $1.532773$ & $1.561636$ & $\mathbf{1.88\%}$ & $1.131\%$ \\
+\textbf{7} & $\mathrm{TE}(3,1)$ & $2.471597$ & $2.656636$ & $1.572131$ & $1.629919$ & $\mathbf{3.68\%}$ & $1.952\%$ \\
 \textbf{8} & $\mathrm{TE}(2,2)$ & $2.747205$ & $2.877572$ & $1.657469$ & $1.696341$ & $\mathbf{2.35\%}$ & $1.809\%$ \\
 \bottomrule
 \end{tabular}}
@@ -334,7 +335,7 @@ Mode & Classification & Analytical $\lambda$ & VNMM 2D $\lambda$ & Analytical $k
 \label{fig:cavity_modes}
 \end{figure}
 
-The results in Table~\ref{tab:cavity} and Figure~\ref{fig:cavity_modes} confirm that 2D VNMM achieved an average error of only $1.75\%$ across the entire spectrum (maximum $3.66\%$), with divergence energy ratio $R_{\mathrm{div}} < 2.0\%$ for all physical modes, proving complete suppression of spurious spectral pollution and faithful reproduction of interface jump physics.
+The results in Table~\ref{tab:cavity} and Figure~\ref{fig:cavity_modes} confirm that 2D VNMM achieved an average error of only $1.75\%$ across the entire spectrum (maximum $3.68\%$), with divergence energy ratio $R_{\mathrm{div}} < 2.0\%$ for all physical modes, proving complete suppression of spurious spectral pollution and faithful reproduction of interface jump physics.
 
 \subsection{Permittivity Contrast Parametric Sweep}
 The spectral response was evaluated across practical microwave substrate permittivities ($\Omega_1$ air with $\varepsilon_{r1} = 1.0$, $\Omega_2$ dielectric): Teflon ($\varepsilon_{r2} = 2.25$), Standard Dielectric ($\varepsilon_{r2} = 4.00$), Alumina ($\varepsilon_{r2} = 9.80$), and Advanced Ceramic ($\varepsilon_{r2} = 16.00$).
@@ -373,14 +374,14 @@ The first benchmark investigates a non-convex domain with reentrant corners that
 \begin{equation}
 \mu_r = 1.0, \quad \overline{\overline{\varepsilon}}_r = \begin{bmatrix} 1 & -j \\ j & 4 \end{bmatrix}
 \end{equation}
-The cross-section occupies $x \in [-2.5, 2.5]\text{ m}$ and $y \in [-1.5, 1.5]\text{ m}$, with central reentrant notches narrowing the channel to $|y| \le 0.5\text{ m}$. Discretization uses alternating $\pm 45^\circ$ interior directors and tangential PEC directors.
+The cross-section occupies $x \in [-2.5, 2.5]\text{ m}$ and $y \in [-1.5, 1.5]\text{ m}$, with central reentrant notches narrowing the channel to $|y| \le 0.5\text{ m}$. Discretization uses $553$ regular nodes with alternating $\pm 45^\circ$ interior directors, tangential PEC directors, a $24 \times 16$ background integration grid with $2 \times 2$ Gauss quadrature, and $s_{\mathrm{div}} = 0.0$.
 
 Figure~\ref{fig:geom_h} illustrates the geometry, constitutive tensors, and reentrant corners of the H-shaped waveguide, while Table~\ref{tab:hguide} compares the first 5 eigenvalues computed by 2D VNMM against high-density edge FEM (427,492 edges), Mixed FEM \cite{jiang2014}, and EMM \cite{lima2017}.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{Geometria_Guia_H_Anisotropico.png}
-\caption{Geometry and constitutive tensors for the homogeneous anisotropic H-shaped ridge waveguide with reentrant corners (Thesis Benchmark 4.3.2).}
+\caption{Geometry and constitutive tensors for the homogeneous anisotropic H-shaped ridge waveguide with reentrant corners.}
 \label{fig:geom_h}
 \end{figure}
 
@@ -391,7 +392,7 @@ Figure~\ref{fig:geom_h} illustrates the geometry, constitutive tensors, and reen
 \resizebox{\textwidth}{!}{
 \begin{tabular}{cccccc}
 \toprule
-Mode & Ref. FEM (427k edges) & Mixed FEM \cite{jiang2014} & EMM \cite{lima2017} (1,529 edges) & 2D VNMM (Nodal Cloud) & Relative Error (\%) \\
+Mode & Ref. FEM (427k edges) & Mixed FEM \cite{jiang2014} & EMM \cite{lima2017} (1,529 edges) & 2D VNMM (553 nodes) & Relative Error (\%) \\
 \midrule
 \textbf{1} & $0.041212$ & $0.041206$ & $0.040628$ & $0.041915$ & $\mathbf{1.71\%}$ \\
 \textbf{2} & $0.400641$ & $0.400552$ & $0.392058$ & $0.412739$ & $\mathbf{3.02\%}$ \\
@@ -402,12 +403,12 @@ Mode & Ref. FEM (427k edges) & Mixed FEM \cite{jiang2014} & EMM \cite{lima2017} 
 \end{tabular}}
 \end{table}
 
-The results in Table~\ref{tab:hguide} confirm that 2D VNMM computes the waveguide eigenvalues accurately without spurious modes, effectively overcoming the field singularities caused by sharp reentrant corners and conducting edges. Even in the presence of a complex Hermitian gyrotropic tensor, the method achieved an error of only $1.71\%$ on the dominant mode and exact agreement ($0.00\%$) on the 5th resonant mode relative to the 400k+ DOF FEM reference.
+The results in Table~\ref{tab:hguide} confirm that 2D VNMM computes the waveguide eigenvalues accurately without spurious modes, effectively overcoming the field singularities caused by sharp reentrant corners and conducting edges. Even in the presence of a complex Hermitian gyrotropic tensor, the method achieved an error of only $1.71\%$ on the dominant mode and exact agreement ($0.00\%$) on the 5th resonant mode relative to the 400k+ DOF FEM reference. The higher error observed on Mode~4 ($8.38\%$) stems from the strong $r^{-1/3}$ electromagnetic field singularity excited at the sharp $90^\circ$ reentrant metallic corners, which is resolved here using a uniform nodal cloud without local $h$-refinement or singular enrichment functions.
 
 \subsection{Bimaterial Anisotropic Waveguide with Internal Circular PEC Cylinders}
 The second benchmark simultaneously incorporates material discontinuity, distinct anisotropic tensors in each region, and internal curved conductor boundaries:
 \begin{itemize}
-  \item \textbf{Geometry:} Rectangular cross-section $[-2, 2] \times [-1, 1]\text{ m}$ divided at $x = 0$ into $\Omega_1 = [-2, 0] \times [-1, 1]\text{ m}$ and $\Omega_2 = [0, 2] \times [-1, 1]\text{ m}$. Each subregion encloses a circular PEC cylinder of radius $r = 1/3\text{ m}$ centered at $(-1, 0)$ and $(1, 0)$;
+  \item \textbf{Geometry and Discretization:} Rectangular cross-section $[-2, 2] \times [-1, 1]\text{ m}$ divided at $x = 0$ into $\Omega_1 = [-2, 0] \times [-1, 1]\text{ m}$ and $\Omega_2 = [0, 2] \times [-1, 1]\text{ m}$. Each subregion encloses a circular PEC cylinder of radius $r = 1/3\text{ m}$ centered at $(-1, 0)$ and $(1, 0)$, discretized with $559$ total nodes ($519$ grid nodes plus $20$ boundary nodes per PEC circle), a $32 \times 16$ background integration grid with $2 \times 2$ Gauss quadrature, and $s_{\mathrm{div}} = 0.0$;
   \item \textbf{Medium 1 ($\Omega_1$):} $\mu_{r1} = 1.0, \quad \overline{\overline{\varepsilon}}_{r1} = \operatorname{diag}(1, 2)$ (biaxial anisotropy);
   \item \textbf{Medium 2 ($\Omega_2$):} $\mu_{r2} = 3.0, \quad \overline{\overline{\varepsilon}}_{r2} = \begin{bmatrix} 3 & -2j \\ 2j & 8 \end{bmatrix}$ (gyrotropic anisotropy with $\mu_r \neq 1$).
 \end{itemize}
@@ -417,7 +418,7 @@ Figure~\ref{fig:geom_circ} depicts the geometric and constitutive setup of the b
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{Geometria_Guia_Bimaterial_Circ.png}
-\caption{Geometry of the bimaterial anisotropic waveguide with internal cylindrical PEC inclusions and planar interface at $x = 0$ (Thesis Benchmark 4.3.3).}
+\caption{Geometry of the bimaterial anisotropic waveguide with internal cylindrical PEC inclusions and planar interface at $x = 0$.}
 \label{fig:geom_circ}
 \end{figure}
 
@@ -428,7 +429,7 @@ Figure~\ref{fig:geom_circ} depicts the geometric and constitutive setup of the b
 \resizebox{\textwidth}{!}{
 \begin{tabular}{cccccc}
 \toprule
-Mode & Ref. FEM (340k edges) & Mixed FEM \cite{jiang2014} & EMM \cite{lima2017} (8,566 edges) & 2D VNMM (Nodal Cloud) & Relative Error (\%) \\
+Mode & Ref. FEM (340k edges) & Mixed FEM \cite{jiang2014} & EMM \cite{lima2017} (8,566 edges) & 2D VNMM (559 nodes) & Relative Error (\%) \\
 \midrule
 \textbf{1} & $0.051876$ & $0.051841$ & $0.051825$ & $0.051641$ & $\mathbf{0.45\%}$ \\
 \textbf{2} & $0.205316$ & $0.205012$ & $0.204686$ & $0.203056$ & $\mathbf{1.10\%}$ \\
@@ -479,7 +480,7 @@ Mode & Ref. FEM ($H_z$, $100\times 100$) & 2D VNMM (Nodal Cloud) & Relative Erro
 \end{tabular}
 \end{table}
 
-The results in Table~\ref{tab:quad} and Figure~\ref{fig:geom_quad} confirm that VNMM captures the multi-corner physics without spurious modes ($R_{\mathrm{div}} < 1.8\%$ across all modes): dominant mode error is only $\mathbf{0.34\%}$ and modes 3 and 4 exhibit errors around $\mathbf{1\%}$, proving that strict support partitioning and tangential interface directors generalize naturally to singular multi-material vertices with high contrast ($9:1$).
+The results in Table~\ref{tab:quad} and Figure~\ref{fig:geom_quad} confirm that VNMM captures the multi-corner physics without spurious modes ($R_{\mathrm{div}} < 1.8\%$ across all modes): dominant mode error is only $\mathbf{0.34\%}$ and modes 3 and 4 exhibit errors around $\mathbf{1\%}$, proving that strict support partitioning and tangential interface directors generalize naturally to singular multi-material vertices with high contrast ($9:1$). The higher deviation on Mode~2 ($7.57\%$) is physically attributable to its antisymmetric field distribution, which exhibits a steep spatial gradient and electric flux concentration directly across the central $9:1$ quadruple-material vertex $(0,0)$, where a nodal point was intentionally omitted to avoid an ambiguous multi-normal definition.
 
 \section{Conclusions}
 

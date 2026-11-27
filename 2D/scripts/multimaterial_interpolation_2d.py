@@ -579,8 +579,8 @@ def plot_interpolation_results(
     cbar1.set_label("$\\log_{10}(\\|\\mathbf{E}^h - \\mathbf{E}_{\\mathrm{ex}}\\|_2)$", fontsize=10)
     
     ax1.set_title(
-        f"Galerkin Patch Test (Campo Afim)\n"
-        f"Erro Relativo Global: {res_patch['l2_rel_E']:.2e} (Precisão de Máquina)",
+        f"Galerkin Patch Test (Affine Field)\n"
+        f"Global Relative Error: {res_patch['l2_rel_E']:.2e} (Machine Precision)",
         fontsize=11, fontweight="bold"
     )
     ax1.set_xlabel("X (m)")
@@ -601,11 +601,11 @@ def plot_interpolation_results(
         c=res_mms["errors_E"], cmap="plasma", s=45, edgecolor="none", zorder=3
     )
     cbar2 = plt.colorbar(sc2, ax=ax2)
-    cbar2.set_label("Erro Absoluto $\\|\\mathbf{E}^h - \\mathbf{E}_{\\mathrm{ex}}\\|_2$", fontsize=10)
+    cbar2.set_label("Absolute Error $\\|\\mathbf{E}^h - \\mathbf{E}_{\\mathrm{ex}}\\|_2$", fontsize=10)
     
     ax2.set_title(
-        f"MMS (Campo Trigonométrico Suave)\n"
-        f"Erro Relativo Global: {res_mms['l2_rel_E']:.2%} | Rotacional: {res_mms['l2_rel_curl']:.2%}",
+        f"MMS (Smooth Trigonometric Field)\n"
+        f"Global Relative Error: {res_mms['l2_rel_E']:.2%} | Curl: {res_mms['l2_rel_curl']:.2%}",
         fontsize=11, fontweight="bold"
     )
     ax2.set_xlabel("X (m)")
@@ -627,12 +627,12 @@ def plot_interpolation_results(
         interp_points[:, 0], interp_points[:, 1],
         E_h[:, 0], E_h[:, 1],
         angles="xy", scale_units="xy", scale=8.0,
-        color="#283593", width=0.0035, label="$\\mathbf{E}^h$ (Interpolado)", zorder=3
+        color="#283593", width=0.0035, label="$\\mathbf{E}^h$ (Interpolated)", zorder=3
     )
     
     ax3.set_title(
-        "Campo Vetorial Interpolado $\\mathbf{E}^h$ (MMS)\n"
-        "Comportamento Físico Contínuo no Domínio",
+        "Interpolated Vector Field $\\mathbf{E}^h$ (MMS)\n"
+        "Continuous Physical Field Across Domain",
         fontsize=11, fontweight="bold"
     )
     ax3.set_xlabel("X (m)")
@@ -670,11 +670,11 @@ def plot_interpolation_results(
             ax4.plot([P[0], n_xy[0]], [P[1], n_xy[1]], linestyle="--", color=col, linewidth=1.2, alpha=0.6, zorder=3)
             
         ax4.scatter(node_coords[st, 0], node_coords[st, 1], facecolor=col, edgecolor="black", s=70, zorder=4)
-        ax4.scatter(P[0], P[1], facecolor=col, edgecolor="black", marker="*", s=300, label=f"Ponto {label_p} + 6 Nós", zorder=5)
+        ax4.scatter(P[0], P[1], facecolor=col, edgecolor="black", marker="*", s=300, label=f"Point {label_p} + 6 Nodes", zorder=5)
         
     ax4.set_title(
-        "Verificação de Suporte Estrito por Material\n"
-        "Nenhum Stencil Contém Nós do Material Oposto",
+        "Strict Material Support Verification\n"
+        "No Stencil Crosses into the Opposing Material",
         fontsize=11, fontweight="bold"
     )
     ax4.set_xlabel("X (m)")

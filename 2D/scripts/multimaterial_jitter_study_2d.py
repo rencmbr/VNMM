@@ -329,29 +329,29 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
         Lx=Lx, Ly=Ly, x_int=x_int, Nx1=11, Nx2=11, Ny=21, jitter_frac=0.25, seed=42
     )
 
-    ax1.fill_between([0.0, x_int], 0.0, Ly, color="#E3F2FD", alpha=0.5, label="Material 1 (Ar)")
-    ax1.fill_between([x_int, Lx], 0.0, Ly, color="#FFF3E0", alpha=0.5, label="Material 2 (Dielétrico)")
+    ax1.fill_between([0.0, x_int], 0.0, Ly, color="#E3F2FD", alpha=0.5, label="Material 1 (Air)")
+    ax1.fill_between([x_int, Lx], 0.0, Ly, color="#FFF3E0", alpha=0.5, label="Material 2 (Dielectric)")
     ax1.axvline(x=x_int, color="#C62828", linestyle="--", linewidth=1.8, label="Interface $\\Gamma_{\\mathrm{int}}$")
 
     # Nós internos Mat 1
     idx_m1 = np.where((mat_ids == 1) & (~is_pec))[0]
-    ax1.scatter(coords[idx_m1, 0], coords[idx_m1, 1], facecolor="#1565C0", edgecolor="black", s=30, zorder=3, label="Nós Mat 1 (Jitter 25%)")
+    ax1.scatter(coords[idx_m1, 0], coords[idx_m1, 1], facecolor="#1565C0", edgecolor="black", s=30, zorder=3, label="Mat 1 Nodes (25% Jitter)")
 
     # Nós internos Mat 2
     idx_m2 = np.where((mat_ids == 2) & (~is_pec))[0]
-    ax1.scatter(coords[idx_m2, 0], coords[idx_m2, 1], facecolor="#E65100", edgecolor="black", s=30, zorder=3, label="Nós Mat 2 (Jitter 25%)")
+    ax1.scatter(coords[idx_m2, 0], coords[idx_m2, 1], facecolor="#E65100", edgecolor="black", s=30, zorder=3, label="Mat 2 Nodes (25% Jitter)")
 
     # Nós de interface
     idx_int = np.where(mat_ids == 0)[0]
-    ax1.scatter(coords[idx_int, 0], coords[idx_int, 1], facecolor="#2E7D32", edgecolor="black", s=45, marker="o", zorder=4, label="Nós Interface (Tangenciais)")
+    ax1.scatter(coords[idx_int, 0], coords[idx_int, 1], facecolor="#2E7D32", edgecolor="black", s=45, marker="o", zorder=4, label="Interface Nodes (Tangential)")
 
     # Nós PEC
     idx_pec = np.where(is_pec)[0]
-    ax1.scatter(coords[idx_pec, 0], coords[idx_pec, 1], facecolor="#555555", marker="s", s=20, zorder=3, label="Paredes PEC Escalonadas")
+    ax1.scatter(coords[idx_pec, 0], coords[idx_pec, 1], facecolor="#555555", marker="s", s=20, zorder=3, label="Staggered PEC Walls")
 
-    ax1.set_title("(a) Geometria da Nuvem Nodal (Jitter = 25%)\nInterface Intacta com Interior Estocástico", fontsize=11, fontweight="bold")
-    ax1.set_xlabel("Coordenada X (m)", fontsize=10)
-    ax1.set_ylabel("Coordenada Y (m)", fontsize=10)
+    ax1.set_title("(a) Nodal Cloud Geometry (Jitter = 25%)\nIntact Interface with Stochastic Interior", fontsize=11, fontweight="bold")
+    ax1.set_xlabel("X Coordinate (m)", fontsize=10)
+    ax1.set_ylabel("Y Coordinate (m)", fontsize=10)
     ax1.set_xlim(-0.1, Lx + 0.1)
     ax1.set_ylim(-0.1, Ly + 0.1)
     ax1.set_aspect("equal")
@@ -371,19 +371,19 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
     ax2.errorbar(
         j_pcts, mean_errs, yerr=mean_stds, fmt='-o', color="#0D47A1",
         linewidth=2.0, capsize=4, capthick=1.5, markersize=6,
-        label="Erro Médio (6 Modos) $\\mu \\pm \\sigma$"
+        label="Mean Error (6 Modes) $\\mu \\pm \\sigma$"
     )
     ax2.errorbar(
         j_pcts, mode1_errs, yerr=mode1_stds, fmt='--s', color="#C62828",
         linewidth=2.0, capsize=4, capthick=1.5, markersize=6,
-        label="Modo Fundamental $TE_{01}$ $\\mu \\pm \\sigma$"
+        label="Fundamental Mode $TE_{01}$ $\\mu \\pm \\sigma$"
     )
 
-    ax2.axhspan(0, 3.0, color="#E8F5E9", alpha=0.4, label="Zona de Alta Precisão (< 3%)")
+    ax2.axhspan(0, 3.0, color="#E8F5E9", alpha=0.4, label="High-Accuracy Zone (< 3%)")
 
-    ax2.set_title("(b) Erro Relativo em $k_c$ vs Nível de Jitter\nEstabilidade Robusta com Platô Ótimo em 10%–25%", fontsize=11, fontweight="bold")
-    ax2.set_xlabel("Nível de Perturbação Nodal Jitter (%)", fontsize=10)
-    ax2.set_ylabel("Erro Relativo em $k_c$ (%)", fontsize=10)
+    ax2.set_title("(b) Relative $k_c$ Error vs Jitter Level\nRobust Stability with Optimal Plateau at 10%–25%", fontsize=11, fontweight="bold")
+    ax2.set_xlabel("Nodal Perturbation Level Jitter (%)", fontsize=10)
+    ax2.set_ylabel("Relative Error in $k_c$ (%)", fontsize=10)
     ax2.set_xticks(j_pcts)
     ax2.set_xticklabels([f"{v}%" for v in j_pcts])
     ax2.set_ylim(0, 8.5)
@@ -397,17 +397,17 @@ def plot_jitter_detailed_analysis(results_by_jitter, ref_kc, output_path=None):
     r_divs = [r['r_div_mean'] for r in results_by_jitter]
     mms_errs = [r['mms_error_l2'] for r in results_by_jitter]
 
-    ax3.plot(j_pcts, r_divs, '-^', color="#2E7D32", linewidth=2.0, markersize=7, label=r"Razão de Divergência $R_{\mathrm{div}}$ (%)")
-    ax3.axhline(y=5.0, color="#D32F2F", linestyle=":", linewidth=1.5, label=r"Limite Máximo de Pureza ($5\%$)")
+    ax3.plot(j_pcts, r_divs, '-^', color="#2E7D32", linewidth=2.0, markersize=7, label=r"Divergence Ratio $R_{\mathrm{div}}$ (%)")
+    ax3.axhline(y=5.0, color="#D32F2F", linestyle=":", linewidth=1.5, label=r"Maximum Purity Threshold ($5\%$)")
 
     ax3_twin = ax3.twinx()
-    ax3_twin.plot(j_pcts, mms_errs, '--d', color="#6A1B9A", linewidth=1.8, markersize=6, label=r"Erro MMS $L_2$ (%)")
-    ax3_twin.set_ylabel("Erro de Interpolação MMS (%)", color="#6A1B9A", fontsize=10)
+    ax3_twin.plot(j_pcts, mms_errs, '--d', color="#6A1B9A", linewidth=1.8, markersize=6, label=r"MMS $L_2$ Error (%)")
+    ax3_twin.set_ylabel("MMS Interpolation Error (%)", color="#6A1B9A", fontsize=10)
     ax3_twin.tick_params(axis='y', labelcolor="#6A1B9A")
 
-    ax3.set_title(r"(c) Supressão de Modos Espúrios sob Jitter" + "\n" + r"Pureza Física Preservada ($R_{\mathrm{div}} < 3.3\%$)", fontsize=11, fontweight="bold")
-    ax3.set_xlabel("Nível de Perturbação Nodal Jitter (%)", fontsize=10)
-    ax3.set_ylabel(r"Razão de Divergência Média $R_{\mathrm{div}}$ (%)", fontsize=10)
+    ax3.set_title(r"(c) Spurious Mode Suppression under Jitter" + "\n" + r"Physical Purity Preserved ($R_{\mathrm{div}} < 3.3\%$)", fontsize=11, fontweight="bold")
+    ax3.set_xlabel("Nodal Perturbation Level Jitter (%)", fontsize=10)
+    ax3.set_ylabel(r"Mean Divergence Ratio $R_{\mathrm{div}}$ (%)", fontsize=10)
     ax3.set_xticks(j_pcts)
     ax3.set_xticklabels([f"{v}%" for v in j_pcts])
     ax3.set_ylim(0, 6.0)
