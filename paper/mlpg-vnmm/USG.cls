@@ -2308,6 +2308,9 @@ Volume\ \@jvol, Article ID\ \@artid, \thepage~pages\par%
 %\RequirePackage[intlimits,sumlimits,namelimits,centertags]{amsmath}%
 
 \RequirePackage{amsmath,amsthm,boites,amssymb,amsbsy}
+\renewcommand{\iint}{\DOTSI\iintop\ilimits@}
+\renewcommand{\iiint}{\DOTSI\iiintop\ilimits@}
+\renewcommand{\iiiint}{\DOTSI\iiiintop\ilimits@}
 
 \newif\ifeproof%
 
